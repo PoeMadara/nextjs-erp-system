@@ -28,7 +28,8 @@
     "downloadPdf": "Download PDF (Soon)",
     "all": "All",
     "status": "Status",
-    "type": "Type"
+    "type": "Type",
+    "location": "Location"
   },
   "loginPage": {
     "title": "ERP Login",
@@ -222,34 +223,50 @@
     "notFound": "Invoice not found."
   },
   "newFacturaPage": {
-    "createGeneralTitle": "Create New Invoice",
-    "createTypedTitle": "Create New {type} Invoice",
+    "titleCreateGeneral": "Create New Invoice",
+    "titleCreateTyped": "Create New {type} Invoice",
     "descriptionGeneral": "Specify details for the new invoice.",
     "descriptionTyped": "Enter details for the new {type} invoice.",
-    "formUnderConstruction": "The form to create a new {type} invoice is currently under development.",
-    "plannedSections": "Planned Sections:",
-    "sectionHeader": "Invoice Header (Date, Number, {partyRole}, etc.)",
-    "clientRole": "Customer",
-    "supplierRole": "Supplier",
-    "clientSupplierRole": "Customer/Supplier",
-    "sectionLineItems": "Invoice Line Items (Products/Services, Quantity, Price, VAT)",
-    "sectionTotals": "Totals (Subtotal, VAT, Total)",
-    "sectionPayment": "Payment Information (if applicable)"
+    "formComingSoon": "The form to create a new {type} invoice is coming soon!",
+    "constructionDetails": "This section is currently under development. The full form for creating invoices will be available in a future update.",
+    "plannedFormTitle": "Planned Invoice Form Sections:",
+    "sectionHeaderTitle": "1. Invoice Header",
+    "fieldDate": "Date",
+    "fieldInvoiceNumber": "Invoice Number (auto-generated or manual)",
+    "fieldInvoiceType": "Type",
+    "associatedPartyClient": "Customer",
+    "associatedPartySupplier": "Supplier",
+    "associatedPartyGeneric": "Client/Supplier",
+    "fieldAssociatedParty": "{party} Selection",
+    "fieldEmployee": "Responsible Employee",
+    "sectionDetailsTitle": "2. Invoice Details / Line Items",
+    "fieldProductServiceSelection": "Product/Service Selection",
+    "fieldQuantity": "Quantity",
+    "fieldUnitPrice": "Unit Price",
+    "fieldVatRate": "VAT Rate",
+    "fieldLineSubtotal": "Line Subtotal (auto-calculated)",
+    "sectionSummaryTitle": "3. Invoice Summary",
+    "fieldTaxableBase": "Taxable Base (auto-calculated)",
+    "fieldTotalVatAmount": "Total VAT Amount (auto-calculated)",
+    "fieldGrandTotal": "Grand Total (auto-calculated)",
+    "fieldStatusSelection": "Status (Pending, Paid, etc.)",
+    "sectionPaymentTitle": "4. Payment Information (for Sales Invoices)",
+    "fieldPaymentMethod": "Payment Method",
+    "fieldPaymentDueDate": "Payment Due Date",
+    "checkBackSoon": "Check back soon for the fully functional invoice creation form!"
   },
   "salesInvoices": {
     "title": "Sales Invoices",
     "description": "Manage your sales invoices.",
-    "newSalesInvoiceButton": "New Sales Invoice",
-    "underConstructionMessage": "The Sales Invoices section is currently under development. You can view all invoices in the main \"All Invoices\" section."
+    "newSalesInvoiceButton": "New Sales Invoice"
   },
   "purchaseInvoices": {
     "title": "Purchase Invoices",
     "description": "Manage your purchase invoices.",
-    "newPurchaseInvoiceButton": "New Purchase Invoice",
-    "underConstructionMessage": "The Purchase Invoices section is currently under development. You can view all invoices in the main \"All Invoices\" section."
+    "newPurchaseInvoiceButton": "New Purchase Invoice"
   },
   "warehouse": {
-    "title": "Warehouse",
+    "title": "Warehouses",
     "description": "Manage your warehouses and stock locations.",
     "addNewWarehouseButton": "Add New Warehouse",
     "underConstructionMessage": "The Warehouse management section is currently under development.",
@@ -263,7 +280,26 @@
     "fieldWarehouseName": "Warehouse Name",
     "fieldLocationAddress": "Location / Address",
     "fieldContactPerson": "Contact Person (optional)",
-    "fieldAdditionalNotes": "Additional Notes (optional)"
+    "fieldAdditionalNotes": "Additional Notes (optional)",
+    "tableId": "Code",
+    "tableName": "Name",
+    "tableLocation": "Location",
+    "noWarehousesFound": "No warehouses found.",
+    "failFetch": "Failed to fetch warehouses.",
+    "searchPlaceholder": "Search warehouses by name or location..."
+  },
+  "newWarehousePage": {
+    "titleCreate": "Create New Warehouse",
+    "description": "Define a new warehouse or stock location for your inventory.",
+    "formComingSoon": "The form to create a new warehouse is coming soon!",
+    "constructionDetails": "This section is currently under development. The full form for creating warehouses will be available in a future update.",
+    "plannedFormTitle": "Planned Warehouse Form Fields:",
+    "fieldWarehouseName": "Warehouse Name",
+    "fieldLocationAddress": "Full Address or Location Description",
+    "fieldCapacity": "Storage Capacity (e.g., sqm, units)",
+    "fieldContactInfo": "Contact Person / Phone (optional)",
+    "fieldNotes": "Additional Notes (optional)",
+    "checkBackSoon": "Check back soon for the fully functional warehouse creation form!"
   },
   "employees": {
     "title": "Employees",

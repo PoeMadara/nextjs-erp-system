@@ -28,7 +28,8 @@
     "downloadPdf": "Descargar PDF (Próximamente)",
     "all": "Todas",
     "status": "Estado",
-    "type": "Tipo"
+    "type": "Tipo",
+    "location": "Ubicación"
   },
   "loginPage": {
     "title": "ERP Login",
@@ -222,34 +223,50 @@
     "notFound": "Factura no encontrada."
   },
   "newFacturaPage": {
-    "createGeneralTitle": "Crear Nueva Factura",
-    "createTypedTitle": "Crear Nueva Factura de {type}",
+    "titleCreateGeneral": "Crear Nueva Factura",
+    "titleCreateTyped": "Crear Nueva Factura de {type}",
     "descriptionGeneral": "Especifica los detalles para la nueva factura.",
     "descriptionTyped": "Introduce los detalles para la nueva factura de {type}.",
-    "formUnderConstruction": "El formulario para crear una nueva factura de {type} está actualmente en desarrollo.",
-    "plannedSections": "Secciones Planeadas:",
-    "sectionHeader": "Cabecera de Factura (Fecha, Número, {partyRole}, etc.)",
-    "clientRole": "Cliente",
-    "supplierRole": "Proveedor",
-    "clientSupplierRole": "Cliente/Proveedor",
-    "sectionLineItems": "Líneas de Factura (Productos/Servicios, Cantidad, Precio, IVA)",
-    "sectionTotals": "Totales (Subtotal, IVA, Total)",
-    "sectionPayment": "Información de Pago (si aplica)"
+    "formComingSoon": "¡El formulario para crear una nueva factura de {type} estará disponible pronto!",
+    "constructionDetails": "Esta sección está actualmente en desarrollo. El formulario completo para crear facturas estará disponible en una futura actualización.",
+    "plannedFormTitle": "Secciones Planeadas del Formulario de Factura:",
+    "sectionHeaderTitle": "1. Cabecera de la Factura",
+    "fieldDate": "Fecha",
+    "fieldInvoiceNumber": "Número de Factura (auto-generado o manual)",
+    "fieldInvoiceType": "Tipo",
+    "associatedPartyClient": "Cliente",
+    "associatedPartySupplier": "Proveedor",
+    "associatedPartyGeneric": "Cliente/Proveedor",
+    "fieldAssociatedParty": "Selección de {party}",
+    "fieldEmployee": "Empleado Responsable",
+    "sectionDetailsTitle": "2. Detalles / Líneas de la Factura",
+    "fieldProductServiceSelection": "Selección de Producto/Servicio",
+    "fieldQuantity": "Cantidad",
+    "fieldUnitPrice": "Precio Unitario",
+    "fieldVatRate": "Tasa de IVA",
+    "fieldLineSubtotal": "Subtotal de Línea (auto-calculado)",
+    "sectionSummaryTitle": "3. Resumen de la Factura",
+    "fieldTaxableBase": "Base Imponible (auto-calculado)",
+    "fieldTotalVatAmount": "Importe Total de IVA (auto-calculado)",
+    "fieldGrandTotal": "Total General (auto-calculado)",
+    "fieldStatusSelection": "Estado (Pendiente, Pagada, etc.)",
+    "sectionPaymentTitle": "4. Información de Pago (para Facturas de Venta)",
+    "fieldPaymentMethod": "Método de Pago",
+    "fieldPaymentDueDate": "Fecha de Vencimiento del Pago",
+    "checkBackSoon": "¡Vuelve pronto para ver el formulario de creación de facturas completamente funcional!"
   },
   "salesInvoices": {
     "title": "Facturas de Venta",
     "description": "Gestiona tus facturas de venta.",
-    "newSalesInvoiceButton": "Nueva Factura de Venta",
-    "underConstructionMessage": "La sección de Facturas de Venta está actualmente en desarrollo. Puedes ver todas las facturas en la sección principal \"Todas las Facturas\"."
+    "newSalesInvoiceButton": "Nueva Factura de Venta"
   },
   "purchaseInvoices": {
     "title": "Facturas de Compra",
     "description": "Gestiona tus facturas de compra.",
-    "newPurchaseInvoiceButton": "Nueva Factura de Compra",
-    "underConstructionMessage": "La sección de Facturas de Compra está actualmente en desarrollo. Puedes ver todas las facturas en la sección principal \"Todas las Facturas\"."
+    "newPurchaseInvoiceButton": "Nueva Factura de Compra"
   },
   "warehouse": {
-    "title": "Almacén",
+    "title": "Almacenes",
     "description": "Gestiona tus almacenes y ubicaciones de stock.",
     "addNewWarehouseButton": "Añadir Nuevo Almacén",
     "underConstructionMessage": "La sección de gestión de Almacén está actualmente en desarrollo.",
@@ -263,7 +280,26 @@
     "fieldWarehouseName": "Nombre del Almacén",
     "fieldLocationAddress": "Ubicación / Dirección",
     "fieldContactPerson": "Persona de Contacto (opcional)",
-    "fieldAdditionalNotes": "Notas Adicionales (opcional)"
+    "fieldAdditionalNotes": "Notas Adicionales (opcional)",
+    "tableId": "Código",
+    "tableName": "Nombre",
+    "tableLocation": "Ubicación",
+    "noWarehousesFound": "No se encontraron almacenes.",
+    "failFetch": "Error al cargar los almacenes.",
+    "searchPlaceholder": "Buscar almacenes por nombre o ubicación..."
+  },
+  "newWarehousePage": {
+    "titleCreate": "Crear Nuevo Almacén",
+    "description": "Define un nuevo almacén o ubicación para tu inventario.",
+    "formComingSoon": "¡El formulario para crear un nuevo almacén estará disponible pronto!",
+    "constructionDetails": "Esta sección está actualmente en desarrollo. El formulario completo para crear almacenes estará disponible en una futura actualización.",
+    "plannedFormTitle": "Campos Planeados del Formulario de Almacén:",
+    "fieldWarehouseName": "Nombre del Almacén",
+    "fieldLocationAddress": "Dirección Completa o Descripción de la Ubicación",
+    "fieldCapacity": "Capacidad de Almacenamiento (ej: m², unidades)",
+    "fieldContactInfo": "Persona de Contacto / Teléfono (opcional)",
+    "fieldNotes": "Notas Adicionales (opcional)",
+    "checkBackSoon": "¡Vuelve pronto para ver el formulario de creación de almacenes completamente funcional!"
   },
   "employees": {
     "title": "Empleados",

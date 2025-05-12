@@ -18,11 +18,14 @@ export interface Proveedor {
   email: string;
 }
 
+export type EmpleadoRole = 'admin' | 'sales' | 'warehouse_manager' | 'employee';
+
 export interface Empleado {
   id: string; // Codigo
   nombre: string;
   email: string;
   telefono?: string;
+  role?: EmpleadoRole;
   // PasswordHash is handled by backend, not stored/managed in frontend state directly for forms typically
 }
 

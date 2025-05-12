@@ -1,5 +1,4 @@
-
-import type { Cliente, Proveedor, Empleado, Producto, Almacen, Factura, DetalleFactura } from '@/types';
+import type { Cliente, Proveedor, Empleado, Producto, Almacen, Factura, DetalleFactura, EmpleadoRole } from '@/types';
 
 let clientes: Cliente[] = [
   { id: 'CLI001', nombre: 'Juan Pérez', nif: '12345678A', direccion: 'Calle Falsa 123', poblacion: 'Ciudad Real', telefono: '926111222', email: 'juan.perez@example.com' },
@@ -12,8 +11,8 @@ let proveedores: Proveedor[] = [
 ];
 
 let empleados: Empleado[] = [
-  { id: 'EMP001', nombre: 'Admin ERP', email: 'admin@example.com', telefono: '600123123' },
-  { id: 'EMP002', nombre: 'Laura García', email: 'laura.garcia@example.com', telefono: '600987654' },
+  { id: 'EMP001', nombre: 'Admin ERP', email: 'admin@example.com', telefono: '600123123', role: 'admin' },
+  { id: 'EMP002', nombre: 'Laura García', email: 'laura.garcia@example.com', telefono: '600987654', role: 'employee' },
 ];
 
 let almacenes: Almacen[] = [
@@ -108,8 +107,12 @@ export const getEmpleados = async (): Promise<Empleado[]> => [...empleados];
 export const getEmpleadoById = async (id: string): Promise<Empleado | undefined> => empleados.find(e => e.id === id);
 export const getEmpleadoByEmail = async (email: string): Promise<Empleado | undefined> => empleados.find(e => e.email.toLowerCase() === email.toLowerCase());
 
-export const addEmpleado = async (empleado: Omit<Empleado, 'id'>): Promise<Empleado> => {
-  const newEmpleado = { ...empleado, id: generateId('EMP', empleados) };
+export const addEmpleado = async (empleado: Omit<Empleado, 'id' | 'role'> & { role?: EmpleadoRole }): Promise<Empleado> => {
+  const newEmpleado: Empleado = { 
+    ...empleado, 
+    id: generateId('EMP', empleados),
+    role: empleado.role || 'employee' // Default role
+  };
   empleados.push(newEmpleado);
   return newEmpleado;
 };
