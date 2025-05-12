@@ -1,3 +1,4 @@
+
 "use client";
 import type { ReactNode } from 'react';
 import { useState, useEffect, useMemo } from 'react';
@@ -24,18 +25,18 @@ interface FacturaListClientPageProps {
   pageTitleKey: string;
   pageDescriptionKey: string;
   newButtonTextKey: string;
-  newButtonLink: string;
+  newButtonLink?: string; // Made optional, will be constructed if not provided
   invoiceTypeFilter?: FacturaTipo;
   hideNewButton?: boolean;
 }
 
-const ALL_CURRENCIES: CurrencyCode[] = ['EUR', 'USD', 'GBP']; // Add more as needed
+const ALL_CURRENCIES: CurrencyCode[] = ['EUR', 'USD', 'GBP']; 
 
 export default function FacturaListClientPage({
   pageTitleKey,
   pageDescriptionKey,
   newButtonTextKey,
-  newButtonLink,
+  newButtonLink: providedNewButtonLink,
   invoiceTypeFilter,
   hideNewButton = false,
 }: FacturaListClientPageProps) {
@@ -69,7 +70,7 @@ export default function FacturaListClientPage({
       currentFacturas = facturas.filter(factura => factura.tipo === invoiceTypeFilter);
     }
     
-    if (selectedCurrencies.size < ALL_CURRENCIES.length) { // Only filter if not all currencies are selected
+    if (selectedCurrencies.size < ALL_CURRENCIES.length) { 
         currentFacturas = currentFacturas.filter(factura => selectedCurrencies.has(factura.moneda));
     }
 
@@ -135,10 +136,14 @@ export default function FacturaListClientPage({
       } else {
         newSet.add(currency);
       }
-      // If set becomes empty, reset to all selected to avoid showing no results unintuitively
       return newSet.size === 0 ? new Set(ALL_CURRENCIES) : newSet;
     });
   };
+
+  const newButtonLink = providedNewButtonLink || 
+                        (invoiceTypeFilter === 'Venta' ? '/dashboard/facturas/new?tipo=venta' 
+                        : invoiceTypeFilter === 'Compra' ? '/dashboard/facturas/new?tipo=compra' 
+                        : '/dashboard/facturas/new');
 
 
   if (isLoading) {
@@ -176,7 +181,7 @@ export default function FacturaListClientPage({
         description={t(pageDescriptionKey)}
         actionButton={
           !hideNewButton ? (
-            <Button asChild className="shadow-sm" disabled>
+            <Button asChild className="shadow-sm">
               <Link href={newButtonLink}>
                 <PlusCircle className="mr-2 h-4 w-4" /> {t(newButtonTextKey)}
               </Link>

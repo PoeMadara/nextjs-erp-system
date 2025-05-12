@@ -237,6 +237,8 @@
     "failDelete": "Error al eliminar la factura #{id}.",
     "successUpdate": "Factura #{id} actualizada correctamente.",
     "failUpdate": "Error al actualizar la factura #{id}.",
+    "successCreate": "Factura #{id} creada correctamente.",
+    "failCreate": "Error al crear la factura. Por favor, inténtalo de nuevo.",
     "filterByCurrency": "Filtrar por moneda",
     "searchCurrency": "Buscar moneda...",
     "noCurrencyFound": "No se encontró la moneda."
@@ -256,7 +258,9 @@
     "employeeLabel": "Empleado",
     "selectEmployee": "Selecciona empleado",
     "warehouseLabel": "Almacén",
+    "warehouseLabelOptional": "Almacén (Opcional)",
     "selectWarehouse": "Selecciona almacén",
+    "noWarehouse": "Sin Almacén",
     "currencyLabel": "Moneda",
     "selectCurrency": "Selecciona moneda",
     "statusLabel": "Estado",
@@ -274,15 +278,17 @@
     "failFetchDropdowns": "Error al cargar datos para los desplegables.",
      "validation": {
       "fechaRequired": "La fecha es obligatoria.",
+      "tipoRequired": "El tipo de factura es obligatorio.",
       "empleadoRequired": "El empleado es obligatorio.",
       "monedaRequired": "La moneda es obligatoria.",
       "estadoRequired": "El estado es obligatorio.",
       "detallesMin": "Se requiere al menos una línea de detalle.",
-      "productoRequired": "El producto es obligatorio.",
+      "productoRequired": "El producto es obligatorio para cada línea.",
       "cantidadMin": "La cantidad debe ser al menos 1.",
       "precioMin": "El precio debe ser 0 o mayor.",
       "ivaMin": "El IVA debe ser 0 o mayor.",
-      "clientSupplierRequired": "Se requiere Cliente o Proveedor según el tipo de factura."
+      "clienteRequired": "El cliente es obligatorio para Facturas de Venta.",
+      "proveedorRequired": "El proveedor es obligatorio para Facturas de Compra."
     }
   },
   "newFacturaPage": {
@@ -530,5 +536,3 @@
     "createTitle": "Crear Nuevo Proveedor"
   }
 }
-
-    

@@ -12,7 +12,7 @@ import type { Factura } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FacturaForm, type FacturaFormValues } from "@/components/crud/FacturaForm";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 export default function EditFacturaPage() {
   const router = useRouter();
@@ -54,21 +54,20 @@ export default function EditFacturaPage() {
     if (!factura) return;
     setIsSubmitting(true);
     
-    const facturaToUpdate: Partial<Factura> = {
+    const facturaToUpdate = {
       ...values,
+      id: factura.id, // Ensure ID is included
       fecha: format(values.fecha, "yyyy-MM-dd"), // Format date back to string for storage
-      // clienteId, proveedorId, empleadoId, almacenId are directly from 'values'
-      // moneda, estado, detalles are directly from 'values'
-      // baseImponible, totalIva, totalFactura are calculated and set in 'values' by the form
+      almacenId: values.almacenId === "" ? undefined : values.almacenId,
     };
 
     try {
-      await updateFacturaApi(factura.id, facturaToUpdate as Factura); // Cast needed due to partial nature
+      await updateFacturaApi(factura.id, facturaToUpdate as Factura); 
       toast({
         title: t('common.success'),
         description: t('facturas.successUpdate', { id: factura.id }),
       });
-      router.push(`/dashboard/facturas/${factura.id}/view`); // Or back to list
+      router.push(`/dashboard/facturas/${factura.id}/view`);
     } catch (error) {
       toast({
         title: t('common.error'),
@@ -134,6 +133,20 @@ export default function EditFacturaPage() {
     );
   }
 
+  const formDefaultValues: FacturaFormValues = {
+    ...factura,
+    fecha: parseISO(factura.fecha), // Convert string date to Date object for the form
+    // Ensure all fields match FacturaFormValues structure
+    clienteId: factura.clienteId || undefined,
+    proveedorId: factura.proveedorId || undefined,
+    almacenId: factura.almacenId || undefined,
+    detalles: factura.detalles.map(d => ({
+        ...d,
+        productoId: d.productoId || '', // Ensure productoId is string
+    }))
+  };
+
+
   return (
     <>
       <PageHeader
@@ -150,12 +163,11 @@ export default function EditFacturaPage() {
       />
       <FacturaForm 
         onSubmit={handleSubmit}
-        defaultValues={factura}
+        defaultValues={formDefaultValues}
         isSubmitting={isSubmitting}
+        isEditMode={true} // Explicitly set to true for editing
         submitButtonText={t('facturaForm.updateButton')}
       />
     </>
   );
 }
-
-    

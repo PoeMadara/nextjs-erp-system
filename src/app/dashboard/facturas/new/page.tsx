@@ -1,46 +1,86 @@
+
 "use client";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Construction, FilePlus2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { FacturaForm, type FacturaFormValues } from '@/components/crud/FacturaForm';
+import { addFactura } from '@/lib/mockData';
+import { useToast } from '@/hooks/use-toast';
+import type { FacturaTipo } from '@/types';
+import { format } from 'date-fns';
 
 export default function NewFacturaPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
-  const [invoiceType, setInvoiceType] = useState<'Venta' | 'Compra' | 'General'>('General');
-  const [invoiceTypeText, setInvoiceTypeText] = useState('');
+  const { toast } = useToast();
+
+  const [initialType, setInitialType] = useState<FacturaTipo | undefined>(undefined);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const tipo = searchParams.get('tipo');
-    if (tipo === 'venta') {
-      setInvoiceType('Venta');
-      setInvoiceTypeText(t('facturas.typeSale'));
-    } else if (tipo === 'compra') {
-      setInvoiceType('Compra');
-      setInvoiceTypeText(t('facturas.typePurchase'));
+    const tipoParam = searchParams.get('tipo');
+    if (tipoParam === 'venta') {
+      setInitialType('Venta');
+    } else if (tipoParam === 'compra') {
+      setInitialType('Compra');
     } else {
-      setInvoiceType('General');
-      setInvoiceTypeText(t('common.all')); // Or a generic term if 'All' doesn't fit
+      setInitialType(undefined); // Or 'Venta' as default if no param
     }
-  }, [searchParams, t]);
+  }, [searchParams]);
 
-  const pageTitle = invoiceType === 'General' 
-    ? t('newFacturaPage.titleCreateGeneral') 
-    : t('newFacturaPage.titleCreateTyped', { type: invoiceTypeText });
+  const handleSubmit = async (values: FacturaFormValues) => {
+    setIsSubmitting(true);
+    
+    const facturaToCreate = {
+      ...values,
+      fecha: format(values.fecha, "yyyy-MM-dd"), // Format date to string for storage
+      almacenId: values.almacenId === "" ? undefined : values.almacenId, // Handle empty string for optional almacenId
+    };
+
+    try {
+      const newFactura = await addFactura(facturaToCreate);
+      toast({
+        title: t('common.success'),
+        description: t('facturas.successCreate', { id: newFactura.id }),
+      });
+      router.push(`/dashboard/facturas/${newFactura.id}/view`);
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      toast({
+        title: t('common.error'),
+        description: t('facturas.failCreate'),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const pageTitle = initialType === 'Venta' ? t('newFacturaPage.titleCreateTyped', { type: t('facturas.typeSale') })
+                  : initialType === 'Compra' ? t('newFacturaPage.titleCreateTyped', { type: t('facturas.typePurchase') })
+                  : t('newFacturaPage.titleCreateGeneral');
+
+  const pageDescription = initialType === 'Venta' ? t('newFacturaPage.descriptionTyped', { type: t('facturas.typeSale').toLowerCase() })
+                        : initialType === 'Compra' ? t('newFacturaPage.descriptionTyped', { type: t('facturas.typePurchase').toLowerCase() })
+                        : t('newFacturaPage.descriptionGeneral');
+
+  const backLink = initialType === 'Venta' ? "/dashboard/facturas/ventas"
+                 : initialType === 'Compra' ? "/dashboard/facturas/compras"
+                 : "/dashboard/facturas";
   
-  const pageDescription = invoiceType === 'General'
-    ? t('newFacturaPage.descriptionGeneral')
-    : t('newFacturaPage.descriptionTyped', { type: invoiceTypeText.toLowerCase() });
+  const backLinkText = initialType === 'Venta' ? t('sidebar.facturasVentas')
+                     : initialType === 'Compra' ? t('sidebar.facturasCompras')
+                     : t('sidebar.facturasTodas');
 
-  const associatedParty = invoiceType === 'Venta' 
-    ? t('newFacturaPage.associatedPartyClient') 
-    : invoiceType === 'Compra' 
-    ? t('newFacturaPage.associatedPartySupplier')
-    : t('newFacturaPage.associatedPartyGeneric');
+
+  // Prepare defaultValues for the form, including the pre-selected type
+  const formDefaultValues: Partial<FacturaFormValues> = initialType ? { tipo: initialType } : { tipo: 'Venta' };
+
 
   return (
     <>
@@ -49,77 +89,20 @@ export default function NewFacturaPage() {
         description={pageDescription}
         actionButton={
           <Button variant="outline" asChild>
-            <Link href={invoiceType === 'Venta' ? "/dashboard/facturas/ventas" : invoiceType === 'Compra' ? "/dashboard/facturas/compras" : "/dashboard/facturas"}>
+            <Link href={backLink}>
               <ArrowLeft className="mr-2 h-4 w-4" /> 
-              {t('pageHeader.backTo', { section: invoiceType === 'Venta' ? t('sidebar.facturasVentas') : invoiceType === 'Compra' ? t('sidebar.facturasCompras') : t('sidebar.facturasTodas') })}
+              {t('pageHeader.backTo', { section: backLinkText })}
             </Link>
           </Button>
         }
       />
-      <Card className="mt-6 shadow-lg">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <FilePlus2 className="h-8 w-8 text-primary" />
-            <div>
-              <CardTitle>{t('common.formUnderConstruction')}</CardTitle>
-              <CardDescription>{t('newFacturaPage.formComingSoon', { type: invoiceTypeText.toLowerCase() })}</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-4">
-            {t('newFacturaPage.constructionDetails')}
-          </p>
-          <div className="space-y-3 p-4 border rounded-md bg-muted/50">
-            <h4 className="font-semibold text-lg">{t('newFacturaPage.plannedFormTitle')}</h4>
-            
-            <div>
-              <h5 className="font-medium">{t('newFacturaPage.sectionHeaderTitle')}</h5>
-              <ul className="list-disc list-inside text-sm text-muted-foreground ml-4">
-                <li>{t('newFacturaPage.fieldDate')}</li>
-                <li>{t('newFacturaPage.fieldInvoiceNumber')}</li>
-                <li>{t('newFacturaPage.fieldInvoiceType')} ({invoiceTypeText})</li>
-                <li>{t('newFacturaPage.fieldAssociatedParty', { party: associatedParty })}</li>
-                <li>{t('newFacturaPage.fieldEmployee')}</li>
-              </ul>
-            </div>
-
-            <div>
-              <h5 className="font-medium">{t('newFacturaPage.sectionDetailsTitle')}</h5>
-              <ul className="list-disc list-inside text-sm text-muted-foreground ml-4">
-                <li>{t('newFacturaPage.fieldProductServiceSelection')}</li>
-                <li>{t('newFacturaPage.fieldQuantity')}</li>
-                <li>{t('newFacturaPage.fieldUnitPrice')}</li>
-                <li>{t('newFacturaPage.fieldVatRate')}</li>
-                <li>{t('newFacturaPage.fieldLineSubtotal')}</li>
-              </ul>
-            </div>
-
-             <div>
-              <h5 className="font-medium">{t('newFacturaPage.sectionSummaryTitle')}</h5>
-              <ul className="list-disc list-inside text-sm text-muted-foreground ml-4">
-                <li>{t('newFacturaPage.fieldTaxableBase')}</li>
-                <li>{t('newFacturaPage.fieldTotalVatAmount')}</li>
-                <li>{t('newFacturaPage.fieldGrandTotal')}</li>
-                <li>{t('newFacturaPage.fieldStatusSelection')}</li>
-              </ul>
-            </div>
-            {invoiceType === 'Venta' && (
-              <div>
-                <h5 className="font-medium">{t('newFacturaPage.sectionPaymentTitle')}</h5>
-                <ul className="list-disc list-inside text-sm text-muted-foreground ml-4">
-                  <li>{t('newFacturaPage.fieldPaymentMethod')}</li>
-                  <li>{t('newFacturaPage.fieldPaymentDueDate')}</li>
-                </ul>
-              </div>
-            )}
-          </div>
-          <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
-            <Construction className="h-5 w-5"/> 
-            <span>{t('newFacturaPage.checkBackSoon')}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <FacturaForm 
+        onSubmit={handleSubmit}
+        defaultValues={formDefaultValues}
+        isSubmitting={isSubmitting}
+        isEditMode={false} // Explicitly set to false for creation
+        submitButtonText={t('facturaForm.createButton')}
+      />
     </>
   );
 }

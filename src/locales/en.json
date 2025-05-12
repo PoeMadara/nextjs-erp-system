@@ -237,6 +237,8 @@
     "failDelete": "Failed to delete invoice #{id}.",
     "successUpdate": "Invoice #{id} updated successfully.",
     "failUpdate": "Failed to update invoice #{id}.",
+    "successCreate": "Invoice #{id} created successfully.",
+    "failCreate": "Failed to create invoice. Please try again.",
     "filterByCurrency": "Filter by currency",
     "searchCurrency": "Search currency...",
     "noCurrencyFound": "No currency found."
@@ -256,7 +258,9 @@
     "employeeLabel": "Employee",
     "selectEmployee": "Select employee",
     "warehouseLabel": "Warehouse",
+    "warehouseLabelOptional": "Warehouse (Optional)",
     "selectWarehouse": "Select warehouse",
+    "noWarehouse": "No Warehouse",
     "currencyLabel": "Currency",
     "selectCurrency": "Select currency",
     "statusLabel": "Status",
@@ -274,15 +278,17 @@
     "failFetchDropdowns": "Failed to load data for dropdowns.",
     "validation": {
       "fechaRequired": "Date is required.",
+      "tipoRequired": "Invoice type is required.",
       "empleadoRequired": "Employee is required.",
       "monedaRequired": "Currency is required.",
       "estadoRequired": "Status is required.",
       "detallesMin": "At least one line item is required.",
-      "productoRequired": "Product is required.",
+      "productoRequired": "Product is required for each line.",
       "cantidadMin": "Quantity must be at least 1.",
       "precioMin": "Price must be 0 or greater.",
       "ivaMin": "VAT must be 0 or greater.",
-      "clientSupplierRequired": "Customer or Supplier is required based on invoice type."
+      "clienteRequired": "Customer is required for Sales Invoices.",
+      "proveedorRequired": "Supplier is required for Purchase Invoices."
     }
   },
   "newFacturaPage": {
@@ -530,5 +536,3 @@
     "createTitle": "Create New Supplier"
   }
 }
-
-    

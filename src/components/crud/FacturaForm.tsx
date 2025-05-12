@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// import { Textarea } from "@/components/ui/textarea"; // Not used in this form currently
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -23,20 +22,20 @@ import { cn } from "@/lib/utils";
 
 const ALL_CURRENCIES: CurrencyCode[] = ['EUR', 'USD', 'GBP'];
 const ALL_STATUSES: FacturaEstado[] = ['Pendiente', 'Pagada', 'Cancelada'];
+const ALL_TYPES: FacturaTipo[] = ['Venta', 'Compra'];
 
-const makeDetalleFacturaSchema = (t: (key: string) => string) => z.object({
+const makeDetalleFacturaSchema = (t: (key: string, params?: Record<string, string | number>) => string) => z.object({
   id: z.string().optional(),
   productoId: z.string().min(1, { message: t('facturaForm.validation.productoRequired') }),
   cantidad: z.coerce.number().min(1, { message: t('facturaForm.validation.cantidadMin') }),
   precioUnitario: z.coerce.number().min(0, { message: t('facturaForm.validation.precioMin') }),
   porcentajeIva: z.coerce.number().min(0, { message: t('facturaForm.validation.ivaMin') }),
-  // subtotal and subtotalConIva will be calculated
 });
 
-const makeFacturaSchema = (t: (key: string) => string) => z.object({
+const makeFacturaSchema = (t: (key: string, params?: Record<string, string | number>) => string) => z.object({
   id: z.string().optional(),
   fecha: z.date({ required_error: t('facturaForm.validation.fechaRequired') }),
-  tipo: z.enum(['Venta', 'Compra']),
+  tipo: z.enum(ALL_TYPES, { required_error: t('facturaForm.validation.tipoRequired')}),
   clienteId: z.string().optional(),
   proveedorId: z.string().optional(),
   empleadoId: z.string().min(1, { message: t('facturaForm.validation.empleadoRequired') }),
@@ -49,20 +48,27 @@ const makeFacturaSchema = (t: (key: string) => string) => z.object({
   totalFactura: z.number().default(0),
 }).refine(data => {
   if (data.tipo === 'Venta' && !data.clienteId) return false;
+  return true;
+}, {
+  message: t('facturaForm.validation.clienteRequired'),
+  path: ["clienteId"],
+}).refine(data => {
   if (data.tipo === 'Compra' && !data.proveedorId) return false;
   return true;
 }, {
-  message: t('facturaForm.validation.clientSupplierRequired'),
-  path: ["clienteId"], // Or proveedorId, refine path might need adjustment or two separate refines
+  message: t('facturaForm.validation.proveedorRequired'),
+  path: ["proveedorId"],
 });
+
 
 export type FacturaFormValues = z.infer<ReturnType<typeof makeFacturaSchema>>;
 
 interface FacturaFormProps {
   onSubmit: (values: FacturaFormValues) => Promise<void>;
-  defaultValues?: Partial<Factura>;
+  defaultValues?: Partial<FacturaFormValues>; // Use FacturaFormValues for defaultValues type
   isSubmitting?: boolean;
   submitButtonText?: string;
+  isEditMode?: boolean;
 }
 
 const statusTranslationMap: Record<FacturaEstado, string> = {
@@ -71,12 +77,18 @@ const statusTranslationMap: Record<FacturaEstado, string> = {
   'Cancelada': 'facturas.statusCancelled',
 };
 
+const typeTranslationMap: Record<FacturaTipo, string> = {
+  'Venta': 'facturas.typeSale',
+  'Compra': 'facturas.typePurchase',
+};
+
 
 export function FacturaForm({
   onSubmit,
   defaultValues,
   isSubmitting = false,
-  submitButtonText
+  submitButtonText,
+  isEditMode = false
 }: FacturaFormProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -91,9 +103,12 @@ export function FacturaForm({
   const form = useForm<FacturaFormValues>({
     resolver: zodResolver(facturaSchema),
     defaultValues: {
-      ...defaultValues,
-      fecha: defaultValues?.fecha ? parseISO(defaultValues.fecha) : new Date(),
+      fecha: defaultValues?.fecha ? (typeof defaultValues.fecha === 'string' ? parseISO(defaultValues.fecha) : defaultValues.fecha) : new Date(),
       tipo: defaultValues?.tipo || 'Venta',
+      clienteId: defaultValues?.clienteId || '',
+      proveedorId: defaultValues?.proveedorId || '',
+      empleadoId: defaultValues?.empleadoId || '',
+      almacenId: defaultValues?.almacenId || '',
       moneda: defaultValues?.moneda || 'EUR',
       estado: defaultValues?.estado || 'Pendiente',
       detalles: defaultValues?.detalles?.map(d => ({
@@ -101,11 +116,12 @@ export function FacturaForm({
         productoId: d.productoId || '',
         cantidad: d.cantidad || 1,
         precioUnitario: d.precioUnitario || 0,
-        porcentajeIva: d.porcentajeIva || 0,
+        porcentajeIva: d.porcentajeIva || 21, // Default IVA if not provided
       })) || [{ productoId: '', cantidad: 1, precioUnitario: 0, porcentajeIva: 21 }],
       baseImponible: defaultValues?.baseImponible || 0,
       totalIva: defaultValues?.totalIva || 0,
       totalFactura: defaultValues?.totalFactura || 0,
+      ...(isEditMode && defaultValues?.id ? { id: defaultValues.id } : {})
     },
   });
 
@@ -141,10 +157,10 @@ export function FacturaForm({
       base += itemSubtotal;
       iva += itemIva;
     });
-    form.setValue("baseImponible", parseFloat(base.toFixed(2)));
-    form.setValue("totalIva", parseFloat(iva.toFixed(2)));
-    form.setValue("totalFactura", parseFloat((base + iva).toFixed(2)));
-  }, [watchedDetalles, form.setValue]);
+    form.setValue("baseImponible", parseFloat(base.toFixed(2)), { shouldValidate: true });
+    form.setValue("totalIva", parseFloat(iva.toFixed(2)), { shouldValidate: true });
+    form.setValue("totalFactura", parseFloat((base + iva).toFixed(2)), { shouldValidate: true });
+  }, [watchedDetalles, form]); // form.setValue removed from dependencies, form added
   
   const handleProductChange = (index: number, productId: string) => {
     const product = productos.find(p => p.id === productId);
@@ -154,12 +170,21 @@ export function FacturaForm({
     }
   };
 
-  const actualSubmitButtonText = submitButtonText || (defaultValues?.id ? t('facturaForm.updateButton') : t('facturaForm.createButton'));
+  const actualSubmitButtonText = submitButtonText || (isEditMode ? t('facturaForm.updateButton') : t('facturaForm.createButton'));
+
+  useEffect(() => {
+    // Reset client/supplier if type changes
+    if (!isEditMode) { // Only in create mode
+        form.setValue('clienteId', '');
+        form.setValue('proveedorId', '');
+    }
+  }, [watchedTipo, form, isEditMode]);
+
 
   return (
     <Card className="shadow-lg mt-6">
       <CardHeader>
-        <CardTitle>{defaultValues?.id ? t('facturaForm.editTitle', {id: defaultValues.id}) : t('facturaForm.createTitle')}</CardTitle>
+        <CardTitle>{isEditMode ? t('facturaForm.editTitle', {id: defaultValues?.id || ''}) : t('facturaForm.createTitle')}</CardTitle>
         <CardDescription>{t('facturaForm.description')}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -214,15 +239,20 @@ export function FacturaForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('facturaForm.typeLabel')}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!defaultValues?.id}>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value} 
+                      disabled={isEditMode} // Disable if editing, type cannot change
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t('facturaForm.selectType')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Venta">{t('facturas.typeSale')}</SelectItem>
-                        <SelectItem value="Compra">{t('facturas.typePurchase')}</SelectItem>
+                        {ALL_TYPES.map(type => (
+                           <SelectItem key={type} value={type}>{t(typeTranslationMap[type])}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -237,7 +267,7 @@ export function FacturaForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('facturaForm.clientLabel')}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={t('facturaForm.selectClient')} />
@@ -260,7 +290,7 @@ export function FacturaForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('facturaForm.supplierLabel')}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={t('facturaForm.selectSupplier')} />
@@ -302,14 +332,15 @@ export function FacturaForm({
                 name="almacenId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('facturaForm.warehouseLabel')}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>{t('facturaForm.warehouseLabelOptional')}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t('facturaForm.selectWarehouse')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="">{t('facturaForm.noWarehouse')}</SelectItem>
                         {almacenes.map(a => <SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -401,6 +432,7 @@ export function FacturaForm({
                               </Select>
                             )}
                           />
+                            <FormMessage>{form.formState.errors.detalles?.[index]?.productoId?.message}</FormMessage>
                         </TableCell>
                         <TableCell>
                           <FormField
@@ -408,6 +440,7 @@ export function FacturaForm({
                             name={`detalles.${index}.cantidad`}
                             render={({ field }) => <Input type="number" {...field} />}
                           />
+                            <FormMessage>{form.formState.errors.detalles?.[index]?.cantidad?.message}</FormMessage>
                         </TableCell>
                         <TableCell>
                           <FormField
@@ -415,6 +448,7 @@ export function FacturaForm({
                             name={`detalles.${index}.precioUnitario`}
                             render={({ field }) => <Input type="number" step="0.01" {...field} />}
                           />
+                           <FormMessage>{form.formState.errors.detalles?.[index]?.precioUnitario?.message}</FormMessage>
                         </TableCell>
                         <TableCell>
                           <FormField
@@ -422,6 +456,7 @@ export function FacturaForm({
                             name={`detalles.${index}.porcentajeIva`}
                             render={({ field }) => <Input type="number" step="0.01" {...field} />}
                           />
+                          <FormMessage>{form.formState.errors.detalles?.[index]?.porcentajeIva?.message}</FormMessage>
                         </TableCell>
                         <TableCell className="text-right">
                           {((form.watch(`detalles.${index}.cantidad`) || 0) * (form.watch(`detalles.${index}.precioUnitario`) || 0)).toFixed(2)} {form.watch("moneda")}
@@ -436,6 +471,7 @@ export function FacturaForm({
                   </TableBody>
                 </Table>
               </div>
+               <FormMessage>{form.formState.errors.detalles?.message}</FormMessage>
               <Button
                 type="button"
                 variant="outline"
@@ -461,8 +497,7 @@ export function FacturaForm({
                 </div>
             </div>
 
-
-            <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
+            <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting || !form.formState.isDirty && isEditMode}>
               {isSubmitting ? t('common.saving') : actualSubmitButtonText}
             </Button>
           </form>
@@ -471,5 +506,3 @@ export function FacturaForm({
     </Card>
   );
 }
-
-    
