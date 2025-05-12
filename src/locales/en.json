@@ -111,8 +111,10 @@
     "totalRegisteredCustomers": "Total registered customers",
     "totalSalesInvoices": "Total sales invoices issued",
     "totalItemsAvailable": "Total items available",
-    "salesOverview": "Sales Overview",
-    "monthlySalesPerformance": "Monthly sales performance for the current year.",
+    "salesOverviewTitle": "Sales Overview",
+    "salesOverviewDescription": "Monthly sales performance for the current year.",
+    "purchasesOverviewTitle": "Purchases Overview",
+    "purchasesOverviewDescription": "Monthly purchase performance for the current year.",
     "warehouseStatus": "Warehouse Status",
     "warehouseOverview": "Overview of current warehouse capacity and items.",
     "warehouse": "Warehouse",
@@ -144,7 +146,13 @@
     "quickLinks": "Quick Links",
     "quickLinkCreateInvoice": "Create New Invoice",
     "quickLinkAddCustomer": "Add New Customer",
-    "quickLinkViewProducts": "View Products"
+    "quickLinkViewProducts": "View Products",
+    "selectCurrencyPrompt": "Display Currency:",
+    "currencyUSD": "USD ($)",
+    "currencyEUR": "EUR (€)",
+    "currencyGBP": "GBP (£)",
+    "chartSalesLabel": "Sales",
+    "chartPurchasesLabel": "Purchases"
   },
   "pageHeader": {
     "backTo": "Back to {section}"

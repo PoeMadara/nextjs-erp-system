@@ -111,8 +111,10 @@
     "totalRegisteredCustomers": "Total de clientes registrados",
     "totalSalesInvoices": "Total de facturas de venta emitidas",
     "totalItemsAvailable": "Total de artículos disponibles",
-    "salesOverview": "Resumen de Ventas",
-    "monthlySalesPerformance": "Rendimiento mensual de ventas para el año actual.",
+    "salesOverviewTitle": "Resumen de Ventas",
+    "salesOverviewDescription": "Rendimiento mensual de ventas para el año actual.",
+    "purchasesOverviewTitle": "Resumen de Compras",
+    "purchasesOverviewDescription": "Rendimiento mensual de compras para el año actual.",
     "warehouseStatus": "Estado del Almacén",
     "warehouseOverview": "Resumen de la capacidad actual y artículos del almacén.",
     "warehouse": "Almacén",
@@ -144,7 +146,13 @@
     "quickLinks": "Enlaces Rápidos",
     "quickLinkCreateInvoice": "Crear Nueva Factura",
     "quickLinkAddCustomer": "Añadir Nuevo Cliente",
-    "quickLinkViewProducts": "Ver Productos"
+    "quickLinkViewProducts": "Ver Productos",
+    "selectCurrencyPrompt": "Moneda de Visualización:",
+    "currencyUSD": "USD ($)",
+    "currencyEUR": "EUR (€)",
+    "currencyGBP": "GBP (£)",
+    "chartSalesLabel": "Ventas",
+    "chartPurchasesLabel": "Compras"
   },
   "pageHeader": {
     "backTo": "Volver a {section}"

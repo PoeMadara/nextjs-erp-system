@@ -19,29 +19,29 @@ import { useTranslation } from "@/hooks/useTranslation"
 
 interface ChartDataItem {
   month: string;
-  sales: number;
+  purchases: number;
 }
 
-interface SalesChartProps {
+interface PurchasesChartProps {
   chartData: ChartDataItem[];
   currencySymbol?: string;
 }
 
-export function SalesChart({ chartData, currencySymbol = "$" }: SalesChartProps) {
+export function PurchasesChart({ chartData, currencySymbol = "$" }: PurchasesChartProps) {
   const { t } = useTranslation();
 
   const chartConfig = {
-    sales: {
-      label: t('dashboardPage.chartSalesLabel'),
-      color: "hsl(var(--primary))",
+    purchases: {
+      label: t('dashboardPage.chartPurchasesLabel'),
+      color: "hsl(var(--chart-2))", // Using a different chart color
     },
   } satisfies ChartConfig;
 
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle>{t('dashboardPage.salesOverviewTitle')}</CardTitle>
-        <CardDescription>{t('dashboardPage.salesOverviewDescription')}</CardDescription>
+        <CardTitle>{t('dashboardPage.purchasesOverviewTitle')}</CardTitle>
+        <CardDescription>{t('dashboardPage.purchasesOverviewDescription')}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -68,7 +68,7 @@ export function SalesChart({ chartData, currencySymbol = "$" }: SalesChartProps)
                 cursor={false}
                 content={<ChartTooltipContent indicator="dashed" />}
               />
-              <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
+              <Bar dataKey="purchases" fill="var(--color-purchases)" radius={4} />
             </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
