@@ -31,6 +31,7 @@ export interface Empleado {
   role: EmpleadoRole;
   password?: string; // For mock authentication simulation
   isBlocked?: boolean; // For blocking user access
+  avatarColor?: string; // For team activity display
 }
 
 export interface Almacen {
@@ -92,6 +93,7 @@ export interface RecentSale {
   customer: string;
   amount: number;
   date: string;
+  currency: CurrencyCode;
 }
 
 export interface RecentOrder {
@@ -99,6 +101,7 @@ export interface RecentOrder {
   supplier: string;
   amount: number;
   date: string;
+  currency: CurrencyCode;
 }
 
 export interface WarehouseSummary {
@@ -108,4 +111,18 @@ export interface WarehouseSummary {
   location: string;
 }
 
-    
+export type TeamActivityModule = "Facturación" | "Compras" | "Inventario" | "Clientes" | "Proveedores" | "Empleados" | "Sistema";
+export type TeamActivityAction = "crear" | "modificar" | "eliminar" | "asignar" | "login" | "logout" | "bloquear" | "desbloquear";
+
+export interface TeamActivityLog {
+  id: string;
+  usuario_id: string;
+  nombre_usuario: string;
+  avatar_color: string; // Hex color string like '#FF5733'
+  modulo: TeamActivityModule;
+  accion: TeamActivityAction;
+  descripcion: string; // e.g., "Carlos generó una factura de cliente por 150 €"
+  timestamp: string; // ISO Date string
+  entidad_id?: string; // Optional: ID of the entity affected (e.g., facturaId, clienteId)
+  entidad_nombre?: string; // Optional: Name of the entity for quick display
+}

@@ -133,9 +133,10 @@
     "orderId": "Order ID",
     "supplier": "Supplier",
     "noRecentPurchases": "No recent purchases to display.",
-    "teamActivity": "Team Activity",
-    "teamActivityPlaceholder": "Placeholder for team activity feed or chart.",
-    "teamActivityAlt": "Team Activity Chart",
+    "teamActivityTitle": "Team Activity",
+    "teamActivityDescription": "Latest actions performed by users.",
+    "viewAllActivity": "View All",
+    "noTeamActivity": "No team activity yet.",
     "notifications": "Notifications",
     "notificationNew": "New:",
     "notificationOverdue": "Overdue:",
@@ -551,5 +552,22 @@
     "paymentTermsPlaceholder": "e.g., Net 30",
     "editTitle": "Edit Supplier",
     "createTitle": "Create New Supplier"
+  },
+  "teamActivity": {
+    "module.facturación": "Billing",
+    "module.compras": "Purchases",
+    "module.inventario": "Inventory",
+    "module.clientes": "Customers",
+    "module.proveedores": "Suppliers",
+    "module.empleados": "Employees",
+    "module.sistema": "System",
+    "action.crear": "created",
+    "action.modificar": "modified",
+    "action.eliminar": "deleted",
+    "action.asignar": "assigned",
+    "action.login": "logged in",
+    "action.logout": "logged out",
+    "action.bloquear": "blocked",
+    "action.desbloquear": "unblocked"
   }
 }

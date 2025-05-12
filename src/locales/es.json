@@ -133,9 +133,10 @@
     "orderId": "ID Pedido",
     "supplier": "Proveedor",
     "noRecentPurchases": "No hay compras recientes para mostrar.",
-    "teamActivity": "Actividad del Equipo",
-    "teamActivityPlaceholder": "Espacio para el feed o gráfico de actividad del equipo.",
-    "teamActivityAlt": "Gráfico de Actividad del Equipo",
+    "teamActivityTitle": "Actividad del Equipo",
+    "teamActivityDescription": "Últimas acciones realizadas por los usuarios.",
+    "viewAllActivity": "Ver Todo",
+    "noTeamActivity": "Aún no hay actividad del equipo.",
     "notifications": "Notificaciones",
     "notificationNew": "Nuevo:",
     "notificationOverdue": "Vencido:",
@@ -551,5 +552,22 @@
     "paymentTermsPlaceholder": "Ej: 30 días neto",
     "editTitle": "Editar Proveedor",
     "createTitle": "Crear Nuevo Proveedor"
+  },
+  "teamActivity": {
+    "module.facturación": "Facturación",
+    "module.compras": "Compras",
+    "module.inventario": "Inventario",
+    "module.clientes": "Clientes",
+    "module.proveedores": "Proveedores",
+    "module.empleados": "Empleados",
+    "module.sistema": "Sistema",
+    "action.crear": "creó",
+    "action.modificar": "modificó",
+    "action.eliminar": "eliminó",
+    "action.asignar": "asignó",
+    "action.login": "inició sesión",
+    "action.logout": "cerró sesión",
+    "action.bloquear": "bloqueó",
+    "action.desbloquear": "desbloqueó"
   }
 }

@@ -1,13 +1,13 @@
 
 "use client";
 import { useEffect, useState, useMemo } from 'react';
-import Link from 'next/link'; // Added import
+import Link from 'next/link'; 
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { PurchasesChart } from "@/components/dashboard/PurchasesChart";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Package, ShoppingCart, Users, ListChecks, TrendingUp, TrendingDown, Banknote } from "lucide-react";
-import Image from "next/image";
+import { DollarSign, Package, ShoppingCart, Users, ListChecks, Banknote } from "lucide-react";
+import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard';
 import {
   Table,
   TableBody,
@@ -20,16 +20,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useTranslation } from '@/hooks/useTranslation';
 import { getRecentSales, getRecentOrders, getWarehouseStatus, getTotalStockValue, getClientes } from '@/lib/mockData';
-import type { RecentSale, RecentOrder, WarehouseSummary, Cliente, CurrencyCode } from '@/types';
+import type { RecentSale, RecentOrder, WarehouseSummary, CurrencyCode } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface DashboardData {
-  totalRevenue: number; // Assumed to be in BASE_CURRENCY (e.g., USD)
+  totalRevenue: number; 
   newCustomersCount: number;
   salesCount: number;
   productsInStock: number;
-  recentSales: RecentSale[]; // Amounts also in BASE_CURRENCY
-  recentOrders: RecentOrder[]; // Amounts also in BASE_CURRENCY
+  recentSales: RecentSale[]; 
+  recentOrders: RecentOrder[]; 
   warehouseStatus: WarehouseSummary[];
 }
 
@@ -361,15 +361,7 @@ export default function DashboardPage() {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>{t('dashboardPage.teamActivity')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Image src="https://picsum.photos/seed/teamactivity/400/200" alt={t('dashboardPage.teamActivityAlt')} width={400} height={200} className="rounded-md" data-ai-hint="team activity chart"/>
-            <p className="text-sm text-muted-foreground mt-2">{t('dashboardPage.teamActivityPlaceholder')}</p>
-          </CardContent>
-        </Card>
+        <TeamActivityCard />
         
         <Card className="shadow-sm">
           <CardHeader>
@@ -388,4 +380,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

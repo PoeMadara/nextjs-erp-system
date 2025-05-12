@@ -1,5 +1,6 @@
 
-import type { Cliente, Proveedor, Empleado, Producto, Almacen, Factura, DetalleFactura, EmpleadoRole, FacturaTipo, FacturaEstado, CurrencyCode } from '@/types';
+import type { Cliente, Proveedor, Empleado, Producto, Almacen, Factura, DetalleFactura, EmpleadoRole, FacturaTipo, FacturaEstado, CurrencyCode, TeamActivityLog, TeamActivityModule, TeamActivityAction } from '@/types';
+import { subDays, subHours, subMinutes } from 'date-fns';
 
 let clientes: Cliente[] = [
   { id: 'CLI001', nombre: 'Juan Pérez', nif: '12345678A', direccion: 'Calle Falsa 123', poblacion: 'Ciudad Real', telefono: '926111222', email: 'juan.perez@example.com' },
@@ -13,6 +14,8 @@ let proveedores: Proveedor[] = [
 
 let empleados: Empleado[] = [
   // Initial admin will be created on first registration.
+  // { id: 'EMP001', nombre: 'Admin ERP', email: 'admin@example.com', role: 'admin', password: 'password', isBlocked: false, avatarColor: '#3498db' },
+  // { id: 'EMP002', nombre: 'Laura García', email: 'laura@example.com', role: 'user', password: 'password', isBlocked: false, avatarColor: '#e74c3c' },
 ];
 
 let almacenes: Almacen[] = [
@@ -29,29 +32,100 @@ let productos: Producto[] = [
 
 let facturas: Factura[] = [
   { 
-    id: 'FV2024-00001', fecha: '2024-05-10', tipo: 'Venta', clienteId: 'CLI001', empleadoId: empleados.length > 0 ? empleados[0].id : 'EMP001', almacenId: 'ALM001', 
+    id: 'FV2024-00001', fecha: '2024-05-10', tipo: 'Venta', clienteId: 'CLI001', empleadoId: empleados.find(e => e.email === 'admin@example.com')?.id || 'EMP001', almacenId: 'ALM001', 
     baseImponible: 179.50, totalIva: 37.69, totalFactura: 217.19, estado: 'Pagada', moneda: 'EUR',
     detalles: [
       { id: 'DET001', productoId: 'PROD002', productoNombre: 'Monitor 24 pulgadas', cantidad: 1, precioUnitario: 179.50, porcentajeIva: 21.00, subtotal: 179.50, subtotalConIva: 217.195 }
     ],
-    clienteNombre: 'Juan Pérez', empleadoNombre: empleados.length > 0 ? empleados[0].nombre : 'Admin ERP'
+    clienteNombre: 'Juan Pérez', empleadoNombre: empleados.find(e => e.email === 'admin@example.com')?.nombre || 'Admin ERP'
   },
   { 
-    id: 'FC2024-00001', fecha: '2024-06-15', tipo: 'Compra', proveedorId: 'PRO001', empleadoId: empleados.length > 1 ? empleados[1].id : 'EMP002', almacenId: 'ALM001', 
+    id: 'FC2024-00001', fecha: '2024-06-15', tipo: 'Compra', proveedorId: 'PRO001', empleadoId: empleados.find(e => e.email === 'laura@example.com')?.id || 'EMP002', almacenId: 'ALM001', 
     baseImponible: 600.00, totalIva: 126.00, totalFactura: 726.00, estado: 'Pendiente', moneda: 'USD',
     detalles: [
       { id: 'DET002', productoId: 'PROD001', productoNombre: 'Portátil Modelo X', cantidad: 1, precioUnitario: 600.00, porcentajeIva: 21.00, subtotal: 600.00, subtotalConIva: 726.00 }
     ],
-    proveedorNombre: 'Suministros Informáticos SL', empleadoNombre: empleados.length > 1 ? empleados[1].nombre : 'Laura García'
+    proveedorNombre: 'Suministros Informáticos SL', empleadoNombre: empleados.find(e => e.email === 'laura@example.com')?.nombre || 'Laura García'
   },
    { 
-    id: 'FV2024-00002', fecha: '2024-07-01', tipo: 'Venta', clienteId: 'CLI002', empleadoId: empleados.length > 0 ? empleados[0].id : 'EMP001', almacenId: 'ALM002', 
+    id: 'FV2024-00002', fecha: '2024-07-01', tipo: 'Venta', clienteId: 'CLI002', empleadoId: empleados.find(e => e.email === 'admin@example.com')?.id || 'EMP001', almacenId: 'ALM002', 
     baseImponible: 79.90, totalIva: 16.78, totalFactura: 96.68, estado: 'Pendiente', moneda: 'GBP',
     detalles: [
       { id: 'DET003', productoId: 'PROD003', productoNombre: 'Teclado Mecánico RGB', cantidad: 1, precioUnitario: 79.90, porcentajeIva: 21.00, subtotal: 79.90, subtotalConIva: 96.679 }
     ],
-    clienteNombre: 'Ana López', empleadoNombre: empleados.length > 0 ? empleados[0].nombre : 'Admin ERP'
+    clienteNombre: 'Ana López', empleadoNombre: empleados.find(e => e.email === 'admin@example.com')?.nombre || 'Admin ERP'
   },
+];
+
+const AVATAR_COLORS = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c', '#d35400'];
+let colorIndex = 0;
+const getNextAvatarColor = () => {
+  const color = AVATAR_COLORS[colorIndex % AVATAR_COLORS.length];
+  colorIndex++;
+  return color;
+}
+
+let teamActivityLogs: TeamActivityLog[] = [
+  {
+    id: 'ACT001',
+    usuario_id: 'EMP001',
+    nombre_usuario: 'Admin ERP',
+    avatar_color: '#3498db',
+    modulo: 'Facturación',
+    accion: 'crear',
+    descripcion: 'Generó la factura FV2024-00001 para Juan Pérez por 217.19 EUR',
+    timestamp: subMinutes(new Date(), 5).toISOString(),
+    entidad_id: 'FV2024-00001',
+    entidad_nombre: 'Factura FV2024-00001'
+  },
+  {
+    id: 'ACT002',
+    usuario_id: 'EMP002',
+    nombre_usuario: 'Laura García',
+    avatar_color: '#e74c3c',
+    modulo: 'Productos',
+    accion: 'modificar',
+    descripcion: 'Actualizó el stock del producto Portátil Modelo X',
+    timestamp: subHours(new Date(), 1).toISOString(),
+    entidad_id: 'PROD001',
+    entidad_nombre: 'Portátil Modelo X'
+  },
+  {
+    id: 'ACT003',
+    usuario_id: 'EMP001',
+    nombre_usuario: 'Admin ERP',
+    avatar_color: '#3498db',
+    modulo: 'Clientes',
+    accion: 'crear',
+    descripcion: 'Añadió al cliente Ana López',
+    timestamp: subHours(new Date(), 3).toISOString(),
+    entidad_id: 'CLI002',
+    entidad_nombre: 'Ana López'
+  },
+  {
+    id: 'ACT004',
+    usuario_id: 'EMP002',
+    nombre_usuario: 'Laura García',
+    avatar_color: '#e74c3c',
+    modulo: 'Proveedores',
+    accion: 'eliminar',
+    descripcion: 'Eliminó el proveedor Material Oficina Global',
+    timestamp: subDays(new Date(), 1).toISOString(),
+    entidad_id: 'PRO002',
+    entidad_nombre: 'Material Oficina Global'
+  },
+   {
+    id: 'ACT005',
+    usuario_id: 'EMP001',
+    nombre_usuario: 'Admin ERP',
+    avatar_color: '#3498db',
+    modulo: 'Empleados',
+    accion: 'asignar',
+    descripcion: 'Asignó el rol de Moderador a Laura García',
+    timestamp: subDays(new Date(), 2).toISOString(),
+    entidad_id: 'EMP002',
+    entidad_nombre: 'Laura García'
+  }
 ];
 
 
@@ -114,25 +188,39 @@ export const getEmpleados = async (): Promise<Empleado[]> => [...empleados];
 export const getEmpleadoById = async (id: string): Promise<Empleado | undefined> => empleados.find(e => e.id === id);
 export const getEmpleadoByEmail = async (email: string): Promise<Empleado | undefined> => empleados.find(e => e.email.toLowerCase() === email.toLowerCase());
 
-export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked' | 'role'> & {password?: string, role?: EmpleadoRole}): Promise<Empleado> => {
+export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked' | 'role' | 'avatarColor'> & {password?: string, role?: EmpleadoRole}): Promise<Empleado> => {
   const role: EmpleadoRole = empleadoData.role || (empleados.length === 0 ? 'admin' : 'user');
   const newEmpleado: Empleado = { 
     ...empleadoData, 
     id: generateId('EMP', empleados),
     role: role, 
     isBlocked: false, 
-    password: empleadoData.password || 'password123' 
+    password: empleadoData.password || 'password123',
+    avatarColor: getNextAvatarColor()
   };
   empleados.push(newEmpleado);
+  if (empleados.length === 1 && newEmpleado.role !== 'admin') {
+    newEmpleado.role = 'admin'; // Ensure first registered user is admin
+  }
   return newEmpleado;
 };
 
-export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado, 'password'>>): Promise<Empleado | null> => {
+export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado, 'password' | 'avatarColor'>>): Promise<Empleado | null> => {
   const index = empleados.findIndex(e => e.id === id);
   if (index === -1) return null;
   
   const currentEmpleado = empleados[index];
-  const { password, ...restOfUpdates } = updates as any; 
+  // Ensure role cannot be changed if there's only one admin and this is that admin
+  if (updates.role && currentEmpleado.role === 'admin' && updates.role !== 'admin') {
+    const adminCount = empleados.filter(e => e.role === 'admin').length;
+    if (adminCount <= 1) {
+      // Prevent changing the role of the last admin
+      console.warn("Cannot change role of the last admin.");
+      delete updates.role; // or return an error / throw
+    }
+  }
+
+  const { password, avatarColor, ...restOfUpdates } = updates as any; 
   empleados[index] = { ...currentEmpleado, ...restOfUpdates };
   return empleados[index];
 };
@@ -145,6 +233,14 @@ export const updateEmpleadoBlockedStatus = async (id: string, isBlocked: boolean
 }
 
 export const deleteEmpleado = async (id: string): Promise<boolean> => {
+    const empleadoToDelete = empleados.find(e => e.id === id);
+    if (empleadoToDelete?.role === 'admin') {
+      const adminCount = empleados.filter(e => e.role === 'admin').length;
+      if (adminCount <= 1) {
+        console.warn("Cannot delete the last admin.");
+        return false; // Prevent deletion
+      }
+    }
     const initialLength = empleados.length;
     empleados = empleados.filter(e => e.id !== id);
     return empleados.length < initialLength;
@@ -439,4 +535,40 @@ export const getTotalStockValue = async (): Promise<{totalStock: number, totalRe
     return { totalStock, totalRevenue, salesCount };
 };
 
-    
+
+// Team Activity Logs
+export const getTeamActivityLogs = async (limit: number = 5): Promise<TeamActivityLog[]> => {
+  return [...teamActivityLogs]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, limit);
+};
+
+export const addTeamActivityLog = async (
+  usuario_id: string,
+  modulo: TeamActivityModule,
+  accion: TeamActivityAction,
+  descripcion: string,
+  entidad_id?: string,
+  entidad_nombre?: string
+): Promise<TeamActivityLog> => {
+  const usuario = await getEmpleadoById(usuario_id);
+  if (!usuario) throw new Error("Usuario no encontrado para registrar actividad.");
+
+  const newLog: TeamActivityLog = {
+    id: generateId('ACT', teamActivityLogs),
+    usuario_id,
+    nombre_usuario: usuario.nombre,
+    avatar_color: usuario.avatarColor || getNextAvatarColor(), // Assign color if missing
+    modulo,
+    accion,
+    descripcion,
+    timestamp: new Date().toISOString(),
+    entidad_id,
+    entidad_nombre,
+  };
+  teamActivityLogs.unshift(newLog); // Add to the beginning for recent first
+  if (teamActivityLogs.length > 100) { // Keep a reasonable limit for mock data
+    teamActivityLogs.pop();
+  }
+  return newLog;
+};
