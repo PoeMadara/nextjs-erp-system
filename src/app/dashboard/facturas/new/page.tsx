@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { FacturaTipo } from '@/types';
 import { format } from 'date-fns';
 
+const NO_WAREHOUSE_SENTINEL_VALUE = "__NO_WAREHOUSE_SENTINEL__";
+
 export default function NewFacturaPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,7 +31,7 @@ export default function NewFacturaPage() {
     } else if (tipoParam === 'compra') {
       setInitialType('Compra');
     } else {
-      setInitialType(undefined); // Or 'Venta' as default if no param
+      setInitialType(undefined); 
     }
   }, [searchParams]);
 
@@ -38,8 +40,8 @@ export default function NewFacturaPage() {
     
     const facturaToCreate = {
       ...values,
-      fecha: format(values.fecha, "yyyy-MM-dd"), // Format date to string for storage
-      almacenId: values.almacenId === "" ? undefined : values.almacenId, // Handle empty string for optional almacenId
+      fecha: format(values.fecha, "yyyy-MM-dd"), 
+      almacenId: (values.almacenId === "" || values.almacenId === NO_WAREHOUSE_SENTINEL_VALUE) ? undefined : values.almacenId,
     };
 
     try {
@@ -78,8 +80,7 @@ export default function NewFacturaPage() {
                      : t('sidebar.facturasTodas');
 
 
-  // Prepare defaultValues for the form, including the pre-selected type
-  const formDefaultValues: Partial<FacturaFormValues> = initialType ? { tipo: initialType } : { tipo: 'Venta' };
+  const formDefaultValues: Partial<FacturaFormValues> = initialType ? { tipo: initialType, almacenId: "" } : { tipo: 'Venta', almacenId: "" };
 
 
   return (
@@ -100,9 +101,11 @@ export default function NewFacturaPage() {
         onSubmit={handleSubmit}
         defaultValues={formDefaultValues}
         isSubmitting={isSubmitting}
-        isEditMode={false} // Explicitly set to false for creation
+        isEditMode={false} 
         submitButtonText={t('facturaForm.createButton')}
       />
     </>
   );
 }
+
+    

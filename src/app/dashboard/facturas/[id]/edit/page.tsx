@@ -14,6 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FacturaForm, type FacturaFormValues } from "@/components/crud/FacturaForm";
 import { format, parseISO } from "date-fns";
 
+const NO_WAREHOUSE_SENTINEL_VALUE = "__NO_WAREHOUSE_SENTINEL__";
+
 export default function EditFacturaPage() {
   const router = useRouter();
   const params = useParams();
@@ -56,9 +58,9 @@ export default function EditFacturaPage() {
     
     const facturaToUpdate = {
       ...values,
-      id: factura.id, // Ensure ID is included
-      fecha: format(values.fecha, "yyyy-MM-dd"), // Format date back to string for storage
-      almacenId: values.almacenId === "" ? undefined : values.almacenId,
+      id: factura.id, 
+      fecha: format(values.fecha, "yyyy-MM-dd"),
+      almacenId: (values.almacenId === "" || values.almacenId === NO_WAREHOUSE_SENTINEL_VALUE) ? undefined : values.almacenId,
     };
 
     try {
@@ -135,14 +137,13 @@ export default function EditFacturaPage() {
 
   const formDefaultValues: FacturaFormValues = {
     ...factura,
-    fecha: parseISO(factura.fecha), // Convert string date to Date object for the form
-    // Ensure all fields match FacturaFormValues structure
+    fecha: parseISO(factura.fecha), 
     clienteId: factura.clienteId || undefined,
     proveedorId: factura.proveedorId || undefined,
-    almacenId: factura.almacenId || undefined,
+    almacenId: factura.almacenId || "", // Ensure it's "" if undefined for the form's Select logic
     detalles: factura.detalles.map(d => ({
         ...d,
-        productoId: d.productoId || '', // Ensure productoId is string
+        productoId: d.productoId || '', 
     }))
   };
 
@@ -165,9 +166,11 @@ export default function EditFacturaPage() {
         onSubmit={handleSubmit}
         defaultValues={formDefaultValues}
         isSubmitting={isSubmitting}
-        isEditMode={true} // Explicitly set to true for editing
+        isEditMode={true} 
         submitButtonText={t('facturaForm.updateButton')}
       />
     </>
   );
 }
+
+    

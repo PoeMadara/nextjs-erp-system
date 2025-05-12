@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 const ALL_CURRENCIES: CurrencyCode[] = ['EUR', 'USD', 'GBP'];
 const ALL_STATUSES: FacturaEstado[] = ['Pendiente', 'Pagada', 'Cancelada'];
 const ALL_TYPES: FacturaTipo[] = ['Venta', 'Compra'];
+const NO_WAREHOUSE_SENTINEL_VALUE = "__NO_WAREHOUSE_SENTINEL__";
 
 const makeDetalleFacturaSchema = (t: (key: string, params?: Record<string, string | number>) => string) => z.object({
   id: z.string().optional(),
@@ -39,7 +40,7 @@ const makeFacturaSchema = (t: (key: string, params?: Record<string, string | num
   clienteId: z.string().optional(),
   proveedorId: z.string().optional(),
   empleadoId: z.string().min(1, { message: t('facturaForm.validation.empleadoRequired') }),
-  almacenId: z.string().optional(),
+  almacenId: z.string().optional(), // Can be ID, empty string, or sentinel
   moneda: z.enum(ALL_CURRENCIES, { required_error: t('facturaForm.validation.monedaRequired') }),
   estado: z.enum(ALL_STATUSES, { required_error: t('facturaForm.validation.estadoRequired') }),
   detalles: z.array(makeDetalleFacturaSchema(t)).min(1, { message: t('facturaForm.validation.detallesMin') }),
@@ -65,7 +66,7 @@ export type FacturaFormValues = z.infer<ReturnType<typeof makeFacturaSchema>>;
 
 interface FacturaFormProps {
   onSubmit: (values: FacturaFormValues) => Promise<void>;
-  defaultValues?: Partial<FacturaFormValues>; // Use FacturaFormValues for defaultValues type
+  defaultValues?: Partial<FacturaFormValues>; 
   isSubmitting?: boolean;
   submitButtonText?: string;
   isEditMode?: boolean;
@@ -108,7 +109,7 @@ export function FacturaForm({
       clienteId: defaultValues?.clienteId || '',
       proveedorId: defaultValues?.proveedorId || '',
       empleadoId: defaultValues?.empleadoId || '',
-      almacenId: defaultValues?.almacenId || '',
+      almacenId: defaultValues?.almacenId || '', // Initial value from data can be '', gets handled by Select
       moneda: defaultValues?.moneda || 'EUR',
       estado: defaultValues?.estado || 'Pendiente',
       detalles: defaultValues?.detalles?.map(d => ({
@@ -116,7 +117,7 @@ export function FacturaForm({
         productoId: d.productoId || '',
         cantidad: d.cantidad || 1,
         precioUnitario: d.precioUnitario || 0,
-        porcentajeIva: d.porcentajeIva || 21, // Default IVA if not provided
+        porcentajeIva: d.porcentajeIva || 21, 
       })) || [{ productoId: '', cantidad: 1, precioUnitario: 0, porcentajeIva: 21 }],
       baseImponible: defaultValues?.baseImponible || 0,
       totalIva: defaultValues?.totalIva || 0,
@@ -132,6 +133,8 @@ export function FacturaForm({
 
   const watchedDetalles = form.watch("detalles");
   const watchedTipo = form.watch("tipo");
+  const watchedMoneda = form.watch("moneda");
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -157,10 +160,10 @@ export function FacturaForm({
       base += itemSubtotal;
       iva += itemIva;
     });
-    form.setValue("baseImponible", parseFloat(base.toFixed(2)), { shouldValidate: true });
-    form.setValue("totalIva", parseFloat(iva.toFixed(2)), { shouldValidate: true });
-    form.setValue("totalFactura", parseFloat((base + iva).toFixed(2)), { shouldValidate: true });
-  }, [watchedDetalles, form]); // form.setValue removed from dependencies, form added
+    form.setValue("baseImponible", parseFloat(base.toFixed(2)));
+    form.setValue("totalIva", parseFloat(iva.toFixed(2)));
+    form.setValue("totalFactura", parseFloat((base + iva).toFixed(2)));
+  }, [watchedDetalles, form]); 
   
   const handleProductChange = (index: number, productId: string) => {
     const product = productos.find(p => p.id === productId);
@@ -173,8 +176,7 @@ export function FacturaForm({
   const actualSubmitButtonText = submitButtonText || (isEditMode ? t('facturaForm.updateButton') : t('facturaForm.createButton'));
 
   useEffect(() => {
-    // Reset client/supplier if type changes
-    if (!isEditMode) { // Only in create mode
+    if (!isEditMode) { 
         form.setValue('clienteId', '');
         form.setValue('proveedorId', '');
     }
@@ -241,8 +243,8 @@ export function FacturaForm({
                     <FormLabel>{t('facturaForm.typeLabel')}</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
-                      defaultValue={field.value} 
-                      disabled={isEditMode} // Disable if editing, type cannot change
+                      value={field.value} 
+                      disabled={isEditMode} 
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -312,7 +314,7 @@ export function FacturaForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('facturaForm.employeeLabel')}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t('facturaForm.selectEmployee')} />
@@ -330,17 +332,20 @@ export function FacturaForm({
               <FormField
                 control={form.control}
                 name="almacenId"
-                render={({ field }) => (
+                render={({ field }) => ( // field.value here is the current form value for almacenId (can be '', ID, or NO_WAREHOUSE_SENTINEL_VALUE)
                   <FormItem>
-                    <FormLabel>{t('facturaForm.warehouseLabelOptional')}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormLabel>{t('facturaForm.warehouseLabel')}</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(value === NO_WAREHOUSE_SENTINEL_VALUE ? "" : value)} 
+                      value={field.value === "" ? NO_WAREHOUSE_SENTINEL_VALUE : field.value || ""} // If form value is "", select the "No Warehouse" sentinel. Otherwise, use field.value or "" for placeholder.
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t('facturaForm.selectWarehouse')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">{t('facturaForm.noWarehouse')}</SelectItem>
+                        <SelectItem value={NO_WAREHOUSE_SENTINEL_VALUE}>{t('facturaForm.noWarehouse')}</SelectItem>
                         {almacenes.map(a => <SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -355,7 +360,7 @@ export function FacturaForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('facturaForm.currencyLabel')}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                            <DollarSign className="mr-2 h-4 w-4 opacity-50" />
@@ -376,7 +381,7 @@ export function FacturaForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('facturaForm.statusLabel')}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t('facturaForm.selectStatus')} />
@@ -419,7 +424,7 @@ export function FacturaForm({
                                   field.onChange(value)
                                   handleProductChange(index, value)
                                 }} 
-                                defaultValue={field.value}
+                                value={field.value}
                               >
                                 <FormControl>
                                   <SelectTrigger>
@@ -459,7 +464,7 @@ export function FacturaForm({
                           <FormMessage>{form.formState.errors.detalles?.[index]?.porcentajeIva?.message}</FormMessage>
                         </TableCell>
                         <TableCell className="text-right">
-                          {((form.watch(`detalles.${index}.cantidad`) || 0) * (form.watch(`detalles.${index}.precioUnitario`) || 0)).toFixed(2)} {form.watch("moneda")}
+                          {((form.watch(`detalles.${index}.cantidad`) || 0) * (form.watch(`detalles.${index}.precioUnitario`) || 0)).toFixed(2)} {watchedMoneda}
                         </TableCell>
                         <TableCell>
                           <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}>
@@ -471,7 +476,7 @@ export function FacturaForm({
                   </TableBody>
                 </Table>
               </div>
-               <FormMessage>{form.formState.errors.detalles?.message}</FormMessage>
+               <FormMessage>{form.formState.errors.detalles?.message}</FormMessage> {/* For array-level errors like min(1) */}
               <Button
                 type="button"
                 variant="outline"
@@ -485,19 +490,19 @@ export function FacturaForm({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end pt-6 border-t">
                 <div className="md:col-start-3 space-y-1 text-right">
                     <p className="text-sm text-muted-foreground">{t('facturas.taxableBase')}:</p>
-                    <p className="font-semibold text-lg">{form.watch("baseImponible").toFixed(2)} {form.watch("moneda")}</p>
+                    <p className="font-semibold text-lg">{form.watch("baseImponible").toFixed(2)} {watchedMoneda}</p>
                 </div>
                  <div className="space-y-1 text-right">
                     <p className="text-sm text-muted-foreground">{t('facturas.totalVAT')}:</p>
-                    <p className="font-semibold text-lg">{form.watch("totalIva").toFixed(2)} {form.watch("moneda")}</p>
+                    <p className="font-semibold text-lg">{form.watch("totalIva").toFixed(2)} {watchedMoneda}</p>
                 </div>
                  <div className="col-span-2 md:col-span-4 space-y-1 text-right border-t pt-2 mt-2">
                     <p className="text-lg text-muted-foreground">{t('facturas.totalInvoice')}:</p>
-                    <p className="font-bold text-2xl text-primary">{form.watch("totalFactura").toFixed(2)} {form.watch("moneda")}</p>
+                    <p className="font-bold text-2xl text-primary">{form.watch("totalFactura").toFixed(2)} {watchedMoneda}</p>
                 </div>
             </div>
 
-            <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting || !form.formState.isDirty && isEditMode}>
+            <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting || (!form.formState.isDirty && isEditMode)}>
               {isSubmitting ? t('common.saving') : actualSubmitButtonText}
             </Button>
           </form>
@@ -506,3 +511,5 @@ export function FacturaForm({
     </Card>
   );
 }
+
+    
