@@ -1,6 +1,7 @@
 
 "use client";
 import { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link'; // Added import
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { PurchasesChart } from "@/components/dashboard/PurchasesChart";
@@ -387,3 +388,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
