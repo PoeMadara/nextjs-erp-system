@@ -1,13 +1,10 @@
+"use client";
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Construction } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/useTranslation';
-
-export const metadata = {
-  title: 'Proveedores - ERP System',
-};
 
 export default function ProveedoresPage() {
   const { t } = useTranslation();

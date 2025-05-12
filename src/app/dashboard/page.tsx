@@ -1,3 +1,4 @@
+"use client";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useTranslation } from '@/hooks/useTranslation';
 
 // Mock data - replace with actual data fetching
 const recentSales = [
