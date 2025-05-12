@@ -236,7 +236,54 @@
     "successDelete": "Factura #{id} eliminada correctamente.",
     "failDelete": "Error al eliminar la factura #{id}.",
     "successUpdate": "Factura #{id} actualizada correctamente.",
-    "failUpdate": "Error al actualizar la factura #{id}."
+    "failUpdate": "Error al actualizar la factura #{id}.",
+    "filterByCurrency": "Filtrar por moneda",
+    "searchCurrency": "Buscar moneda...",
+    "noCurrencyFound": "No se encontró la moneda."
+  },
+  "facturaForm": {
+    "editTitle": "Editar Factura #{id}",
+    "createTitle": "Crear Nueva Factura",
+    "description": "Completa los detalles de la factura.",
+    "dateLabel": "Fecha",
+    "pickDate": "Selecciona una fecha",
+    "typeLabel": "Tipo",
+    "selectType": "Selecciona tipo de factura",
+    "clientLabel": "Cliente",
+    "selectClient": "Selecciona cliente",
+    "supplierLabel": "Proveedor",
+    "selectSupplier": "Selecciona proveedor",
+    "employeeLabel": "Empleado",
+    "selectEmployee": "Selecciona empleado",
+    "warehouseLabel": "Almacén (Opcional)",
+    "selectWarehouse": "Selecciona almacén",
+    "currencyLabel": "Moneda",
+    "selectCurrency": "Selecciona moneda",
+    "statusLabel": "Estado",
+    "selectStatus": "Selecciona estado",
+    "detailsTitle": "Líneas de Detalle",
+    "productLabel": "Producto",
+    "selectProduct": "Selecciona producto",
+    "quantityLabel": "Cant.",
+    "unitPriceLabel": "Precio Unit.",
+    "vatLabel": "IVA %",
+    "subtotalLabel": "Subtotal",
+    "addLineItem": "Añadir Línea",
+    "updateButton": "Actualizar Factura",
+    "createButton": "Crear Factura",
+    "failFetchDropdowns": "Error al cargar datos para los desplegables.",
+     "validation": {
+      "fechaRequired": "La fecha es obligatoria.",
+      "empleadoRequired": "El empleado es obligatorio.",
+      "monedaRequired": "La moneda es obligatoria.",
+      "estadoRequired": "El estado es obligatorio.",
+      "detallesMin": "Se requiere al menos una línea de detalle.",
+      "productoRequired": "El producto es obligatorio.",
+      "cantidadMin": "La cantidad debe ser al menos 1.",
+      "precioMin": "El precio debe ser 0 o mayor.",
+      "ivaMin": "El IVA debe ser 0 o mayor.",
+      "clientSupplierRequired": "Se requiere Cliente o Proveedor según el tipo de factura."
+    }
   },
   "newFacturaPage": {
     "titleCreateGeneral": "Crear Nueva Factura",
@@ -273,7 +320,7 @@
   },
   "editFacturaPage": {
     "title": "Editar Factura",
-    "description": "Modificar detalles de la factura #{id}.",
+    "description": "Modificar detalles de la factura #{id}",
     "formComingSoon": "El formulario para editar la factura #{id} está en construcción.",
     "constructionDetails": "Esta sección está actualmente en desarrollo. El formulario completo para editar facturas estará disponible en una futura actualización.",
     "plannedFormTitle": "Funcionalidades Planeadas del Formulario de Edición de Factura:",
@@ -483,4 +530,5 @@
     "createTitle": "Crear Nuevo Proveedor"
   }
 }
-```
+
+    

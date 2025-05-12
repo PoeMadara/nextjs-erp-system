@@ -35,7 +35,7 @@ let facturas: Factura[] = [
     id: 'FV2024-00001', fecha: '2024-05-10', tipo: 'Venta', clienteId: 'CLI001', empleadoId: empleados.length > 0 ? empleados[0].id : 'EMP001', almacenId: 'ALM001', 
     baseImponible: 179.50, totalIva: 37.69, totalFactura: 217.19, estado: 'Pagada', moneda: 'EUR',
     detalles: [
-      { productoId: 'PROD002', productoNombre: 'Monitor 24 pulgadas', cantidad: 1, precioUnitario: 179.50, porcentajeIva: 21.00, subtotal: 179.50, subtotalConIva: 217.195 }
+      { id: 'DET001', productoId: 'PROD002', productoNombre: 'Monitor 24 pulgadas', cantidad: 1, precioUnitario: 179.50, porcentajeIva: 21.00, subtotal: 179.50, subtotalConIva: 217.195 }
     ],
     clienteNombre: 'Juan Pérez', empleadoNombre: empleados.length > 0 ? empleados[0].nombre : 'Admin ERP'
   },
@@ -43,7 +43,7 @@ let facturas: Factura[] = [
     id: 'FC2024-00001', fecha: '2024-06-15', tipo: 'Compra', proveedorId: 'PRO001', empleadoId: empleados.length > 1 ? empleados[1].id : 'EMP002', almacenId: 'ALM001', 
     baseImponible: 600.00, totalIva: 126.00, totalFactura: 726.00, estado: 'Pendiente', moneda: 'USD',
     detalles: [
-      { productoId: 'PROD001', productoNombre: 'Portátil Modelo X', cantidad: 1, precioUnitario: 600.00, porcentajeIva: 21.00, subtotal: 600.00, subtotalConIva: 726.00 }
+      { id: 'DET002', productoId: 'PROD001', productoNombre: 'Portátil Modelo X', cantidad: 1, precioUnitario: 600.00, porcentajeIva: 21.00, subtotal: 600.00, subtotalConIva: 726.00 }
     ],
     proveedorNombre: 'Suministros Informáticos SL', empleadoNombre: empleados.length > 1 ? empleados[1].nombre : 'Laura García'
   },
@@ -51,7 +51,7 @@ let facturas: Factura[] = [
     id: 'FV2024-00002', fecha: '2024-07-01', tipo: 'Venta', clienteId: 'CLI002', empleadoId: empleados.length > 0 ? empleados[0].id : 'EMP001', almacenId: 'ALM002', 
     baseImponible: 79.90, totalIva: 16.78, totalFactura: 96.68, estado: 'Pendiente', moneda: 'GBP',
     detalles: [
-      { productoId: 'PROD003', productoNombre: 'Teclado Mecánico RGB', cantidad: 1, precioUnitario: 79.90, porcentajeIva: 21.00, subtotal: 79.90, subtotalConIva: 96.679 }
+      { id: 'DET003', productoId: 'PROD003', productoNombre: 'Teclado Mecánico RGB', cantidad: 1, precioUnitario: 79.90, porcentajeIva: 21.00, subtotal: 79.90, subtotalConIva: 96.679 }
     ],
     clienteNombre: 'Ana López', empleadoNombre: empleados.length > 0 ? empleados[0].nombre : 'Admin ERP'
   },
@@ -117,12 +117,12 @@ export const getEmpleados = async (): Promise<Empleado[]> => [...empleados];
 export const getEmpleadoById = async (id: string): Promise<Empleado | undefined> => empleados.find(e => e.id === id);
 export const getEmpleadoByEmail = async (email: string): Promise<Empleado | undefined> => empleados.find(e => e.email.toLowerCase() === email.toLowerCase());
 
-export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked'> & {password?: string}): Promise<Empleado> => {
-  const role: EmpleadoRole = empleados.length === 0 ? 'admin' : 'user';
+export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked' | 'role'> & {password?: string, role?: EmpleadoRole}): Promise<Empleado> => {
+  const role: EmpleadoRole = empleadoData.role || (empleados.length === 0 ? 'admin' : 'user');
   const newEmpleado: Empleado = { 
     ...empleadoData, 
     id: generateId('EMP', empleados),
-    role: empleadoData.role || role, // Assign provided role or default
+    role: role, 
     isBlocked: false, 
     password: empleadoData.password || 'password123' 
   };
@@ -226,21 +226,37 @@ export const getFacturaById = async (id: string): Promise<Factura | undefined> =
   };
 };
 
-export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombre' | 'proveedorNombre' | 'empleadoNombre' | 'detalles'> & { detalles: Omit<DetalleFactura, 'id' | 'productoNombre' | 'subtotal' | 'subtotalConIva'>[] }): Promise<Factura> => {
-  const nextIdNum = facturas.length > 0 ? Math.max(...facturas.map(f => parseInt(f.id.split('-')[1]))) + 1 : 1;
+const generateDetalleId = (facturaId: string, index: number) => `${facturaId}-DET${(index + 1).toString().padStart(3, '0')}`;
+
+export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombre' | 'proveedorNombre' | 'empleadoNombre' >): Promise<Factura> => {
+  const nextIdNum = facturas.length > 0 ? Math.max(...facturas.map(f => parseInt(f.id.split('-')[1])).filter(num => !isNaN(num))) + 1 : 1;
   const prefix = facturaData.tipo === 'Venta' ? 'FV' : 'FC';
   const newId = `${prefix}${new Date().getFullYear()}-${nextIdNum.toString().padStart(5, '0')}`;
   
+  const processedDetalles = facturaData.detalles.map((d, index) => {
+    const producto = productos.find(p => p.id === d.productoId);
+    const subtotal = d.cantidad * d.precioUnitario;
+    const subtotalConIva = subtotal * (1 + d.porcentajeIva / 100);
+    return {
+      ...d,
+      id: d.id || generateDetalleId(newId, index),
+      productoNombre: producto?.nombre,
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      subtotalConIva: parseFloat(subtotalConIva.toFixed(2)),
+    };
+  });
+
+  const baseImponible = processedDetalles.reduce((sum, d) => sum + (d.subtotal || 0), 0);
+  const totalIva = processedDetalles.reduce((sum, d) => sum + ((d.subtotalConIva || 0) - (d.subtotal || 0)), 0);
+
   const newFactura: Factura = {
     ...facturaData,
     id: newId,
+    detalles: processedDetalles,
+    baseImponible: parseFloat(baseImponible.toFixed(2)),
+    totalIva: parseFloat(totalIva.toFixed(2)),
+    totalFactura: parseFloat((baseImponible + totalIva).toFixed(2)),
     // Names will be enriched by getFacturas or getFacturaById
-    detalles: facturaData.detalles.map((d, index) => ({
-      ...d,
-      id: `${newId}-DET${index + 1}`, // Example detail ID
-      // productoNombre will be enriched later
-      // subtotal and subtotalConIva would be calculated here in a real scenario
-    }))
   };
   facturas.push(newFactura);
   return newFactura; // Return the basic new factura, enrichment happens on retrieval
@@ -250,8 +266,36 @@ export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombr
 export const updateFactura = async (id: string, updates: Partial<Factura>): Promise<Factura | null> => {
   const index = facturas.findIndex(f => f.id === id);
   if (index === -1) return null;
-  // Simple update for mock data, in real app, recalculate totals if details change
-  facturas[index] = { ...facturas[index], ...updates };
+
+  const existingFactura = facturas[index];
+  
+  // Process detalles: update existing, add new, ensure they have IDs
+  const updatedDetalles = updates.detalles?.map((det, idx) => {
+    const producto = productos.find(p => p.id === det.productoId);
+    const subtotal = det.cantidad * det.precioUnitario;
+    const subtotalConIva = subtotal * (1 + det.porcentajeIva / 100);
+    return {
+      ...det,
+      id: det.id || generateDetalleId(id, idx), // Assign new ID if missing (for new lines)
+      productoNombre: producto?.nombre,
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      subtotalConIva: parseFloat(subtotalConIva.toFixed(2)),
+    };
+  }) || existingFactura.detalles;
+
+  const newBaseImponible = updatedDetalles.reduce((sum, d) => sum + (d.subtotal || 0), 0);
+  const newTotalIva = updatedDetalles.reduce((sum, d) => sum + ((d.subtotalConIva || 0) - (d.subtotal || 0)), 0);
+  const newTotalFactura = newBaseImponible + newTotalIva;
+
+  facturas[index] = { 
+    ...existingFactura, 
+    ...updates,
+    detalles: updatedDetalles,
+    baseImponible: parseFloat(newBaseImponible.toFixed(2)),
+    totalIva: parseFloat(newTotalIva.toFixed(2)),
+    totalFactura: parseFloat(newTotalFactura.toFixed(2)),
+  };
+  
   // Re-enrich names after update
   const updatedFactura = facturas[index];
   return {
@@ -259,10 +303,6 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
     clienteNombre: updatedFactura.clienteId ? clientes.find(c=>c.id === updatedFactura.clienteId)?.nombre : undefined,
     proveedorNombre: updatedFactura.proveedorId ? proveedores.find(p=>p.id === updatedFactura.proveedorId)?.nombre : undefined,
     empleadoNombre: empleados.find(e=>e.id === updatedFactura.empleadoId)?.nombre,
-    detalles: updatedFactura.detalles.map(d => ({
-      ...d,
-      productoNombre: productos.find(p=>p.id === d.productoId)?.nombre
-    }))
   };
 };
 
@@ -308,3 +348,5 @@ export const getWarehouseStatus = async () => {
     location: alm.ubicacion || 'N/A',
   }));
 };
+
+    

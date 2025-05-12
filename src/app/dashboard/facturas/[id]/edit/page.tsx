@@ -1,16 +1,18 @@
+
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Construction, FileEdit } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { getFacturaById } from "@/lib/mockData";
+import { getFacturaById, updateFactura as updateFacturaApi } from "@/lib/mockData";
 import type { Factura } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FacturaForm, type FacturaFormValues } from "@/components/crud/FacturaForm";
+import { format } from "date-fns";
 
 export default function EditFacturaPage() {
   const router = useRouter();
@@ -19,6 +21,7 @@ export default function EditFacturaPage() {
   const { toast } = useToast();
   const [factura, setFactura] = useState<Factura | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const id = typeof params.id === 'string' ? params.id : '';
 
@@ -47,6 +50,36 @@ export default function EditFacturaPage() {
     }
   }, [id, router, toast, t]);
 
+  const handleSubmit = async (values: FacturaFormValues) => {
+    if (!factura) return;
+    setIsSubmitting(true);
+    
+    const facturaToUpdate: Partial<Factura> = {
+      ...values,
+      fecha: format(values.fecha, "yyyy-MM-dd"), // Format date back to string for storage
+      // clienteId, proveedorId, empleadoId, almacenId are directly from 'values'
+      // moneda, estado, detalles are directly from 'values'
+      // baseImponible, totalIva, totalFactura are calculated and set in 'values' by the form
+    };
+
+    try {
+      await updateFacturaApi(factura.id, facturaToUpdate as Factura); // Cast needed due to partial nature
+      toast({
+        title: t('common.success'),
+        description: t('facturas.successUpdate', { id: factura.id }),
+      });
+      router.push(`/dashboard/facturas/${factura.id}/view`); // Or back to list
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('facturas.failUpdate', { id: factura.id }),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const pageTitle = t('editFacturaPage.title');
   const pageDescription = factura ? t('editFacturaPage.description', { id: factura.id }) : t('common.loading');
   
@@ -72,10 +105,13 @@ export default function EditFacturaPage() {
             </Button>
           }
         />
-        <Card className="mt-6 shadow-lg">
-            <CardHeader><Skeleton className="h-8 w-3/4" /></CardHeader>
-            <CardContent><Skeleton className="h-20 w-full" /></CardContent>
-        </Card>
+        <div className="mt-6 space-y-4">
+            <Skeleton className="h-12 w-1/2" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-40 w-full" />
+             <Skeleton className="h-10 w-24" />
+        </div>
       </>
     );
   }
@@ -98,7 +134,6 @@ export default function EditFacturaPage() {
     );
   }
 
-
   return (
     <>
       <PageHeader
@@ -113,36 +148,14 @@ export default function EditFacturaPage() {
           </Button>
         }
       />
-      <Card className="mt-6 shadow-lg">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <FileEdit className="h-8 w-8 text-primary" />
-            <div>
-              <CardTitle>{t('common.formUnderConstruction')}</CardTitle>
-              <CardDescription>{t('editFacturaPage.formComingSoon', { id: factura.id })}</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-4">
-            {t('editFacturaPage.constructionDetails')}
-          </p>
-          <div className="space-y-3 p-4 border rounded-md bg-muted/50">
-            <h4 className="font-semibold text-lg">{t('editFacturaPage.plannedFormTitle')}</h4>
-             <ul className="list-disc list-inside text-sm text-muted-foreground ml-4 space-y-1">
-              <li>{t('editFacturaPage.fieldReviewHeader')}</li>
-              <li>{t('editFacturaPage.fieldModifyDetails')}</li>
-              <li>{t('editFacturaPage.fieldChangeCurrency')}</li>
-              <li>{t('editFacturaPage.fieldAdjustVAT')}</li>
-              <li>{t('editFacturaPage.fieldUpdateStatus')}</li>
-            </ul>
-          </div>
-          <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
-            <Construction className="h-5 w-5"/> 
-            <span>{t('editFacturaPage.checkBackSoon')}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <FacturaForm 
+        onSubmit={handleSubmit}
+        defaultValues={factura}
+        isSubmitting={isSubmitting}
+        submitButtonText={t('facturaForm.updateButton')}
+      />
     </>
   );
 }
+
+    

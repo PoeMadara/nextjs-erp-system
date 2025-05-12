@@ -1,3 +1,4 @@
+
 export interface Cliente {
   id: string; // Codigo
   nombre: string;
@@ -55,7 +56,7 @@ export type FacturaEstado = 'Pendiente' | 'Pagada' | 'Cancelada';
 export type CurrencyCode = 'EUR' | 'USD' | 'GBP'; // Add more as needed
 
 export interface DetalleFactura {
-  id?: string; // Auto-increment or UUID, generated
+  id?: string; // Auto-increment or UUID, generated. Optional for new lines in form.
   productoId: string;
   productoNombre?: string; // For display convenience
   cantidad: number;
@@ -75,9 +76,9 @@ export interface Factura {
   almacenId?: string;
   baseImponible: number;
   totalIva: number;
-  totalFactura: number; // Added this field
+  totalFactura: number;
   estado: FacturaEstado;
-  moneda: CurrencyCode; // Added currency
+  moneda: CurrencyCode;
   detalles: DetalleFactura[];
   // For display purposes
   clienteNombre?: string;
@@ -106,4 +107,5 @@ export interface WarehouseSummary {
   items: number;
   location: string;
 }
-```
+
+    

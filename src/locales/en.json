@@ -236,7 +236,54 @@
     "successDelete": "Invoice #{id} deleted successfully.",
     "failDelete": "Failed to delete invoice #{id}.",
     "successUpdate": "Invoice #{id} updated successfully.",
-    "failUpdate": "Failed to update invoice #{id}."
+    "failUpdate": "Failed to update invoice #{id}.",
+    "filterByCurrency": "Filter by currency",
+    "searchCurrency": "Search currency...",
+    "noCurrencyFound": "No currency found."
+  },
+  "facturaForm": {
+    "editTitle": "Edit Invoice #{id}",
+    "createTitle": "Create New Invoice",
+    "description": "Fill in the details for the invoice.",
+    "dateLabel": "Date",
+    "pickDate": "Pick a date",
+    "typeLabel": "Type",
+    "selectType": "Select invoice type",
+    "clientLabel": "Customer",
+    "selectClient": "Select customer",
+    "supplierLabel": "Supplier",
+    "selectSupplier": "Select supplier",
+    "employeeLabel": "Employee",
+    "selectEmployee": "Select employee",
+    "warehouseLabel": "Warehouse (Optional)",
+    "selectWarehouse": "Select warehouse",
+    "currencyLabel": "Currency",
+    "selectCurrency": "Select currency",
+    "statusLabel": "Status",
+    "selectStatus": "Select status",
+    "detailsTitle": "Line Items",
+    "productLabel": "Product",
+    "selectProduct": "Select product",
+    "quantityLabel": "Qty",
+    "unitPriceLabel": "Unit Price",
+    "vatLabel": "VAT %",
+    "subtotalLabel": "Subtotal",
+    "addLineItem": "Add Line Item",
+    "updateButton": "Update Invoice",
+    "createButton": "Create Invoice",
+    "failFetchDropdowns": "Failed to load data for dropdowns.",
+    "validation": {
+      "fechaRequired": "Date is required.",
+      "empleadoRequired": "Employee is required.",
+      "monedaRequired": "Currency is required.",
+      "estadoRequired": "Status is required.",
+      "detallesMin": "At least one line item is required.",
+      "productoRequired": "Product is required.",
+      "cantidadMin": "Quantity must be at least 1.",
+      "precioMin": "Price must be 0 or greater.",
+      "ivaMin": "VAT must be 0 or greater.",
+      "clientSupplierRequired": "Customer or Supplier is required based on invoice type."
+    }
   },
   "newFacturaPage": {
     "titleCreateGeneral": "Create New Invoice",
@@ -273,7 +320,7 @@
   },
   "editFacturaPage": {
     "title": "Edit Invoice",
-    "description": "Modify details for invoice #{id}.",
+    "description": "Modify details for invoice #{id}",
     "formComingSoon": "The form to edit invoice #{id} is under construction.",
     "constructionDetails": "This section is currently under development. The full form for editing invoices will be available in a future update.",
     "plannedFormTitle": "Planned Edit Invoice Form Features:",
@@ -483,4 +530,5 @@
     "createTitle": "Create New Supplier"
   }
 }
-```
+
+    
