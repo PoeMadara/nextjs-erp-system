@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import Link from 'next/link';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -20,7 +19,7 @@ const getModuleIcon = (module: TeamActivityLog['modulo']) => {
     case 'Compras': return <ShoppingCart className="h-4 w-4 text-muted-foreground" />;
     case 'Productos': return <Package className="h-4 w-4 text-muted-foreground" />;
     case 'Clientes': return <Users className="h-4 w-4 text-muted-foreground" />;
-    case 'Proveedores': return <Users className="h-4 w-4 text-muted-foreground" />; // Consider different icon
+    case 'Proveedores': return <Users className="h-4 w-4 text-muted-foreground" />;
     case 'Empleados': return <Briefcase className="h-4 w-4 text-muted-foreground" />;
     case 'Sistema': return <Settings className="h-4 w-4 text-muted-foreground" />;
     default: return <Users className="h-4 w-4 text-muted-foreground" />;
@@ -29,7 +28,7 @@ const getModuleIcon = (module: TeamActivityLog['modulo']) => {
 
 const getInitials = (name: string) => {
     const names = name.split(' ');
-    if (names.length > 1) {
+    if (names.length > 1 && names[0] && names[names.length - 1]) {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
@@ -103,21 +102,13 @@ export function TeamActivityCard() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <p className="text-sm font-medium">
-                      <span style={{ color: activity.avatar_color }}>{activity.nombre_usuario}</span>{' '}
-                      <span className="text-muted-foreground">{t(`teamActivity.action.${activity.accion}`)}</span>{' '}
-                       {activity.entidad_nombre ? (
-                        <Link href="#" className="text-primary hover:underline">{activity.entidad_nombre}</Link>
-                       ) : (
-                         t(`teamActivity.module.${activity.modulo.toLowerCase()}`)
-                       )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {activity.descripcion}
+                    <p className="text-sm">
+                      <span className="font-medium" style={{ color: activity.avatar_color }}>{activity.nombre_usuario}</span>{' '}
+                      <span className="text-muted-foreground">{activity.descripcion}</span>
                     </p>
                     <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                        {getModuleIcon(activity.modulo)}
-                       <span>{t(`teamActivity.module.${activity.modulo.toLowerCase()}`)}</span>
+                       <span>{t(`teamActivity.module.${activity.modulo.toLowerCase().replace('ó', 'o').replace('é', 'e')}`)}</span>
                        <span className="mx-1">&bull;</span>
                        <span>
                         {formatDistanceToNow(parseISO(activity.timestamp), {
@@ -137,7 +128,7 @@ export function TeamActivityCard() {
       </CardContent>
       {activities.length > 0 && (
         <CardFooter className="p-4 border-t">
-            <Button variant="outline" size="sm" className="ml-auto" disabled>
+            <Button variant="outline" size="sm" className="ml-auto">
              {t('dashboardPage.viewAllActivity')}
             </Button>
         </CardFooter>
@@ -145,4 +136,3 @@ export function TeamActivityCard() {
     </Card>
   );
 }
-

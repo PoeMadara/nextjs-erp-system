@@ -554,7 +554,7 @@
     "createTitle": "Create New Supplier"
   },
   "teamActivity": {
-    "module.facturación": "Billing",
+    "module.facturacion": "Billing",
     "module.compras": "Purchases",
     "module.productos": "Products",
     "module.clientes": "Customers",

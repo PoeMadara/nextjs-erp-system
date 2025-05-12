@@ -554,7 +554,7 @@
     "createTitle": "Crear Nuevo Proveedor"
   },
   "teamActivity": {
-    "module.facturación": "Facturación",
+    "module.facturacion": "Facturación",
     "module.compras": "Compras",
     "module.productos": "Productos",
     "module.clientes": "Clientes",
