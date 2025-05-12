@@ -1,3 +1,4 @@
+
 import type { Cliente, Proveedor, Empleado, Producto, Almacen, Factura, DetalleFactura } from '@/types';
 
 let clientes: Cliente[] = [
@@ -50,8 +51,13 @@ let facturas: Factura[] = [
 // Helper to generate next ID
 const generateId = (prefix: string, currentItems: {id: string}[]) => {
   const maxNum = currentItems.reduce((max, item) => {
-    const num = parseInt(item.id.replace(prefix, ''), 10);
-    return isNaN(num) ? max : Math.max(max, num);
+    const numStr = item.id.replace(prefix, '');
+    // Ensure numStr is not empty and contains only digits before parsing
+    if (numStr && /^\d+$/.test(numStr)) {
+        const num = parseInt(numStr, 10);
+        return Math.max(max, num);
+    }
+    return max;
   }, 0);
   return `${prefix}${(maxNum + 1).toString().padStart(3, '0')}`;
 };
@@ -100,6 +106,8 @@ export const deleteProveedor = async (id: string): Promise<boolean> => {
 // Empleados CRUD
 export const getEmpleados = async (): Promise<Empleado[]> => [...empleados];
 export const getEmpleadoById = async (id: string): Promise<Empleado | undefined> => empleados.find(e => e.id === id);
+export const getEmpleadoByEmail = async (email: string): Promise<Empleado | undefined> => empleados.find(e => e.email.toLowerCase() === email.toLowerCase());
+
 export const addEmpleado = async (empleado: Omit<Empleado, 'id'>): Promise<Empleado> => {
   const newEmpleado = { ...empleado, id: generateId('EMP', empleados) };
   empleados.push(newEmpleado);
