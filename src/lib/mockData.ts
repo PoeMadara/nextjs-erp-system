@@ -1,4 +1,5 @@
-import type { Cliente, Proveedor, Empleado, Producto, Almacen, Factura, DetalleFactura, EmpleadoRole } from '@/types';
+
+import type { Cliente, Proveedor, Empleado, Producto, Almacen, Factura, DetalleFactura, EmpleadoRole, FacturaTipo, FacturaEstado, CurrencyCode } from '@/types';
 
 let clientes: Cliente[] = [
   { id: 'CLI001', nombre: 'Juan Pérez', nif: '12345678A', direccion: 'Calle Falsa 123', poblacion: 'Ciudad Real', telefono: '926111222', email: 'juan.perez@example.com' },
@@ -32,7 +33,7 @@ let productos: Producto[] = [
 let facturas: Factura[] = [
   { 
     id: 'FV2024-00001', fecha: '2024-05-10', tipo: 'Venta', clienteId: 'CLI001', empleadoId: empleados.length > 0 ? empleados[0].id : 'EMP001', almacenId: 'ALM001', 
-    baseImponible: 179.50, totalIva: 37.69, totalFactura: 217.19, estado: 'Pagada',
+    baseImponible: 179.50, totalIva: 37.69, totalFactura: 217.19, estado: 'Pagada', moneda: 'EUR',
     detalles: [
       { productoId: 'PROD002', productoNombre: 'Monitor 24 pulgadas', cantidad: 1, precioUnitario: 179.50, porcentajeIva: 21.00, subtotal: 179.50, subtotalConIva: 217.195 }
     ],
@@ -40,11 +41,19 @@ let facturas: Factura[] = [
   },
   { 
     id: 'FC2024-00001', fecha: '2024-06-15', tipo: 'Compra', proveedorId: 'PRO001', empleadoId: empleados.length > 1 ? empleados[1].id : 'EMP002', almacenId: 'ALM001', 
-    baseImponible: 600.00, totalIva: 126.00, totalFactura: 726.00, estado: 'Pendiente',
+    baseImponible: 600.00, totalIva: 126.00, totalFactura: 726.00, estado: 'Pendiente', moneda: 'USD',
     detalles: [
       { productoId: 'PROD001', productoNombre: 'Portátil Modelo X', cantidad: 1, precioUnitario: 600.00, porcentajeIva: 21.00, subtotal: 600.00, subtotalConIva: 726.00 }
     ],
     proveedorNombre: 'Suministros Informáticos SL', empleadoNombre: empleados.length > 1 ? empleados[1].nombre : 'Laura García'
+  },
+   { 
+    id: 'FV2024-00002', fecha: '2024-07-01', tipo: 'Venta', clienteId: 'CLI002', empleadoId: empleados.length > 0 ? empleados[0].id : 'EMP001', almacenId: 'ALM002', 
+    baseImponible: 79.90, totalIva: 16.78, totalFactura: 96.68, estado: 'Pendiente', moneda: 'GBP',
+    detalles: [
+      { productoId: 'PROD003', productoNombre: 'Teclado Mecánico RGB', cantidad: 1, precioUnitario: 79.90, porcentajeIva: 21.00, subtotal: 79.90, subtotalConIva: 96.679 }
+    ],
+    clienteNombre: 'Ana López', empleadoNombre: empleados.length > 0 ? empleados[0].nombre : 'Admin ERP'
   },
 ];
 
@@ -108,15 +117,14 @@ export const getEmpleados = async (): Promise<Empleado[]> => [...empleados];
 export const getEmpleadoById = async (id: string): Promise<Empleado | undefined> => empleados.find(e => e.id === id);
 export const getEmpleadoByEmail = async (email: string): Promise<Empleado | undefined> => empleados.find(e => e.email.toLowerCase() === email.toLowerCase());
 
-export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'role' | 'isBlocked'> & {password?: string}): Promise<Empleado> => {
+export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked'> & {password?: string}): Promise<Empleado> => {
   const role: EmpleadoRole = empleados.length === 0 ? 'admin' : 'user';
   const newEmpleado: Empleado = { 
     ...empleadoData, 
     id: generateId('EMP', empleados),
-    role: role,
-    isBlocked: false, // New users are not blocked by default
-    // In a real app, hash the password here
-    password: empleadoData.password || 'password123' // Store password for mock login
+    role: empleadoData.role || role, // Assign provided role or default
+    isBlocked: false, 
+    password: empleadoData.password || 'password123' 
   };
   empleados.push(newEmpleado);
   return newEmpleado;
@@ -125,9 +133,12 @@ export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'role' | '
 export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado, 'password'>>): Promise<Empleado | null> => {
   const index = empleados.findIndex(e => e.id === id);
   if (index === -1) return null;
-  // Prevent password from being updated directly through this generic update function
+  
+  const currentEmpleado = empleados[index];
+  // Ensure role cannot be changed to admin if current user is not admin, etc. (logic to be handled in page/component)
+  // Here, just apply updates. Password is not updatable here.
   const { password, ...restOfUpdates } = updates as any; 
-  empleados[index] = { ...empleados[index], ...restOfUpdates };
+  empleados[index] = { ...currentEmpleado, ...restOfUpdates };
   return empleados[index];
 };
 
@@ -185,7 +196,7 @@ export const deleteAlmacen = async (id: string): Promise<boolean> => {
     return almacenes.length < initialLength;
 };
 
-// Facturas (Read-only for now for simplicity in mock)
+// Facturas
 export const getFacturas = async (): Promise<Factura[]> => {
   // Enrich with names for display
   return facturas.map(f => ({
@@ -214,6 +225,53 @@ export const getFacturaById = async (id: string): Promise<Factura | undefined> =
     }))
   };
 };
+
+export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombre' | 'proveedorNombre' | 'empleadoNombre' | 'detalles'> & { detalles: Omit<DetalleFactura, 'id' | 'productoNombre' | 'subtotal' | 'subtotalConIva'>[] }): Promise<Factura> => {
+  const nextIdNum = facturas.length > 0 ? Math.max(...facturas.map(f => parseInt(f.id.split('-')[1]))) + 1 : 1;
+  const prefix = facturaData.tipo === 'Venta' ? 'FV' : 'FC';
+  const newId = `${prefix}${new Date().getFullYear()}-${nextIdNum.toString().padStart(5, '0')}`;
+  
+  const newFactura: Factura = {
+    ...facturaData,
+    id: newId,
+    // Names will be enriched by getFacturas or getFacturaById
+    detalles: facturaData.detalles.map((d, index) => ({
+      ...d,
+      id: `${newId}-DET${index + 1}`, // Example detail ID
+      // productoNombre will be enriched later
+      // subtotal and subtotalConIva would be calculated here in a real scenario
+    }))
+  };
+  facturas.push(newFactura);
+  return newFactura; // Return the basic new factura, enrichment happens on retrieval
+};
+
+
+export const updateFactura = async (id: string, updates: Partial<Factura>): Promise<Factura | null> => {
+  const index = facturas.findIndex(f => f.id === id);
+  if (index === -1) return null;
+  // Simple update for mock data, in real app, recalculate totals if details change
+  facturas[index] = { ...facturas[index], ...updates };
+  // Re-enrich names after update
+  const updatedFactura = facturas[index];
+  return {
+    ...updatedFactura,
+    clienteNombre: updatedFactura.clienteId ? clientes.find(c=>c.id === updatedFactura.clienteId)?.nombre : undefined,
+    proveedorNombre: updatedFactura.proveedorId ? proveedores.find(p=>p.id === updatedFactura.proveedorId)?.nombre : undefined,
+    empleadoNombre: empleados.find(e=>e.id === updatedFactura.empleadoId)?.nombre,
+    detalles: updatedFactura.detalles.map(d => ({
+      ...d,
+      productoNombre: productos.find(p=>p.id === d.productoId)?.nombre
+    }))
+  };
+};
+
+export const deleteFactura = async (id: string): Promise<boolean> => {
+  const initialLength = facturas.length;
+  facturas = facturas.filter(f => f.id !== id);
+  return facturas.length < initialLength;
+};
+
 
 // For dashboard summaries
 export const getRecentSales = async (limit: number = 3) => {

@@ -197,12 +197,13 @@
     "titleAll": "Todas las Facturas",
     "descriptionAll": "Visualiza y gestiona todas tus facturas de venta y compra.",
     "createNewButton": "Crear Nueva Factura",
-    "searchPlaceholder": "Buscar facturas por ID, nombre de cliente/proveedor o tipo...",
+    "searchPlaceholder": "Buscar facturas por ID, cliente/proveedor, tipo o moneda...",
     "tableNumber": "Número",
     "tableDate": "Fecha",
     "tableType": "Tipo",
     "tableClientSupplier": "Cliente/Proveedor",
     "tableTotal": "Total",
+    "tableCurrency": "Moneda",
     "tableStatus": "Estado",
     "noFacturasFound": "No se encontraron facturas.",
     "viewTitle": "Ver Factura",
@@ -229,7 +230,13 @@
     "employee": "Empleado",
     "failFetch": "Error al cargar las facturas.",
     "failFetchDetails": "Error al cargar los detalles de la factura.",
-    "notFound": "Factura no encontrada."
+    "notFound": "Factura no encontrada.",
+    "deleteDialogTitle": "¿Seguro que quieres eliminar esta factura?",
+    "deleteDialogDescription": "Esta acción no se puede deshacer. Se eliminará permanentemente la factura #{id}.",
+    "successDelete": "Factura #{id} eliminada correctamente.",
+    "failDelete": "Error al eliminar la factura #{id}.",
+    "successUpdate": "Factura #{id} actualizada correctamente.",
+    "failUpdate": "Error al actualizar la factura #{id}."
   },
   "newFacturaPage": {
     "titleCreateGeneral": "Crear Nueva Factura",
@@ -263,6 +270,19 @@
     "fieldPaymentMethod": "Método de Pago",
     "fieldPaymentDueDate": "Fecha de Vencimiento del Pago",
     "checkBackSoon": "¡Vuelve pronto para ver el formulario de creación de facturas completamente funcional!"
+  },
+  "editFacturaPage": {
+    "title": "Editar Factura",
+    "description": "Modificar detalles de la factura #{id}.",
+    "formComingSoon": "El formulario para editar la factura #{id} está en construcción.",
+    "constructionDetails": "Esta sección está actualmente en desarrollo. El formulario completo para editar facturas estará disponible en una futura actualización.",
+    "plannedFormTitle": "Funcionalidades Planeadas del Formulario de Edición de Factura:",
+    "fieldReviewHeader": "Revisar y modificar información de cabecera (fecha, cliente/proveedor, etc.).",
+    "fieldModifyDetails": "Añadir, eliminar o editar líneas de detalle (productos, cantidades, precios).",
+    "fieldChangeCurrency": "Cambiar la moneda de la factura (EUR, USD, GBP, etc.).",
+    "fieldAdjustVAT": "Ajustar tasas de IVA por línea o para toda la factura.",
+    "fieldUpdateStatus": "Actualizar el estado de la factura (Pendiente, Pagada, Cancelada).",
+    "checkBackSoon": "¡Vuelve pronto para ver el formulario de edición de facturas completamente funcional!"
   },
   "salesInvoices": {
     "title": "Facturas de Venta",
@@ -463,3 +483,4 @@
     "createTitle": "Crear Nuevo Proveedor"
   }
 }
+```

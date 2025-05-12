@@ -52,6 +52,7 @@ export interface Producto {
 
 export type FacturaTipo = 'Compra' | 'Venta';
 export type FacturaEstado = 'Pendiente' | 'Pagada' | 'Cancelada';
+export type CurrencyCode = 'EUR' | 'USD' | 'GBP'; // Add more as needed
 
 export interface DetalleFactura {
   id?: string; // Auto-increment or UUID, generated
@@ -74,7 +75,9 @@ export interface Factura {
   almacenId?: string;
   baseImponible: number;
   totalIva: number;
+  totalFactura: number; // Added this field
   estado: FacturaEstado;
+  moneda: CurrencyCode; // Added currency
   detalles: DetalleFactura[];
   // For display purposes
   clienteNombre?: string;
@@ -103,3 +106,4 @@ export interface WarehouseSummary {
   items: number;
   location: string;
 }
+```

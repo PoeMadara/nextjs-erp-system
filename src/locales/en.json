@@ -197,12 +197,13 @@
     "titleAll": "All Invoices",
     "descriptionAll": "View and manage all your sales and purchase invoices.",
     "createNewButton": "Create New Invoice",
-    "searchPlaceholder": "Search invoices by ID, client/supplier name, or type...",
+    "searchPlaceholder": "Search invoices by ID, client/supplier, type, or currency...",
     "tableNumber": "Number",
     "tableDate": "Date",
     "tableType": "Type",
     "tableClientSupplier": "Client/Supplier",
     "tableTotal": "Total",
+    "tableCurrency": "Currency",
     "tableStatus": "Status",
     "noFacturasFound": "No invoices found.",
     "viewTitle": "View Invoice",
@@ -229,7 +230,13 @@
     "employee": "Employee",
     "failFetch": "Failed to fetch invoices.",
     "failFetchDetails": "Failed to fetch invoice details.",
-    "notFound": "Invoice not found."
+    "notFound": "Invoice not found.",
+    "deleteDialogTitle": "Are you sure you want to delete this invoice?",
+    "deleteDialogDescription": "This action cannot be undone. This will permanently delete invoice #{id}.",
+    "successDelete": "Invoice #{id} deleted successfully.",
+    "failDelete": "Failed to delete invoice #{id}.",
+    "successUpdate": "Invoice #{id} updated successfully.",
+    "failUpdate": "Failed to update invoice #{id}."
   },
   "newFacturaPage": {
     "titleCreateGeneral": "Create New Invoice",
@@ -263,6 +270,19 @@
     "fieldPaymentMethod": "Payment Method",
     "fieldPaymentDueDate": "Payment Due Date",
     "checkBackSoon": "Check back soon for the fully functional invoice creation form!"
+  },
+  "editFacturaPage": {
+    "title": "Edit Invoice",
+    "description": "Modify details for invoice #{id}.",
+    "formComingSoon": "The form to edit invoice #{id} is under construction.",
+    "constructionDetails": "This section is currently under development. The full form for editing invoices will be available in a future update.",
+    "plannedFormTitle": "Planned Edit Invoice Form Features:",
+    "fieldReviewHeader": "Review and modify invoice header information (date, client/supplier, etc.).",
+    "fieldModifyDetails": "Add, remove, or edit line items (products, quantities, prices).",
+    "fieldChangeCurrency": "Change the invoice currency (EUR, USD, GBP, etc.).",
+    "fieldAdjustVAT": "Adjust VAT rates per line item or for the entire invoice.",
+    "fieldUpdateStatus": "Update the invoice status (Pending, Paid, Cancelled).",
+    "checkBackSoon": "Check back soon for the fully functional invoice editing form!"
   },
   "salesInvoices": {
     "title": "Sales Invoices",
@@ -463,3 +483,4 @@
     "createTitle": "Create New Supplier"
   }
 }
+```
