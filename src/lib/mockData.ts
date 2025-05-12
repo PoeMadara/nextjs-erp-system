@@ -13,9 +13,6 @@ let proveedores: Proveedor[] = [
 
 let empleados: Empleado[] = [
   // Initial admin will be created on first registration.
-  // Example users for testing:
-  // { id: 'EMP002', nombre: 'Laura García', email: 'laura.garcia@example.com', telefono: '600987654', role: 'user', password: 'password123', isBlocked: false },
-  // { id: 'EMP003', nombre: 'Carlos Moderador', email: 'carlos.mod@example.com', telefono: '600112233', role: 'moderator', password: 'password123', isBlocked: false },
 ];
 
 let almacenes: Almacen[] = [
@@ -135,8 +132,6 @@ export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado,
   if (index === -1) return null;
   
   const currentEmpleado = empleados[index];
-  // Ensure role cannot be changed to admin if current user is not admin, etc. (logic to be handled in page/component)
-  // Here, just apply updates. Password is not updatable here.
   const { password, ...restOfUpdates } = updates as any; 
   empleados[index] = { ...currentEmpleado, ...restOfUpdates };
   return empleados[index];
@@ -198,7 +193,6 @@ export const deleteAlmacen = async (id: string): Promise<boolean> => {
 
 // Facturas
 export const getFacturas = async (): Promise<Factura[]> => {
-  // Enrich with names for display
   return facturas.map(f => ({
     ...f,
     clienteNombre: f.clienteId ? clientes.find(c=>c.id === f.clienteId)?.nombre : undefined,
@@ -228,7 +222,29 @@ export const getFacturaById = async (id: string): Promise<Factura | undefined> =
 
 const generateDetalleId = (facturaId: string, index: number) => `${facturaId}-DET${(index + 1).toString().padStart(3, '0')}`;
 
+const adjustStock = (productoId: string, cantidad: number, tipoAjuste: 'increment' | 'decrement') => {
+  const productoIndex = productos.findIndex(p => p.id === productoId);
+  if (productoIndex !== -1) {
+    if (tipoAjuste === 'increment') {
+      productos[productoIndex].stock += cantidad;
+    } else {
+      productos[productoIndex].stock -= cantidad;
+    }
+  }
+};
+
 export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombre' | 'proveedorNombre' | 'empleadoNombre' >): Promise<Factura> => {
+  // Stock Validation for Sales
+  if (facturaData.tipo === 'Venta' && facturaData.estado !== 'Cancelada') {
+    for (const detalle of facturaData.detalles) {
+      const producto = productos.find(p => p.id === detalle.productoId);
+      if (!producto) throw new Error(`Producto con ID ${detalle.productoId} no encontrado.`);
+      if (producto.stock < detalle.cantidad) {
+        throw new Error(`No hay suficiente stock para ${producto.nombre}. Stock disponible: ${producto.stock}, Solicitado: ${detalle.cantidad}.`);
+      }
+    }
+  }
+
   const nextIdNum = facturas.length > 0 ? Math.max(...facturas.map(f => parseInt(f.id.split('-')[1])).filter(num => !isNaN(num))) + 1 : 1;
   const prefix = facturaData.tipo === 'Venta' ? 'FV' : 'FC';
   const newId = `${prefix}${new Date().getFullYear()}-${nextIdNum.toString().padStart(5, '0')}`;
@@ -256,10 +272,20 @@ export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombr
     baseImponible: parseFloat(baseImponible.toFixed(2)),
     totalIva: parseFloat(totalIva.toFixed(2)),
     totalFactura: parseFloat((baseImponible + totalIva).toFixed(2)),
-    // Names will be enriched by getFacturas or getFacturaById
   };
   facturas.push(newFactura);
-  return newFactura; // Return the basic new factura, enrichment happens on retrieval
+
+  // Adjust Stock
+  if (newFactura.estado !== 'Cancelada') {
+    newFactura.detalles.forEach(detalle => {
+      if (newFactura.tipo === 'Venta') {
+        adjustStock(detalle.productoId, detalle.cantidad, 'decrement');
+      } else if (newFactura.tipo === 'Compra') {
+        adjustStock(detalle.productoId, detalle.cantidad, 'increment');
+      }
+    });
+  }
+  return newFactura;
 };
 
 
@@ -267,33 +293,75 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
   const index = facturas.findIndex(f => f.id === id);
   if (index === -1) return null;
 
-  const existingFactura = facturas[index];
-  
-  const updatedDetalles = updates.detalles?.map((det, idx) => {
-    const producto = productos.find(p => p.id === det.productoId);
-    const subtotal = det.cantidad * det.precioUnitario;
-    const subtotalConIva = subtotal * (1 + det.porcentajeIva / 100);
-    return {
-      ...det,
-      id: det.id || generateDetalleId(id, idx), 
-      productoNombre: producto?.nombre,
-      subtotal: parseFloat(subtotal.toFixed(2)),
-      subtotalConIva: parseFloat(subtotalConIva.toFixed(2)),
-    };
-  }) || existingFactura.detalles;
+  const originalFactura = { ...facturas[index], detalles: [...facturas[index].detalles.map(d => ({...d}))] }; // Deep copy for details
 
-  const newBaseImponible = updatedDetalles.reduce((sum, d) => sum + (d.subtotal || 0), 0);
-  const newTotalIva = updatedDetalles.reduce((sum, d) => sum + ((d.subtotalConIva || 0) - (d.subtotal || 0)), 0);
-  const newTotalFactura = newBaseImponible + newTotalIva;
-
-  facturas[index] = { 
-    ...existingFactura, 
-    ...updates, // Ensure moneda is part of updates and gets spread
-    detalles: updatedDetalles,
-    baseImponible: parseFloat(newBaseImponible.toFixed(2)),
-    totalIva: parseFloat(newTotalIva.toFixed(2)),
-    totalFactura: parseFloat(newTotalFactura.toFixed(2)),
+  // Tentatively apply updates to a copy to perform validations
+  const tentativeUpdatedFactura: Factura = {
+    ...originalFactura,
+    ...updates,
+    detalles: updates.detalles ? updates.detalles.map((d, idx) => {
+        const producto = productos.find(p => p.id === d.productoId);
+        const subtotal = d.cantidad * d.precioUnitario;
+        const subtotalConIva = subtotal * (1 + d.porcentajeIva / 100);
+        return {
+            ...d,
+            id: d.id || generateDetalleId(id, idx),
+            productoNombre: producto?.nombre,
+            subtotal: parseFloat(subtotal.toFixed(2)),
+            subtotalConIva: parseFloat(subtotalConIva.toFixed(2)),
+        };
+    }) : [...originalFactura.detalles], // if no details in updates, use original
   };
+
+  // Recalculate totals for tentative updated factura
+  const newBaseImponible = tentativeUpdatedFactura.detalles.reduce((sum, d) => sum + (d.subtotal || 0), 0);
+  const newTotalIva = tentativeUpdatedFactura.detalles.reduce((sum, d) => sum + ((d.subtotalConIva || 0) - (d.subtotal || 0)), 0);
+  tentativeUpdatedFactura.baseImponible = parseFloat(newBaseImponible.toFixed(2));
+  tentativeUpdatedFactura.totalIva = parseFloat(newTotalIva.toFixed(2));
+  tentativeUpdatedFactura.totalFactura = parseFloat((newBaseImponible + newTotalIva).toFixed(2));
+
+
+  // 1. Revert stock changes from original invoice state if it wasn't cancelled
+  if (originalFactura.estado !== 'Cancelada') {
+    originalFactura.detalles.forEach(detalle => {
+      if (originalFactura.tipo === 'Venta') {
+        adjustStock(detalle.productoId, detalle.cantidad, 'increment');
+      } else if (originalFactura.tipo === 'Compra') {
+        adjustStock(detalle.productoId, detalle.cantidad, 'decrement');
+      }
+    });
+  }
+
+  // 2. Stock Validation & Application for the new/updated invoice state
+  if (tentativeUpdatedFactura.estado !== 'Cancelada') {
+    if (tentativeUpdatedFactura.tipo === 'Venta') {
+      for (const detalle of tentativeUpdatedFactura.detalles) {
+        const producto = productos.find(p => p.id === detalle.productoId);
+        if (!producto) throw new Error(`Producto con ID ${detalle.productoId} no encontrado.`);
+        // Stock check is against current available stock (after potential reversal)
+        if (producto.stock < detalle.cantidad) {
+          // If validation fails, we must revert the stock reversal for original invoice
+          if (originalFactura.estado !== 'Cancelada') {
+            originalFactura.detalles.forEach(d => {
+              if (originalFactura.tipo === 'Venta') adjustStock(d.productoId, d.cantidad, 'decrement');
+              else if (originalFactura.tipo === 'Compra') adjustStock(d.productoId, d.cantidad, 'increment');
+            });
+          }
+          throw new Error(`No hay suficiente stock para ${producto.nombre}. Stock disponible: ${producto.stock}, Solicitado: ${detalle.cantidad}.`);
+        }
+      }
+    }
+    // Apply new stock changes
+    tentativeUpdatedFactura.detalles.forEach(detalle => {
+      if (tentativeUpdatedFactura.tipo === 'Venta') {
+        adjustStock(detalle.productoId, detalle.cantidad, 'decrement');
+      } else if (tentativeUpdatedFactura.tipo === 'Compra') {
+        adjustStock(detalle.productoId, detalle.cantidad, 'increment');
+      }
+    });
+  }
+  
+  facturas[index] = tentativeUpdatedFactura;
   
   const updatedFactura = facturas[index];
   return {
@@ -305,14 +373,29 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
 };
 
 export const deleteFactura = async (id: string): Promise<boolean> => {
-  const initialLength = facturas.length;
-  facturas = facturas.filter(f => f.id !== id);
-  return facturas.length < initialLength;
+  const index = facturas.findIndex(f => f.id === id);
+  if (index === -1) return false;
+
+  const facturaToDelete = facturas[index];
+
+  // Revert stock changes if the invoice wasn't cancelled
+  if (facturaToDelete.estado !== 'Cancelada') {
+    facturaToDelete.detalles.forEach(detalle => {
+      if (facturaToDelete.tipo === 'Venta') {
+        adjustStock(detalle.productoId, detalle.cantidad, 'increment');
+      } else if (facturaToDelete.tipo === 'Compra') {
+        adjustStock(detalle.productoId, detalle.cantidad, 'decrement');
+      }
+    });
+  }
+
+  facturas.splice(index, 1);
+  return true;
 };
 
 
 // For dashboard summaries
-export const getRecentSales = async (limit: number = 3) => {
+export const getRecentSales = async (limit: number = 3): Promise<Array<{id: string, customer: string, amount: number, date: string, currency: CurrencyCode}>> => {
   return facturas
     .filter(f => f.tipo === 'Venta')
     .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
@@ -322,10 +405,11 @@ export const getRecentSales = async (limit: number = 3) => {
       customer: f.clienteNombre || clientes.find(c => c.id === f.clienteId)?.nombre || 'N/A',
       amount: f.totalFactura,
       date: f.fecha,
+      currency: f.moneda,
     }));
 };
 
-export const getRecentOrders = async (limit: number = 2) => {
+export const getRecentOrders = async (limit: number = 2): Promise<Array<{id: string, supplier: string, amount: number, date: string, currency: CurrencyCode}>> => {
    return facturas
     .filter(f => f.tipo === 'Compra')
     .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
@@ -335,16 +419,24 @@ export const getRecentOrders = async (limit: number = 2) => {
       supplier: f.proveedorNombre || proveedores.find(p => p.id === f.proveedorId)?.nombre || 'N/A',
       amount: f.totalFactura,
       date: f.fecha,
+      currency: f.moneda,
     }));
 };
 
-export const getWarehouseStatus = async () => {
+export const getWarehouseStatus = async (): Promise<Array<{name: string, capacity: string, items: number, location: string }>> => {
   return almacenes.map(alm => ({
     name: alm.nombre,
-    capacity: `${Math.floor(Math.random() * 40) + 50}%`, // Random capacity for demo
-    items: productos.reduce((sum, p) => sum + p.stock, 0) / almacenes.length, // simplified item count
+    capacity: `${Math.floor(Math.random() * 40) + 50}%`, 
+    items: productos.reduce((sum, p) => sum + p.stock, 0) / (almacenes.length || 1), // Distribute total stock somewhat evenly for demo
     location: alm.ubicacion || 'N/A',
   }));
+};
+
+export const getTotalStockValue = async (): Promise<{totalStock: number, totalRevenue: number, salesCount: number}> => {
+    const totalStock = productos.reduce((sum, p) => sum + p.stock, 0);
+    const totalRevenue = facturas.filter(f => f.tipo === 'Venta' && f.estado === 'Pagada').reduce((sum, f) => sum + f.totalFactura, 0);
+    const salesCount = facturas.filter(f => f.tipo === 'Venta').length;
+    return { totalStock, totalRevenue, salesCount };
 };
 
     
