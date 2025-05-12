@@ -556,7 +556,7 @@
   "teamActivity": {
     "module.facturación": "Billing",
     "module.compras": "Purchases",
-    "module.inventario": "Inventory",
+    "module.productos": "Products",
     "module.clientes": "Customers",
     "module.proveedores": "Suppliers",
     "module.empleados": "Employees",
@@ -571,3 +571,4 @@
     "action.desbloquear": "unblocked"
   }
 }
+

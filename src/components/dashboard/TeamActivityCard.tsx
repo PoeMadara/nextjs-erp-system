@@ -18,7 +18,7 @@ const getModuleIcon = (module: TeamActivityLog['modulo']) => {
   switch (module) {
     case 'Facturación': return <FileText className="h-4 w-4 text-muted-foreground" />;
     case 'Compras': return <ShoppingCart className="h-4 w-4 text-muted-foreground" />;
-    case 'Inventario': return <Package className="h-4 w-4 text-muted-foreground" />;
+    case 'Productos': return <Package className="h-4 w-4 text-muted-foreground" />;
     case 'Clientes': return <Users className="h-4 w-4 text-muted-foreground" />;
     case 'Proveedores': return <Users className="h-4 w-4 text-muted-foreground" />; // Consider different icon
     case 'Empleados': return <Briefcase className="h-4 w-4 text-muted-foreground" />;
@@ -145,3 +145,4 @@ export function TeamActivityCard() {
     </Card>
   );
 }
+

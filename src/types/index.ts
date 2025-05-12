@@ -111,7 +111,7 @@ export interface WarehouseSummary {
   location: string;
 }
 
-export type TeamActivityModule = "Facturación" | "Compras" | "Inventario" | "Clientes" | "Proveedores" | "Empleados" | "Sistema";
+export type TeamActivityModule = "Facturación" | "Compras" | "Productos" | "Clientes" | "Proveedores" | "Empleados" | "Sistema";
 export type TeamActivityAction = "crear" | "modificar" | "eliminar" | "asignar" | "login" | "logout" | "bloquear" | "desbloquear";
 
 export interface TeamActivityLog {
@@ -126,3 +126,4 @@ export interface TeamActivityLog {
   entidad_id?: string; // Optional: ID of the entity affected (e.g., facturaId, clienteId)
   entidad_nombre?: string; // Optional: Name of the entity for quick display
 }
+
