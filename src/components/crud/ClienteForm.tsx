@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -17,16 +16,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Cliente } from "@/types";
 import { useTranslation } from "@/hooks/useTranslation";
 
-const clienteSchema = z.object({
-  nombre: z.string().min(2, { message: "Nombre must be at least 2 characters." }),
-  nif: z.string().regex(/^[A-Za-z0-9]{9}$/, { message: "NIF must be 9 alphanumeric characters." }),
-  email: z.string().email({ message: "Invalid email address." }),
+const makeClienteSchema = (t: (key: string, params?: Record<string, string | number>) => string) => z.object({
+  nombre: z.string().min(2, { message: t('clientes.validation.nameMinLength', { count: 2 }) }),
+  nif: z.string().regex(/^[A-Za-z0-9]{9}$/, { message: t('clientes.validation.nifRegex') }).optional().or(z.literal('')),
+  email: z.string().email({ message: t('clientes.validation.emailInvalid') }),
   direccion: z.string().optional(),
   poblacion: z.string().optional(),
   telefono: z.string().optional(),
 });
 
-export type ClienteFormValues = z.infer<typeof clienteSchema>;
+export type ClienteFormValues = z.infer<ReturnType<typeof makeClienteSchema>>;
 
 interface ClienteFormProps {
   onSubmit: (values: ClienteFormValues) => void;
@@ -42,6 +41,8 @@ export function ClienteForm({
   submitButtonText 
 }: ClienteFormProps) {
   const { t } = useTranslation();
+  const clienteSchema = makeClienteSchema(t);
+  
   const form = useForm<ClienteFormValues>({
     resolver: zodResolver(clienteSchema),
     defaultValues: {
@@ -57,7 +58,7 @@ export function ClienteForm({
   const actualSubmitButtonText = submitButtonText || (defaultValues?.id ? t('clientes.updateButton') : t('clientes.createButton'));
 
   return (
-    <Card className="max-w-2xl mx-auto shadow-lg">
+    <Card className="max-w-2xl mx-auto shadow-lg mt-6">
       <CardHeader>
         <CardTitle>{defaultValues?.id ? t('clienteForm.editTitle') : t('clienteForm.createTitle')}</CardTitle>
       </CardHeader>

@@ -42,7 +42,7 @@ export default function ClienteClientPage() {
     return clientes.filter(cliente =>
       cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cliente.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.nif.toLowerCase().includes(searchTerm.toLowerCase())
+      (cliente.nif && cliente.nif.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [clientes, searchTerm]);
 
@@ -143,7 +143,7 @@ export default function ClienteClientPage() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
+                          <span className="sr-only">{t('common.actions')}</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>

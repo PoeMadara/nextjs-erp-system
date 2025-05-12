@@ -37,12 +37,15 @@ export default function EditClientePage() {
           }
         } catch (error) {
           toast({ title: t('common.error'), description: t('clientes.failFetchDetails'), variant: "destructive" });
+          router.push("/dashboard/clientes");
         } finally {
           setIsLoading(false);
         }
       };
       fetchCliente();
     } else {
+      // Should not happen if routing is correct, but good to handle
+      toast({ title: t('common.error'), description: t('clientes.invalidId'), variant: "destructive" });
       router.push("/dashboard/clientes"); 
     }
   }, [id, router, toast, t]);
@@ -63,6 +66,7 @@ export default function EditClientePage() {
         description: t('clientes.failUpdate'),
         variant: "destructive",
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -70,20 +74,46 @@ export default function EditClientePage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title={t('clientes.editTitle')} description={t('common.loading')} />
-        <div className="max-w-2xl mx-auto">
-            <Skeleton className="h-10 w-1/2 mb-4" />
-            <Skeleton className="h-8 w-full mb-2" />
-            <Skeleton className="h-8 w-full mb-2" />
-            <Skeleton className="h-8 w-2/3 mb-6" />
-            <Skeleton className="h-10 w-24" />
+        <PageHeader 
+          title={t('clientes.editTitle')} 
+          description={t('common.loading')} 
+          actionButton={
+            <Button variant="outline" asChild disabled>
+                <Link href="/dashboard/clientes">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> {t('pageHeader.backTo', {section: t('sidebar.clientes')})}
+                </Link>
+            </Button>
+          }
+        />
+        <div className="max-w-2xl mx-auto mt-6">
+            <Skeleton className="h-12 w-1/2 mb-4" /> 
+            <div className="space-y-6">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-1/3" />
+            </div>
         </div>
       </>
     );
   }
 
   if (!cliente) {
-    return <PageHeader title={t('common.error')} description={t('clientes.notFound')} />;
+    // This case should ideally be handled by the redirect in useEffect,
+    // but as a fallback:
+    return (
+      <PageHeader 
+        title={t('common.error')} 
+        description={t('clientes.notFound')} 
+        actionButton={
+          <Button variant="outline" asChild>
+              <Link href="/dashboard/clientes">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> {t('pageHeader.backTo', {section: t('sidebar.clientes')})}
+              </Link>
+          </Button>
+        }
+      />
+    );
   }
 
   return (

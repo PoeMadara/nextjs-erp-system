@@ -1,7 +1,7 @@
 export interface Cliente {
   id: string; // Codigo
   nombre: string;
-  nif: string;
+  nif?: string; // Made optional to align with form
   direccion?: string;
   poblacion?: string;
   telefono?: string;

@@ -163,15 +163,21 @@
     "failFetch": "Failed to fetch customers.",
     "failFetchDetails": "Failed to fetch customer details.",
     "notFound": "Customer not found.",
+    "invalidId": "Invalid customer ID provided.",
     "successUpdate": "Customer {name} updated successfully.",
     "failUpdate": "Failed to update customer. Please try again.",
     "successCreate": "Customer {name} created successfully.",
-    "failCreate": "Failed to create customer. Please try again."
+    "failCreate": "Failed to create customer. Please try again.",
+    "validation": {
+      "nameMinLength": "Name must be at least {count} characters.",
+      "nifRegex": "NIF must be 9 alphanumeric characters.",
+      "emailInvalid": "Invalid email address."
+    }
   },
   "clienteForm": {
     "nameLabel": "Name",
     "namePlaceholder": "John Doe",
-    "nifLabel": "NIF",
+    "nifLabel": "NIF (Tax ID)",
     "nifPlaceholder": "12345678A",
     "emailLabel": "Email",
     "emailPlaceholder": "john.doe@example.com",

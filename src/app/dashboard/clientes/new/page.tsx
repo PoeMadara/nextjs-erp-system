@@ -31,6 +31,7 @@ export default function NewClientePage() {
         description: t('clientes.failCreate'),
         variant: "destructive",
       });
+    } finally {
       setIsSubmitting(false);
     }
   };

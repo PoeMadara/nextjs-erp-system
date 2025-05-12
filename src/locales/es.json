@@ -163,10 +163,16 @@
     "failFetch": "Error al cargar los clientes.",
     "failFetchDetails": "Error al cargar los detalles del cliente.",
     "notFound": "Cliente no encontrado.",
+    "invalidId": "ID de cliente inválido.",
     "successUpdate": "Cliente {name} actualizado correctamente.",
     "failUpdate": "Error al actualizar el cliente. Por favor, inténtalo de nuevo.",
     "successCreate": "Cliente {name} creado correctamente.",
-    "failCreate": "Error al crear el cliente. Por favor, inténtalo de nuevo."
+    "failCreate": "Error al crear el cliente. Por favor, inténtalo de nuevo.",
+    "validation": {
+      "nameMinLength": "El nombre debe tener al menos {count} caracteres.",
+      "nifRegex": "El NIF debe tener 9 caracteres alfanuméricos.",
+      "emailInvalid": "Dirección de correo electrónico inválida."
+    }
   },
   "clienteForm": {
     "nameLabel": "Nombre",
