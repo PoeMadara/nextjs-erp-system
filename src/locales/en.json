@@ -255,7 +255,7 @@
     "selectSupplier": "Select supplier",
     "employeeLabel": "Employee",
     "selectEmployee": "Select employee",
-    "warehouseLabel": "Warehouse (Optional)",
+    "warehouseLabel": "Warehouse",
     "selectWarehouse": "Select warehouse",
     "currencyLabel": "Currency",
     "selectCurrency": "Select currency",

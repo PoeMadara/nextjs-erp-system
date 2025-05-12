@@ -1,12 +1,12 @@
 
 "use client";
 import { useEffect, useState } from "react";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+// import { Textarea } from "@/components/ui/textarea"; // Not used in this form currently
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -64,6 +64,13 @@ interface FacturaFormProps {
   isSubmitting?: boolean;
   submitButtonText?: string;
 }
+
+const statusTranslationMap: Record<FacturaEstado, string> = {
+  'Pendiente': 'facturas.statusPending',
+  'Pagada': 'facturas.statusPaid',
+  'Cancelada': 'facturas.statusCancelled',
+};
+
 
 export function FacturaForm({
   onSubmit,
@@ -137,7 +144,7 @@ export function FacturaForm({
     form.setValue("baseImponible", parseFloat(base.toFixed(2)));
     form.setValue("totalIva", parseFloat(iva.toFixed(2)));
     form.setValue("totalFactura", parseFloat((base + iva).toFixed(2)));
-  }, [watchedDetalles, form.setValue, form]);
+  }, [watchedDetalles, form.setValue]);
   
   const handleProductChange = (index: number, productId: string) => {
     const product = productos.find(p => p.id === productId);
@@ -345,7 +352,7 @@ export function FacturaForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {ALL_STATUSES.map(s => <SelectItem key={s} value={s}>{t(`facturas.status${s}`)}</SelectItem>)}
+                        {ALL_STATUSES.map(s => <SelectItem key={s} value={s}>{t(statusTranslationMap[s])}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -417,7 +424,7 @@ export function FacturaForm({
                           />
                         </TableCell>
                         <TableCell className="text-right">
-                          {((form.watch(`detalles.${index}.cantidad`) || 0) * (form.watch(`detalles.${index}.precioUnitario`) || 0)).toFixed(2)}
+                          {((form.watch(`detalles.${index}.cantidad`) || 0) * (form.watch(`detalles.${index}.precioUnitario`) || 0)).toFixed(2)} {form.watch("moneda")}
                         </TableCell>
                         <TableCell>
                           <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}>

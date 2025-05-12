@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -50,13 +51,14 @@ export default function ViewFacturaPage() {
     }
   }, [id, router, toast, t]);
 
+  const statusTranslationMap: Record<Factura['estado'], string> = {
+    'Pagada': 'facturas.statusPaid',
+    'Pendiente': 'facturas.statusPending',
+    'Cancelada': 'facturas.statusCancelled',
+  };
+
   const translateStatus = (status: Factura['estado']) => {
-    switch (status) {
-      case 'Pagada': return t('facturas.statusPaid');
-      case 'Pendiente': return t('facturas.statusPending');
-      case 'Cancelada': return t('facturas.statusCancelled');
-      default: return status;
-    }
+    return t(statusTranslationMap[status] || status);
   }
 
   const translateType = (type: Factura['tipo']) => {
@@ -147,9 +149,9 @@ export default function ViewFacturaPage() {
                   <TableRow key={index}>
                     <TableCell>{item.productoNombre || item.productoId}</TableCell>
                     <TableCell className="text-center">{item.cantidad}</TableCell>
-                    <TableCell className="text-right">${item.precioUnitario.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{item.precioUnitario.toFixed(2)} {factura.moneda}</TableCell>
                     <TableCell className="text-right">{item.porcentajeIva.toFixed(2)}%</TableCell>
-                    <TableCell className="text-right">${(item.cantidad * item.precioUnitario).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{(item.cantidad * item.precioUnitario).toFixed(2)} {factura.moneda}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -162,16 +164,16 @@ export default function ViewFacturaPage() {
             <div className="col-span-2 md:col-span-1 md:col-start-3 space-y-2 text-right">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('facturas.taxableBase')}:</span>
-                <span className="font-semibold">${factura.baseImponible.toFixed(2)}</span>
+                <span className="font-semibold">{factura.baseImponible.toFixed(2)} {factura.moneda}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('facturas.totalVAT')}:</span>
-                <span className="font-semibold">${factura.totalIva.toFixed(2)}</span>
+                <span className="font-semibold">{factura.totalIva.toFixed(2)} {factura.moneda}</span>
               </div>
               <Separator />
               <div className="flex justify-between text-lg">
                 <span className="font-bold">{t('facturas.totalInvoice')}:</span>
-                <span className="font-bold text-primary">${factura.totalFactura.toFixed(2)}</span>
+                <span className="font-bold text-primary">{factura.totalFactura.toFixed(2)} {factura.moneda}</span>
               </div>
             </div>
           </div>
@@ -188,3 +190,4 @@ export default function ViewFacturaPage() {
     </>
   );
 }
+

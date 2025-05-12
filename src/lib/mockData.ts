@@ -269,14 +269,13 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
 
   const existingFactura = facturas[index];
   
-  // Process detalles: update existing, add new, ensure they have IDs
   const updatedDetalles = updates.detalles?.map((det, idx) => {
     const producto = productos.find(p => p.id === det.productoId);
     const subtotal = det.cantidad * det.precioUnitario;
     const subtotalConIva = subtotal * (1 + det.porcentajeIva / 100);
     return {
       ...det,
-      id: det.id || generateDetalleId(id, idx), // Assign new ID if missing (for new lines)
+      id: det.id || generateDetalleId(id, idx), 
       productoNombre: producto?.nombre,
       subtotal: parseFloat(subtotal.toFixed(2)),
       subtotalConIva: parseFloat(subtotalConIva.toFixed(2)),
@@ -289,14 +288,13 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
 
   facturas[index] = { 
     ...existingFactura, 
-    ...updates,
+    ...updates, // Ensure moneda is part of updates and gets spread
     detalles: updatedDetalles,
     baseImponible: parseFloat(newBaseImponible.toFixed(2)),
     totalIva: parseFloat(newTotalIva.toFixed(2)),
     totalFactura: parseFloat(newTotalFactura.toFixed(2)),
   };
   
-  // Re-enrich names after update
   const updatedFactura = facturas[index];
   return {
     ...updatedFactura,
