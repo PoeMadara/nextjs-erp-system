@@ -1,12 +1,11 @@
-
 "use client";
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { getEmpleadoByEmail, addEmpleado as addUserToMockData } from '@/lib/mockData'; // Renamed for clarity
-import type { Empleado } from '@/types'; // Empleado serves as our User type
+import { getEmpleadoByEmail, addEmpleado as addUserToMockData } from '@/lib/mockData';
+import type { Empleado } from '@/types';
 
-interface User { // Simplified User type for context, matching Empleado's relevant fields
+interface User {
   id: string;
   name: string;
   email: string;
@@ -15,9 +14,9 @@ interface User { // Simplified User type for context, matching Empleado's releva
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (email: string, name?: string, id?: string) => void; // name/id optional if fetched
+  login: (email: string, password?: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
-  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message?: string }>; // Password not stored in mock
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message?: string }>;
   isLoading: boolean;
 }
 
@@ -46,49 +45,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = useCallback(async (email: string, name?: string, id?: string) => {
-    // In a real app, you'd verify password against a backend.
-    // For mock, we might fetch user details if not provided.
-    let userData: User | undefined = user;
-
-    if (!userData || userData.email !== email) {
-        const existingUser = await getEmpleadoByEmail(email);
-        if (existingUser) {
-            userData = { id: existingUser.id, name: existingUser.nombre, email: existingUser.email };
-        } else if (name && id) { // If user explicitly passed (e.g. after registration)
-             userData = { email, name, id };
-        }
-    }
+  const login = useCallback(async (email: string, password?: string): Promise<{ success: boolean; message?: string }> => {
+    // In a real app, password would be verified here against a backend.
+    // For this mock implementation, the password argument is present for API consistency but not used for verification.
+    setIsLoading(true);
     
-    // Special case for admin@example.com for easy demo login
-    if (email === "admin@example.com" && !userData) {
-      const adminUser = await getEmpleadoByEmail("admin@example.com");
-      if (adminUser) {
-        userData = { id: adminUser.id, name: adminUser.nombre, email: adminUser.email };
-      } else {
-         // If admin not in mockData, create a temporary one for login
-        userData = { email, name: name || "Admin ERP", id: id || "EMP001" };
-      }
-    }
+    const targetEmpleado: Empleado | undefined = await getEmpleadoByEmail(email);
 
-
-    if (userData) {
+    if (targetEmpleado) {
+      const userData: User = { id: targetEmpleado.id, name: targetEmpleado.nombre, email: targetEmpleado.email };
       try {
         localStorage.setItem('erpUser', JSON.stringify(userData));
       } catch (error) {
         console.error("Failed to set user in localStorage", error);
+        setIsLoading(false);
+        return { success: false, message: "A storage error occurred. Please try again." };
       }
       setUser(userData);
       setIsAuthenticated(true);
-      router.push('/dashboard');
+      setIsLoading(false);
+      router.push('/dashboard'); // Navigate on successful login
+      return { success: true };
     } else {
-      // Handle login failure (e.g., user not found, or password mismatch in real app)
-      console.error("Login failed: User not found or credentials incorrect.");
-      // Optionally, show a toast message for login failure
+      setIsLoading(false);
+      return { success: false, message: "Invalid credentials. User not found." };
     }
-  }, [router, user]);
+  }, [router]);
 
   const logout = useCallback(() => {
+    setIsLoading(true);
     try {
       localStorage.removeItem('erpUser');
     } catch (error) {
@@ -96,24 +81,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setUser(null);
     setIsAuthenticated(false);
+    setIsLoading(false);
     router.push('/login');
   }, [router]);
 
   const register = useCallback(async (name: string, email: string, password?: string): Promise<{ success: boolean; message?: string }> => {
-    // Password is not used in this mock registration, but included for API consistency
+    setIsLoading(true);
     const existingUser = await getEmpleadoByEmail(email);
     if (existingUser) {
+      setIsLoading(false);
       return { success: false, message: "Email already registered." };
     }
     
-    // Create a new user (Empleado)
-    // The `addEmpleado` function in mockData will generate an ID
     const newUserBase: Omit<Empleado, 'id'> = { nombre: name, email };
     const newEmpleado = await addUserToMockData(newUserBase);
 
+    setIsLoading(false);
     if (newEmpleado) {
-      // Optionally log the user in directly after registration
-      // login(newEmpleado.email, newEmpleado.nombre, newEmpleado.id);
       return { success: true, message: "Registration successful! Please log in." };
     } else {
       return { success: false, message: "Failed to register user." };
@@ -124,10 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isLoading && !isAuthenticated && pathname?.startsWith('/dashboard')) {
       router.replace('/login');
     }
-    // Allow access to /register even if authenticated, then redirect from register page itself.
     const authAccessRoutes = ['/login', '/forgot-password', '/register'];
     if (!isLoading && isAuthenticated && authAccessRoutes.includes(pathname || '')) {
-       if(pathname !== '/register') { // Specific logic for /register is handled on the page itself
+       if(pathname !== '/register') { 
          router.replace('/dashboard');
        }
     }

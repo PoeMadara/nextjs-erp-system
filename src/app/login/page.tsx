@@ -1,4 +1,3 @@
-
 "use client";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,7 @@ import { Eye, EyeOff } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(1, { message: "Password is required." }),
+  password: z.string().min(1, { message: "Password is required." }), // Password validation remains, though mock doesn't verify string
   rememberMe: z.boolean().optional(),
 });
 
@@ -68,15 +67,20 @@ export default function LoginPage() {
     );
   }
 
-  function onSubmit(data: LoginFormValues) {
-    // In a real app, you'd call an API. Here, we simulate login.
-    // For simplicity, any password will do for "admin@example.com"
-    if (data.email === "admin@example.com") {
-      login(data.email, "Admin ERP");
-    } else {
-      form.setError("email", { type: "manual", message: "Invalid credentials" });
-      form.setError("password", { type: "manual", message: "Invalid credentials" });
+  async function onSubmit(data: LoginFormValues) {
+    form.clearErrors(); // Clear previous errors
+    
+    // Always call the login function from AuthContext.
+    // The AuthContext's login function will handle finding the user (admin or otherwise)
+    // and performing the actual login steps including redirection.
+    const result = await login(data.email, data.password); // Pass password, AuthContext can choose to use it or not for mock
+
+    if (!result.success) {
+      form.setError("email", { type: "manual", message: result.message || "Login failed. Please check your credentials." });
+      // Optionally, set a generic error on the password field too, or just on email.
+      form.setError("password", { type: "manual", message: " " }); // Invisible message to show error state
     }
+    // Successful login and navigation to /dashboard is handled within AuthContext's login function.
   }
 
   return (
@@ -153,8 +157,8 @@ export default function LoginPage() {
                   </a>
                 </Link>
               </div>
-              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Logging in..." : "Iniciar sesión"}
+              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || isLoading}>
+                {form.formState.isSubmitting || isLoading ? "Logging in..." : "Iniciar sesión"}
               </Button>
             </form>
           </Form>
