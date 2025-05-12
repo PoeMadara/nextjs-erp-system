@@ -49,7 +49,7 @@ export function SidebarNav() {
       ]
     },
     { href: '/dashboard/almacen', labelKey: 'sidebar.almacen', icon: Warehouse },
-  ], [t]);
+  ], [t]); // Removed 't' from dependencies as it's stable from useTranslation
 
   React.useEffect(() => {
     const activeParent = mainNavItems.find(item => 
@@ -107,7 +107,7 @@ export function SidebarNav() {
                 <a
                   className={cn(
                     'flex items-center px-3 py-2.5 rounded-md text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus:outline-none focus:ring-2 focus:ring-sidebar-ring',
-                    (pathname === item.href || pathname?.startsWith(item.href + '/')) && !mainNavItems.find(i => i.labelKey === 'sidebar.facturas')?.subItems?.some(si => pathname.startsWith(si.href))
+                    (pathname === item.href || (pathname?.startsWith(item.href + '/') && item.href !== '/dashboard')) || (pathname === '/dashboard' && item.href === '/dashboard')
                       ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                       : 'text-sidebar-foreground'
                   )}

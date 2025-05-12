@@ -16,16 +16,18 @@ export interface Proveedor {
   poblacion?: string;
   telefono?: string;
   email: string;
+  personaContacto?: string;
+  terminosPago?: string;
 }
 
-export type EmpleadoRole = 'admin' | 'sales' | 'warehouse_manager' | 'employee';
+export type EmpleadoRole = 'admin' | 'moderator' | 'user';
 
 export interface Empleado {
   id: string; // Codigo
   nombre: string;
   email: string;
   telefono?: string;
-  role?: EmpleadoRole;
+  role: EmpleadoRole; // Changed to be non-optional, with 'user' as default in mockData
   // PasswordHash is handled by backend, not stored/managed in frontend state directly for forms typically
 }
 
@@ -43,6 +45,8 @@ export interface Producto {
   precioVenta: number;
   iva: number; // Percentage e.g., 21 for 21%
   stock: number;
+  categoria?: string;
+  referencia?: string;
 }
 
 export type FacturaTipo = 'Compra' | 'Venta';

@@ -6,13 +6,14 @@ let clientes: Cliente[] = [
 ];
 
 let proveedores: Proveedor[] = [
-  { id: 'PRO001', nombre: 'Suministros Informáticos SL', nif: 'B12345678', direccion: 'Polígono Industrial La Estrella, Nave 10', poblacion: 'Argamasilla', telefono: '926555666', email: 'pedidos@suministrosinfo.com' },
-  { id: 'PRO002', nombre: 'Material Oficina Global', nif: 'A87654321', direccion: 'Calle Comercio 7', poblacion: 'Valdepeñas', telefono: '926777888', email: 'ventas@materialoficina.com' },
+  { id: 'PRO001', nombre: 'Suministros Informáticos SL', nif: 'B12345678', direccion: 'Polígono Industrial La Estrella, Nave 10', poblacion: 'Argamasilla', telefono: '926555666', email: 'pedidos@suministrosinfo.com', personaContacto: 'Carlos Duty', terminosPago: '30 días' },
+  { id: 'PRO002', nombre: 'Material Oficina Global', nif: 'A87654321', direccion: 'Calle Comercio 7', poblacion: 'Valdepeñas', telefono: '926777888', email: 'ventas@materialoficina.com', personaContacto: 'Lucía Admin', terminosPago: 'Al contado' },
 ];
 
 let empleados: Empleado[] = [
   { id: 'EMP001', nombre: 'Admin ERP', email: 'admin@example.com', telefono: '600123123', role: 'admin' },
-  { id: 'EMP002', nombre: 'Laura García', email: 'laura.garcia@example.com', telefono: '600987654', role: 'employee' },
+  { id: 'EMP002', nombre: 'Laura García', email: 'laura.garcia@example.com', telefono: '600987654', role: 'user' },
+  { id: 'EMP003', nombre: 'Carlos Moderador', email: 'carlos.mod@example.com', telefono: '600112233', role: 'moderator' },
 ];
 
 let almacenes: Almacen[] = [
@@ -21,10 +22,10 @@ let almacenes: Almacen[] = [
 ];
 
 let productos: Producto[] = [
-  { id: 'PROD001', nombre: 'Portátil Modelo X', descripcion: 'Portátil 15 pulgadas, 16GB RAM, 512GB SSD', precioCompra: 600.00, precioVenta: 899.99, iva: 21.00, stock: 50 },
-  { id: 'PROD002', nombre: 'Monitor 24 pulgadas', descripcion: 'Monitor LED Full HD', precioCompra: 120.00, precioVenta: 179.50, iva: 21.00, stock: 120 },
-  { id: 'PROD003', nombre: 'Teclado Mecánico RGB', descripcion: 'Teclado mecánico con retroiluminación RGB', precioCompra: 45.00, precioVenta: 79.90, iva: 21.00, stock: 75 },
-  { id: 'PROD004', nombre: 'Ratón Inalámbrico Ergo', descripcion: 'Ratón ergonómico inalámbrico', precioCompra: 20.00, precioVenta: 35.00, iva: 21.00, stock: 200 },
+  { id: 'PROD001', nombre: 'Portátil Modelo X', descripcion: 'Portátil 15 pulgadas, 16GB RAM, 512GB SSD', precioCompra: 600.00, precioVenta: 899.99, iva: 21.00, stock: 50, categoria: 'Electrónica', referencia: 'LX15-512'},
+  { id: 'PROD002', nombre: 'Monitor 24 pulgadas', descripcion: 'Monitor LED Full HD', precioCompra: 120.00, precioVenta: 179.50, iva: 21.00, stock: 120, categoria: 'Periféricos', referencia: 'MON24-FHD' },
+  { id: 'PROD003', nombre: 'Teclado Mecánico RGB', descripcion: 'Teclado mecánico con retroiluminación RGB', precioCompra: 45.00, precioVenta: 79.90, iva: 21.00, stock: 75, categoria: 'Periféricos', referencia: 'TEC-MEC-RGB' },
+  { id: 'PROD004', nombre: 'Ratón Inalámbrico Ergo', descripcion: 'Ratón ergonómico inalámbrico', precioCompra: 20.00, precioVenta: 35.00, iva: 21.00, stock: 200, categoria: 'Periféricos', referencia: 'RAT-ERG-WL' },
 ];
 
 let facturas: Factura[] = [
@@ -82,7 +83,7 @@ export const deleteCliente = async (id: string): Promise<boolean> => {
   return clientes.length < initialLength;
 };
 
-// Proveedores CRUD (similar structure, simplified for brevity)
+// Proveedores CRUD
 export const getProveedores = async (): Promise<Proveedor[]> => [...proveedores];
 export const getProveedorById = async (id: string): Promise<Proveedor | undefined> => proveedores.find(p => p.id === id);
 export const addProveedor = async (proveedor: Omit<Proveedor, 'id'>): Promise<Proveedor> => {
@@ -107,11 +108,11 @@ export const getEmpleados = async (): Promise<Empleado[]> => [...empleados];
 export const getEmpleadoById = async (id: string): Promise<Empleado | undefined> => empleados.find(e => e.id === id);
 export const getEmpleadoByEmail = async (email: string): Promise<Empleado | undefined> => empleados.find(e => e.email.toLowerCase() === email.toLowerCase());
 
-export const addEmpleado = async (empleado: Omit<Empleado, 'id' | 'role'> & { role?: EmpleadoRole }): Promise<Empleado> => {
+export const addEmpleado = async (empleadoData: Omit<Empleado, 'id'>): Promise<Empleado> => {
   const newEmpleado: Empleado = { 
-    ...empleado, 
+    ...empleadoData, 
     id: generateId('EMP', empleados),
-    role: empleado.role || 'employee' // Default role
+    role: empleadoData.role || 'user' // Default role if not provided
   };
   empleados.push(newEmpleado);
   return newEmpleado;

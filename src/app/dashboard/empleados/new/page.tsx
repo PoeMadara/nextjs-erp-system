@@ -1,49 +1,60 @@
 "use client";
-import { PageHeader } from '@/components/shared/PageHeader';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { ArrowLeft, Construction } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTranslation } from '@/hooks/useTranslation';
+import { EmpleadoForm, type EmpleadoFormValues } from "@/components/crud/EmpleadoForm";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { addEmpleado } from "@/lib/mockData";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function NewEmpleadoPage() {
+  const { toast } = useToast();
+  const router = useRouter();
   const { t } = useTranslation();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (values: EmpleadoFormValues) => {
+    setIsSubmitting(true);
+    try {
+      // Ensure password isn't sent if form doesn't include it / or handle as needed
+      const newEmpleado = await addEmpleado(values);
+      toast({
+        title: t('common.success'),
+        description: t('employees.successCreate', {name: newEmpleado.nombre }),
+      });
+      router.push("/dashboard/empleados");
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('employees.failCreate'),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <>
-      <PageHeader
-        title={t('employees.newTitle')}
-        description={t('employees.newDescription')}
+      <PageHeader 
+        title={t('employees.createTitle')}
+        description={t('employees.createDescription')}
         actionButton={
-          <Button variant="outline" asChild>
-            <Link href="/dashboard/empleados">
-              <ArrowLeft className="mr-2 h-4 w-4" /> {t('pageHeader.backTo', {section: t('sidebar.empleados')})}
-            </Link>
-          </Button>
+            <Button variant="outline" asChild>
+                <Link href="/dashboard/empleados">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> {t('pageHeader.backTo', { section: t('sidebar.empleados') })}
+                </Link>
+            </Button>
         }
       />
-      <Card className="mt-6 shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-primary">
-            <Construction className="h-6 w-6" />
-            {t('common.formUnderConstruction')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-lg text-muted-foreground">
-             {t('employees.underConstructionMessage')}
-          </p>
-          <div className="mt-4 p-4 bg-muted rounded-md">
-            <h3 className="font-semibold mb-2">{t('employees.formPlannedFields')}:</h3>
-            <ul className="list-disc list-inside text-sm space-y-1">
-              <li>{t('employees.fieldFullName')}</li>
-              <li>{t('employees.fieldEmail')}</li>
-              <li>{t('employees.fieldPhone')}</li>
-              <li>{t('employees.fieldPosition')}</li>
-              <li>{t('employees.fieldPermissions')}</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+      <EmpleadoForm 
+        onSubmit={handleSubmit} 
+        isSubmitting={isSubmitting} 
+        submitButtonText={t('employees.createButton')} 
+      />
     </>
   );
 }
