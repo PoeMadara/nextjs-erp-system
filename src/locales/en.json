@@ -43,7 +43,8 @@
     "registerLink": "Register",
     "contactSupport": "Contact support if you have issues logging in.",
     "loginFailed": "Login failed. Please check your credentials.",
-    "loggingIn": "Logging in..."
+    "loggingIn": "Logging in...",
+    "userBlocked": "User account is blocked. Please contact an administrator."
   },
   "registerPage": {
     "title": "Create Account",
@@ -330,6 +331,12 @@
     "roleModerator": "Moderator",
     "roleUser": "User",
     "selectRole": "Select Role",
+    "blockUser": "Block User",
+    "unblockUser": "Unblock User",
+    "successBlock": "User {name} blocked successfully.",
+    "failBlock": "Failed to block user {name}.",
+    "successUnblock": "User {name} unblocked successfully.",
+    "failUnblock": "Failed to unblock user {name}.",
     "validation": {
       "nameMinLength": "Name must be at least {count} characters.",
       "emailInvalid": "Invalid email address.",

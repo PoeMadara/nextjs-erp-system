@@ -43,7 +43,8 @@
     "registerLink": "Regístrate",
     "contactSupport": "Contacta con soporte si tienes problemas para acceder.",
     "loginFailed": "Inicio de sesión fallido. Por favor, comprueba tus credenciales.",
-    "loggingIn": "Iniciando sesión..."
+    "loggingIn": "Iniciando sesión...",
+    "userBlocked": "Cuenta de usuario bloqueada. Por favor, contacta a un administrador."
   },
   "registerPage": {
     "title": "Crear Cuenta",
@@ -330,6 +331,12 @@
     "roleModerator": "Moderador",
     "roleUser": "Usuario",
     "selectRole": "Seleccionar Rol",
+    "blockUser": "Bloquear Usuario",
+    "unblockUser": "Desbloquear Usuario",
+    "successBlock": "Usuario {name} bloqueado correctamente.",
+    "failBlock": "Error al bloquear al usuario {name}.",
+    "successUnblock": "Usuario {name} desbloqueado correctamente.",
+    "failUnblock": "Error al desbloquear al usuario {name}.",
     "validation": {
       "nameMinLength": "El nombre debe tener al menos {count} caracteres.",
       "emailInvalid": "Dirección de correo electrónico inválida.",

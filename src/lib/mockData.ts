@@ -11,9 +11,10 @@ let proveedores: Proveedor[] = [
 ];
 
 let empleados: Empleado[] = [
-  { id: 'EMP001', nombre: 'Admin ERP', email: 'admin@example.com', telefono: '600123123', role: 'admin' },
-  { id: 'EMP002', nombre: 'Laura García', email: 'laura.garcia@example.com', telefono: '600987654', role: 'user' },
-  { id: 'EMP003', nombre: 'Carlos Moderador', email: 'carlos.mod@example.com', telefono: '600112233', role: 'moderator' },
+  // Initial admin will be created on first registration.
+  // Example users for testing:
+  // { id: 'EMP002', nombre: 'Laura García', email: 'laura.garcia@example.com', telefono: '600987654', role: 'user', password: 'password123', isBlocked: false },
+  // { id: 'EMP003', nombre: 'Carlos Moderador', email: 'carlos.mod@example.com', telefono: '600112233', role: 'moderator', password: 'password123', isBlocked: false },
 ];
 
 let almacenes: Almacen[] = [
@@ -30,20 +31,20 @@ let productos: Producto[] = [
 
 let facturas: Factura[] = [
   { 
-    id: 'FV2024-00001', fecha: '2024-05-10', tipo: 'Venta', clienteId: 'CLI001', empleadoId: 'EMP001', almacenId: 'ALM001', 
+    id: 'FV2024-00001', fecha: '2024-05-10', tipo: 'Venta', clienteId: 'CLI001', empleadoId: empleados.length > 0 ? empleados[0].id : 'EMP001', almacenId: 'ALM001', 
     baseImponible: 179.50, totalIva: 37.69, totalFactura: 217.19, estado: 'Pagada',
     detalles: [
       { productoId: 'PROD002', productoNombre: 'Monitor 24 pulgadas', cantidad: 1, precioUnitario: 179.50, porcentajeIva: 21.00, subtotal: 179.50, subtotalConIva: 217.195 }
     ],
-    clienteNombre: 'Juan Pérez', empleadoNombre: 'Admin ERP'
+    clienteNombre: 'Juan Pérez', empleadoNombre: empleados.length > 0 ? empleados[0].nombre : 'Admin ERP'
   },
   { 
-    id: 'FC2024-00001', fecha: '2024-06-15', tipo: 'Compra', proveedorId: 'PRO001', empleadoId: 'EMP002', almacenId: 'ALM001', 
+    id: 'FC2024-00001', fecha: '2024-06-15', tipo: 'Compra', proveedorId: 'PRO001', empleadoId: empleados.length > 1 ? empleados[1].id : 'EMP002', almacenId: 'ALM001', 
     baseImponible: 600.00, totalIva: 126.00, totalFactura: 726.00, estado: 'Pendiente',
     detalles: [
       { productoId: 'PROD001', productoNombre: 'Portátil Modelo X', cantidad: 1, precioUnitario: 600.00, porcentajeIva: 21.00, subtotal: 600.00, subtotalConIva: 726.00 }
     ],
-    proveedorNombre: 'Suministros Informáticos SL', empleadoNombre: 'Laura García'
+    proveedorNombre: 'Suministros Informáticos SL', empleadoNombre: empleados.length > 1 ? empleados[1].nombre : 'Laura García'
   },
 ];
 
@@ -52,7 +53,6 @@ let facturas: Factura[] = [
 const generateId = (prefix: string, currentItems: {id: string}[]) => {
   const maxNum = currentItems.reduce((max, item) => {
     const numStr = item.id.replace(prefix, '');
-    // Ensure numStr is not empty and contains only digits before parsing
     if (numStr && /^\d+$/.test(numStr)) {
         const num = parseInt(numStr, 10);
         return Math.max(max, num);
@@ -108,21 +108,36 @@ export const getEmpleados = async (): Promise<Empleado[]> => [...empleados];
 export const getEmpleadoById = async (id: string): Promise<Empleado | undefined> => empleados.find(e => e.id === id);
 export const getEmpleadoByEmail = async (email: string): Promise<Empleado | undefined> => empleados.find(e => e.email.toLowerCase() === email.toLowerCase());
 
-export const addEmpleado = async (empleadoData: Omit<Empleado, 'id'>): Promise<Empleado> => {
+export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'role' | 'isBlocked'> & {password?: string}): Promise<Empleado> => {
+  const role: EmpleadoRole = empleados.length === 0 ? 'admin' : 'user';
   const newEmpleado: Empleado = { 
     ...empleadoData, 
     id: generateId('EMP', empleados),
-    role: empleadoData.role || 'user' // Default role if not provided
+    role: role,
+    isBlocked: false, // New users are not blocked by default
+    // In a real app, hash the password here
+    password: empleadoData.password || 'password123' // Store password for mock login
   };
   empleados.push(newEmpleado);
   return newEmpleado;
 };
-export const updateEmpleado = async (id: string, updates: Partial<Empleado>): Promise<Empleado | null> => {
+
+export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado, 'password'>>): Promise<Empleado | null> => {
   const index = empleados.findIndex(e => e.id === id);
   if (index === -1) return null;
-  empleados[index] = { ...empleados[index], ...updates };
+  // Prevent password from being updated directly through this generic update function
+  const { password, ...restOfUpdates } = updates as any; 
+  empleados[index] = { ...empleados[index], ...restOfUpdates };
   return empleados[index];
 };
+
+export const updateEmpleadoBlockedStatus = async (id: string, isBlocked: boolean): Promise<Empleado | null> => {
+  const index = empleados.findIndex(e => e.id === id);
+  if (index === -1) return null;
+  empleados[index].isBlocked = isBlocked;
+  return empleados[index];
+}
+
 export const deleteEmpleado = async (id: string): Promise<boolean> => {
     const initialLength = empleados.length;
     empleados = empleados.filter(e => e.id !== id);

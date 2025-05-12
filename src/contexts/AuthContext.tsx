@@ -3,13 +3,14 @@ import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { getEmpleadoByEmail, addEmpleado as addUserToMockData } from '@/lib/mockData';
-import type { Empleado } from '@/types';
-import { useTranslation } from '@/hooks/useTranslation'; // Import useTranslation
+import type { Empleado, EmpleadoRole } from '@/types';
+import { useTranslation } from '@/hooks/useTranslation'; 
 
 interface User {
   id: string;
   name: string;
   email: string;
+  role: EmpleadoRole;
 }
 
 interface AuthContextType {
@@ -29,7 +30,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  // const { t } = useTranslation(); // Cannot use useTranslation here directly as AuthProvider wraps LanguageProvider
+  // t will be initialized after LanguageProvider is mounted
+  const { t } = useTranslation(); 
+
 
   useEffect(() => {
     setIsLoading(true);
@@ -53,14 +56,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const targetEmpleado: Empleado | undefined = await getEmpleadoByEmail(email);
 
     if (targetEmpleado) {
-      const userData: User = { id: targetEmpleado.id, name: targetEmpleado.nombre, email: targetEmpleado.email };
+      // In a real app, you would compare hashed passwords. Here, we simulate.
+      if (targetEmpleado.password && password !== targetEmpleado.password) {
+          setIsLoading(false);
+          return { success: false, message: t('loginPage.loginFailed') };
+      }
+      
+      if (targetEmpleado.isBlocked) {
+        setIsLoading(false);
+        return { success: false, message: t('loginPage.userBlocked') };
+      }
+
+      const userData: User = { 
+        id: targetEmpleado.id, 
+        name: targetEmpleado.nombre, 
+        email: targetEmpleado.email,
+        role: targetEmpleado.role 
+      };
       try {
         localStorage.setItem('erpUser', JSON.stringify(userData));
       } catch (error) {
         console.error("Failed to set user in localStorage", error);
         setIsLoading(false);
-        // Note: Cannot use t() here directly for "A storage error occurred."
-        return { success: false, message: "A storage error occurred. Please try again." };
+        return { success: false, message: t('common.error') }; // Generic storage error
       }
       setUser(userData);
       setIsAuthenticated(true);
@@ -69,10 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: true };
     } else {
       setIsLoading(false);
-      // Note: Cannot use t() here directly
-      return { success: false, message: "Invalid credentials. User not found." };
+      return { success: false, message: t('loginPage.loginFailed') };
     }
-  }, [router]);
+  }, [router, t]);
 
   const logout = useCallback(() => {
     setIsLoading(true);
@@ -92,22 +109,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const existingUser = await getEmpleadoByEmail(email);
     if (existingUser) {
       setIsLoading(false);
-      // Note: Cannot use t() here directly
-      return { success: false, message: "Email already registered." };
+      return { success: false, message: t('registerPage.emailExistsError') };
     }
     
-    const newUserBase: Omit<Empleado, 'id'> = { nombre: name, email };
-    const newEmpleado = await addUserToMockData(newUserBase);
+    // Pass password to addEmpleado for mock storage
+    const newEmpleado = await addUserToMockData({ nombre: name, email, password });
 
     setIsLoading(false);
     if (newEmpleado) {
-      // Note: Cannot use t() here directly
-      return { success: true, message: "Registration successful! Please log in." };
+      return { success: true, message: t('registerPage.registrationSuccessMessage') };
     } else {
-      // Note: Cannot use t() here directly
-      return { success: false, message: "Failed to register user." };
+      return { success: false, message: t('registerPage.genericError') };
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && pathname?.startsWith('/dashboard')) {
@@ -115,7 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const authAccessRoutes = ['/login', '/forgot-password', '/register'];
     if (!isLoading && isAuthenticated && authAccessRoutes.includes(pathname || '')) {
-       if(pathname !== '/register') { 
+       // Allow staying on /register if registration was just successful to see the toast
+       // A more robust solution might involve a query param or state.
+       if(pathname !== '/register' || (pathname === '/register' && !router.asPath.includes('?fromSuccess=true')) ) { 
          router.replace('/dashboard');
        }
     }

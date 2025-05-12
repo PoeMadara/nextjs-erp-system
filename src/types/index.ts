@@ -27,8 +27,9 @@ export interface Empleado {
   nombre: string;
   email: string;
   telefono?: string;
-  role: EmpleadoRole; // Changed to be non-optional, with 'user' as default in mockData
-  // PasswordHash is handled by backend, not stored/managed in frontend state directly for forms typically
+  role: EmpleadoRole;
+  password?: string; // For mock authentication simulation
+  isBlocked?: boolean; // For blocking user access
 }
 
 export interface Almacen {
@@ -73,7 +74,6 @@ export interface Factura {
   almacenId?: string;
   baseImponible: number;
   totalIva: number;
-  totalFactura: number;
   estado: FacturaEstado;
   detalles: DetalleFactura[];
   // For display purposes
