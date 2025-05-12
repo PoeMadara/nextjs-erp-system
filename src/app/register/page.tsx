@@ -1,4 +1,3 @@
-
 "use client";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -11,8 +10,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect, useState, useContext }
-from 'react';
+import { useEffect, useState, useContext, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Globe } from 'lucide-react';
@@ -41,7 +39,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(makeRegisterSchema(t)),
     defaultValues: {
@@ -53,10 +50,19 @@ export default function RegisterPage() {
     },
   });
 
-   // Update resolver if language changes for validation messages
+  const isMounted = useRef(false);
+
   useEffect(() => {
-    form.trigger(); // Re-validate form to update messages if language changed
-  }, [t, form]);
+    if (isMounted.current) {
+      // This effect runs when 't' changes (language changes), after the initial mount.
+      // If there are any errors currently displayed, re-trigger validation to update their messages.
+      if (Object.keys(form.formState.errors).length > 0) {
+        form.trigger();
+      }
+    } else {
+      isMounted.current = true;
+    }
+  }, [t, form.trigger, form.formState.errors]);
 
 
   useEffect(() => {
@@ -210,7 +216,7 @@ export default function RegisterPage() {
                     <FormLabel>{t('registerPage.languageLabel')}</FormLabel>
                     <Select onValueChange={(value) => {
                         field.onChange(value);
-                        setContextLanguage(value as Locale); // Update context language immediately
+                        setContextLanguage(value as Locale); 
                       }} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
