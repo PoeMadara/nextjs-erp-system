@@ -5,6 +5,8 @@
     "confirmPassword": "Confirm Password",
     "name": "Name",
     "fullName": "Full Name",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. John Doe",
     "submit": "Submit",
     "saving": "Saving...",
     "loading": "Loading...",
@@ -51,7 +53,17 @@
     "registrationFailedTitle": "Registration Failed",
     "emailExistsError": "Email already registered.",
     "genericError": "An error occurred. Please try again.",
-    "registering": "Registering..."
+    "registering": "Registering...",
+    "nameMinLength": "Name must be at least {count} characters.",
+    "emailInvalid": "Please enter a valid email address.",
+    "emailRequired": "Email is required.",
+    "passwordMinLength": "Password must be at least {count} characters.",
+    "passwordsNoMatch": "Passwords do not match.",
+    "languageLabel": "Preferred Language",
+    "selectLanguage": "Select language",
+    "languageEnglish": "English",
+    "languageSpanish": "Spanish",
+    "languageRequired": "Language selection is required."
   },
   "forgotPasswordPage": {
     "title": "Forgot Password?",

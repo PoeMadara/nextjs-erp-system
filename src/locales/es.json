@@ -5,6 +5,8 @@
     "confirmPassword": "Confirmar Contraseña",
     "name": "Nombre",
     "fullName": "Nombre Completo",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Ej: Juan Pérez",
     "submit": "Enviar",
     "saving": "Guardando...",
     "loading": "Cargando...",
@@ -51,7 +53,17 @@
     "registrationFailedTitle": "Registro Fallido",
     "emailExistsError": "El correo electrónico ya está registrado.",
     "genericError": "Ocurrió un error. Por favor, inténtalo de nuevo.",
-    "registering": "Registrando..."
+    "registering": "Registrando...",
+    "nameMinLength": "El nombre debe tener al menos {count} caracteres.",
+    "emailInvalid": "Por favor, introduce una dirección de correo electrónico válida.",
+    "emailRequired": "El correo electrónico es obligatorio.",
+    "passwordMinLength": "La contraseña debe tener al menos {count} caracteres.",
+    "passwordsNoMatch": "Las contraseñas no coinciden.",
+    "languageLabel": "Idioma Preferido",
+    "selectLanguage": "Seleccionar idioma",
+    "languageEnglish": "Inglés",
+    "languageSpanish": "Español",
+    "languageRequired": "La selección de idioma es obligatoria."
   },
   "forgotPasswordPage": {
     "title": "¿Olvidaste tu Contraseña?",

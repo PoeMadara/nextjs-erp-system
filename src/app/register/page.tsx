@@ -1,3 +1,4 @@
+tsx
 "use client";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -9,41 +10,54 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useEffect, useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect, useState, useContext }
+from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Globe } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { LanguageContext, type Locale } from '@/contexts/LanguageContext';
 
-const registerSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }).min(1, {message: "Email is required."}),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
-  confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters." }),
+const makeRegisterSchema = (t: (key: string, params?: Record<string, string | number>) => string) => z.object({
+  name: z.string().min(2, { message: t('registerPage.nameMinLength', { count: 2 }) }),
+  email: z.string().email({ message: t('registerPage.emailInvalid') }).min(1, {message: t('registerPage.emailRequired')}),
+  password: z.string().min(6, { message: t('registerPage.passwordMinLength', { count: 6 }) }),
+  confirmPassword: z.string().min(6, { message: t('registerPage.passwordMinLength', { count: 6 }) }),
+  language: z.enum(['en', 'es'], { required_error: t('registerPage.languageRequired') })
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match.",
+  message: t('registerPage.passwordsNoMatch'),
   path: ["confirmPassword"],
 });
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
+type RegisterFormValues = z.infer<ReturnType<typeof makeRegisterSchema>>;
 
 export default function RegisterPage() {
   const { register, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, language: currentContextLanguage, setLanguage: setContextLanguage } = useTranslation();
+  const languageContext = useContext(LanguageContext);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
 
   const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(makeRegisterSchema(t)),
     defaultValues: {
       name: "",
       email: "",
       password: "",
       confirmPassword: "",
+      language: currentContextLanguage,
     },
   });
+
+   // Update resolver if language changes for validation messages
+  useEffect(() => {
+    form.trigger(); // Re-validate form to update messages if language changed
+  }, [t, form]);
+
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -78,6 +92,9 @@ export default function RegisterPage() {
   async function onSubmit(data: RegisterFormValues) {
     const result = await register(data.name, data.email, data.password);
     if (result.success) {
+      if (languageContext) {
+        languageContext.setLanguage(data.language as Locale);
+      }
       toast({
         title: t('registerPage.registrationSuccessTitle'),
         description: t('registerPage.registrationSuccessMessage'),
@@ -116,9 +133,9 @@ export default function RegisterPage() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('common.fullName')}</FormLabel>
+                    <FormLabel>{t('common.nameLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t('common.namePlaceholder', {defaultValue: 'John Doe'})} {...field} />
+                      <Input placeholder={t('common.namePlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -181,6 +198,31 @@ export default function RegisterPage() {
                         </Button>
                       </div>
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="language"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('registerPage.languageLabel')}</FormLabel>
+                    <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        setContextLanguage(value as Locale); // Update context language immediately
+                      }} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                           <Globe className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder={t('registerPage.selectLanguage')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="en">{t('registerPage.languageEnglish')}</SelectItem>
+                        <SelectItem value="es">{t('registerPage.languageSpanish')}</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
