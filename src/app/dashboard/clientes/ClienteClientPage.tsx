@@ -12,6 +12,7 @@ import type { Cliente } from '@/types';
 import { getClientes, deleteCliente as deleteClienteApi } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function ClienteClientPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -20,6 +21,7 @@ export default function ClienteClientPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => {
     async function fetchClientes() {
@@ -28,13 +30,13 @@ export default function ClienteClientPage() {
         const data = await getClientes();
         setClientes(data);
       } catch (error) {
-        toast({ title: "Error", description: "Failed to fetch clientes.", variant: "destructive" });
+        toast({ title: t('common.error'), description: t('clientes.failFetch'), variant: "destructive" });
       } finally {
         setIsLoading(false);
       }
     }
     fetchClientes();
-  }, [toast]);
+  }, [toast, t]);
 
   const filteredClientes = useMemo(() => {
     return clientes.filter(cliente =>
@@ -50,9 +52,9 @@ export default function ClienteClientPage() {
     try {
       await deleteClienteApi(clienteToDelete.id);
       setClientes(prev => prev.filter(c => c.id !== clienteToDelete.id));
-      toast({ title: "Success", description: `Cliente ${clienteToDelete.nombre} deleted successfully.` });
+      toast({ title: t('common.success'), description: t('clientes.successDelete', { name: clienteToDelete.nombre }) });
     } catch (error) {
-      toast({ title: "Error", description: `Failed to delete cliente ${clienteToDelete.nombre}.`, variant: "destructive" });
+      toast({ title: t('common.error'), description: t('clientes.failDelete', { name: clienteToDelete.nombre }), variant: "destructive" });
     } finally {
       setIsDeleting(false);
       setClienteToDelete(null);
@@ -66,7 +68,7 @@ export default function ClienteClientPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Clientes" description="Manage your customer records." actionButton={<Skeleton className="h-10 w-32" />} />
+        <PageHeader title={t('clientes.title')} description={t('common.loading')} actionButton={<Skeleton className="h-10 w-32" />} />
         <div className="mb-4">
           <Skeleton className="h-10 w-full max-w-sm" />
         </div>
@@ -74,13 +76,13 @@ export default function ClienteClientPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                {[...Array(5)].map((_, i) => <TableHead key={i}><Skeleton className="h-6 w-24" /></TableHead>)}
+                {[...Array(6)].map((_, i) => <TableHead key={i}><Skeleton className="h-6 w-24" /></TableHead>)}
               </TableRow>
             </TableHeader>
             <TableBody>
               {[...Array(3)].map((_, i) => (
                 <TableRow key={i}>
-                  {[...Array(5)].map((_, j) => <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>)}
+                  {[...Array(6)].map((_, j) => <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>)}
                 </TableRow>
               ))}
             </TableBody>
@@ -94,12 +96,12 @@ export default function ClienteClientPage() {
   return (
     <>
       <PageHeader
-        title="Clientes"
-        description="Manage your customer records."
+        title={t('clientes.title')}
+        description={t('clientes.description')}
         actionButton={
           <Button asChild className="shadow-sm">
             <Link href="/dashboard/clientes/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Add New Cliente
+              <PlusCircle className="mr-2 h-4 w-4" /> {t('clientes.addNewClienteButton')}
             </Link>
           </Button>
         }
@@ -109,7 +111,7 @@ export default function ClienteClientPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search clientes by name, email, or NIF..."
+          placeholder={t('clientes.searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full max-w-md pl-10 shadow-sm"
@@ -120,12 +122,12 @@ export default function ClienteClientPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Código</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>NIF</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Teléfono</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('clientes.tableId')}</TableHead>
+              <TableHead>{t('clientes.tableName')}</TableHead>
+              <TableHead>{t('clientes.tableNif')}</TableHead>
+              <TableHead>{t('clientes.tableEmail')}</TableHead>
+              <TableHead>{t('clientes.tablePhone')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -148,11 +150,11 @@ export default function ClienteClientPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
                           <Link href={`/dashboard/clientes/${cliente.id}/edit`}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit
+                            <Edit className="mr-2 h-4 w-4" /> {t('common.edit')}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openDeleteDialog(cliente)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          <Trash2 className="mr-2 h-4 w-4" /> {t('common.delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -162,7 +164,7 @@ export default function ClienteClientPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  No clientes found.
+                  {t('clientes.noClientesFound')}
                 </TableCell>
               </TableRow>
             )}
@@ -173,16 +175,15 @@ export default function ClienteClientPage() {
       <AlertDialog open={!!clienteToDelete} onOpenChange={() => setClienteToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('clientes.deleteDialogTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the cliente
-              "{clienteToDelete?.nombre}" and all associated data.
+              {t('clientes.deleteDialogDescription', { name: clienteToDelete?.nombre })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteCliente} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? t('common.deleting') : t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

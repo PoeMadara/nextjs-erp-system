@@ -3,21 +3,23 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Construction } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export const metadata = {
-  title: 'Almacén - ERP Simplified',
+  title: 'Almacén - ERP System',
 };
 
 export default function AlmacenPage() {
+  const { t } = useTranslation();
   return (
     <>
       <PageHeader
-        title="Almacén"
-        description="Manage your warehouses and stock locations."
+        title={t('warehouse.title')}
+        description={t('warehouse.description')}
         actionButton={
           <Button asChild className="shadow-sm" disabled>
             <Link href="/dashboard/almacen/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Add New Almacén
+              <PlusCircle className="mr-2 h-4 w-4" /> {t('warehouse.addNewWarehouseButton')}
             </Link>
           </Button>
         }
@@ -26,20 +28,20 @@ export default function AlmacenPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary">
             <Construction className="h-6 w-6" />
-            Under Construction
+            {t('common.underConstruction')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-lg text-muted-foreground">
-            The Almacén management section is currently under development.
+            {t('warehouse.underConstructionMessage')}
           </p>
           <div className="mt-4 p-4 bg-muted rounded-md">
-            <h3 className="font-semibold mb-2">Planned Features:</h3>
+            <h3 className="font-semibold mb-2">{t('common.plannedFeatures')}:</h3>
             <ul className="list-disc list-inside text-sm space-y-1">
-              <li>Define multiple warehouses and their locations.</li>
-              <li>Manage stock levels per warehouse.</li>
-              <li>Track stock transfers between warehouses.</li>
-              <li>View inventory reports by warehouse.</li>
+              <li>{t('warehouse.feature1')}</li>
+              <li>{t('warehouse.feature2')}</li>
+              <li>{t('warehouse.feature3')}</li>
+              <li>{t('warehouse.feature4')}</li>
             </ul>
           </div>
         </CardContent>

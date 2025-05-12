@@ -3,21 +3,23 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Construction } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export const metadata = {
-  title: 'Facturas de Venta - ERP Simplified',
+  title: 'Facturas de Venta - ERP System',
 };
 
 export default function FacturasVentasPage() {
+  const { t } = useTranslation();
   return (
     <>
       <PageHeader
-        title="Facturas de Venta"
-        description="Manage your sales invoices."
+        title={t('salesInvoices.title')}
+        description={t('salesInvoices.description')}
         actionButton={
           <Button asChild className="shadow-sm" disabled>
             <Link href="/dashboard/facturas/new?tipo=venta">
-              <PlusCircle className="mr-2 h-4 w-4" /> New Sales Invoice
+              <PlusCircle className="mr-2 h-4 w-4" /> {t('salesInvoices.newSalesInvoiceButton')}
             </Link>
           </Button>
         }
@@ -26,12 +28,12 @@ export default function FacturasVentasPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary">
             <Construction className="h-6 w-6" />
-            Under Construction
+            {t('common.underConstruction')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-lg text-muted-foreground">
-            The Sales Invoices section is currently under development. You can view all invoices in the main "Facturas" section.
+            {t('salesInvoices.underConstructionMessage')}
           </p>
         </CardContent>
       </Card>

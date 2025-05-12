@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Cliente } from "@/types";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const clienteSchema = z.object({
   nombre: z.string().min(2, { message: "Nombre must be at least 2 characters." }),
@@ -38,8 +39,9 @@ export function ClienteForm({
   onSubmit, 
   defaultValues, 
   isSubmitting = false, 
-  submitButtonText = "Save Cliente" 
+  submitButtonText 
 }: ClienteFormProps) {
+  const { t } = useTranslation();
   const form = useForm<ClienteFormValues>({
     resolver: zodResolver(clienteSchema),
     defaultValues: {
@@ -52,10 +54,12 @@ export function ClienteForm({
     },
   });
 
+  const actualSubmitButtonText = submitButtonText || (defaultValues?.id ? t('clientes.updateButton') : t('clientes.createButton'));
+
   return (
     <Card className="max-w-2xl mx-auto shadow-lg">
       <CardHeader>
-        <CardTitle>{defaultValues?.id ? "Edit Cliente" : "Create New Cliente"}</CardTitle>
+        <CardTitle>{defaultValues?.id ? t('clienteForm.editTitle') : t('clienteForm.createTitle')}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -66,9 +70,9 @@ export function ClienteForm({
                 name="nombre"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombre</FormLabel>
+                    <FormLabel>{t('clienteForm.nameLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Juan Pérez" {...field} />
+                      <Input placeholder={t('clienteForm.namePlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -79,9 +83,9 @@ export function ClienteForm({
                 name="nif"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>NIF</FormLabel>
+                    <FormLabel>{t('clienteForm.nifLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="12345678A" {...field} />
+                      <Input placeholder={t('clienteForm.nifPlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -93,9 +97,9 @@ export function ClienteForm({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('clienteForm.emailLabel')}</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="juan.perez@example.com" {...field} />
+                    <Input type="email" placeholder={t('clienteForm.emailPlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -106,9 +110,9 @@ export function ClienteForm({
               name="direccion"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Dirección (Optional)</FormLabel>
+                  <FormLabel>{t('clienteForm.addressLabel')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Calle Falsa 123" {...field} />
+                    <Input placeholder={t('clienteForm.addressPlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -120,9 +124,9 @@ export function ClienteForm({
                 name="poblacion"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Población (Optional)</FormLabel>
+                    <FormLabel>{t('clienteForm.cityLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ciudad Real" {...field} />
+                      <Input placeholder={t('clienteForm.cityPlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -133,9 +137,9 @@ export function ClienteForm({
                 name="telefono"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Teléfono (Optional)</FormLabel>
+                    <FormLabel>{t('clienteForm.phoneLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="926123456" {...field} />
+                      <Input placeholder={t('clienteForm.phonePlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -143,7 +147,7 @@ export function ClienteForm({
               />
             </div>
             <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : submitButtonText}
+              {isSubmitting ? t('common.saving') : actualSubmitButtonText}
             </Button>
           </form>
         </Form>

@@ -10,11 +10,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function EditClientePage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,20 +32,20 @@ export default function EditClientePage() {
           if (data) {
             setCliente(data);
           } else {
-            toast({ title: "Error", description: "Cliente not found.", variant: "destructive" });
+            toast({ title: t('common.error'), description: t('clientes.notFound'), variant: "destructive" });
             router.push("/dashboard/clientes");
           }
         } catch (error) {
-          toast({ title: "Error", description: "Failed to fetch cliente details.", variant: "destructive" });
+          toast({ title: t('common.error'), description: t('clientes.failFetchDetails'), variant: "destructive" });
         } finally {
           setIsLoading(false);
         }
       };
       fetchCliente();
     } else {
-      router.push("/dashboard/clientes"); // Should not happen if route is matched correctly
+      router.push("/dashboard/clientes"); 
     }
-  }, [id, router, toast]);
+  }, [id, router, toast, t]);
 
   const handleSubmit = async (values: ClienteFormValues) => {
     if (!cliente) return;
@@ -51,14 +53,14 @@ export default function EditClientePage() {
     try {
       await updateCliente(cliente.id, values);
       toast({
-        title: "Success!",
-        description: `Cliente ${values.nombre} updated successfully.`,
+        title: t('common.success'),
+        description: t('clientes.successUpdate', { name: values.nombre }),
       });
       router.push("/dashboard/clientes");
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to update cliente. Please try again.",
+        title: t('common.error'),
+        description: t('clientes.failUpdate'),
         variant: "destructive",
       });
       setIsSubmitting(false);
@@ -68,7 +70,7 @@ export default function EditClientePage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Edit Cliente" description="Loading cliente details..." />
+        <PageHeader title={t('clientes.editTitle')} description={t('common.loading')} />
         <div className="max-w-2xl mx-auto">
             <Skeleton className="h-10 w-1/2 mb-4" />
             <Skeleton className="h-8 w-full mb-2" />
@@ -81,19 +83,18 @@ export default function EditClientePage() {
   }
 
   if (!cliente) {
-    // This case should ideally be handled by redirect in useEffect, but as a fallback:
-    return <PageHeader title="Error" description="Cliente not found or failed to load." />;
+    return <PageHeader title={t('common.error')} description={t('clientes.notFound')} />;
   }
 
   return (
     <>
       <PageHeader 
-        title="Edit Cliente" 
-        description={`Update details for ${cliente.nombre}.`}
+        title={t('clientes.editTitle')}
+        description={t('clientes.editDescription', { name: cliente.nombre })}
         actionButton={
           <Button variant="outline" asChild>
               <Link href="/dashboard/clientes">
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Clientes
+                  <ArrowLeft className="mr-2 h-4 w-4" /> {t('pageHeader.backTo', {section: t('sidebar.clientes')})}
               </Link>
           </Button>
         }
@@ -102,7 +103,7 @@ export default function EditClientePage() {
         onSubmit={handleSubmit} 
         defaultValues={cliente} 
         isSubmitting={isSubmitting}
-        submitButtonText="Update Cliente"
+        submitButtonText={t('clientes.updateButton')}
       />
     </>
   );

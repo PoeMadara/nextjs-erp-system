@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { useRouter, usePathname } from 'next/navigation';
 import { getEmpleadoByEmail, addEmpleado as addUserToMockData } from '@/lib/mockData';
 import type { Empleado } from '@/types';
+import { useTranslation } from '@/hooks/useTranslation'; // Import useTranslation
 
 interface User {
   id: string;
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  // const { t } = useTranslation(); // Cannot use useTranslation here directly as AuthProvider wraps LanguageProvider
 
   useEffect(() => {
     setIsLoading(true);
@@ -46,8 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password?: string): Promise<{ success: boolean; message?: string }> => {
-    // In a real app, password would be verified here against a backend.
-    // For this mock implementation, the password argument is present for API consistency but not used for verification.
     setIsLoading(true);
     
     const targetEmpleado: Empleado | undefined = await getEmpleadoByEmail(email);
@@ -59,15 +59,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error("Failed to set user in localStorage", error);
         setIsLoading(false);
+        // Note: Cannot use t() here directly for "A storage error occurred."
         return { success: false, message: "A storage error occurred. Please try again." };
       }
       setUser(userData);
       setIsAuthenticated(true);
       setIsLoading(false);
-      router.push('/dashboard'); // Navigate on successful login
+      router.push('/dashboard'); 
       return { success: true };
     } else {
       setIsLoading(false);
+      // Note: Cannot use t() here directly
       return { success: false, message: "Invalid credentials. User not found." };
     }
   }, [router]);
@@ -90,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const existingUser = await getEmpleadoByEmail(email);
     if (existingUser) {
       setIsLoading(false);
+      // Note: Cannot use t() here directly
       return { success: false, message: "Email already registered." };
     }
     
@@ -98,8 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(false);
     if (newEmpleado) {
+      // Note: Cannot use t() here directly
       return { success: true, message: "Registration successful! Please log in." };
     } else {
+      // Note: Cannot use t() here directly
       return { success: false, message: "Failed to register user." };
     }
   }, []);

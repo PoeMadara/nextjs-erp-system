@@ -1,4 +1,3 @@
-
 "use client";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -22,7 +22,7 @@ const registerSchema = z.object({
   confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters." }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match.",
-  path: ["confirmPassword"], // Path to the field to show the error on
+  path: ["confirmPassword"],
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -31,6 +31,7 @@ export default function RegisterPage() {
   const { register, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -51,7 +52,7 @@ export default function RegisterPage() {
   }, [isLoading, isAuthenticated, router]);
 
   if (isLoading || (!isLoading && isAuthenticated)) {
-    return ( // Basic loading skeleton for register page
+    return ( 
       <div className="flex items-center justify-center min-h-screen login-gradient-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="items-center text-center">
@@ -78,18 +79,21 @@ export default function RegisterPage() {
     const result = await register(data.name, data.email, data.password);
     if (result.success) {
       toast({
-        title: "Registration Successful!",
-        description: "You can now log in with your new account.",
+        title: t('registerPage.registrationSuccessTitle'),
+        description: t('registerPage.registrationSuccessMessage'),
       });
       router.push('/login');
     } else {
-      toast({
-        title: "Registration Failed",
-        description: result.message || "An error occurred. Please try again.",
-        variant: "destructive",
-      });
-      if (result.message?.toLowerCase().includes('email')) {
-        form.setError("email", { type: "manual", message: result.message });
+      let errorMessage = result.message || t('registerPage.genericError');
+      if (result.message?.toLowerCase().includes('email') || result.message?.toLowerCase().includes('correo')) {
+           errorMessage = t('registerPage.emailExistsError');
+           form.setError("email", { type: "manual", message: errorMessage });
+      } else {
+        toast({
+            title: t('registerPage.registrationFailedTitle'),
+            description: errorMessage,
+            variant: "destructive",
+        });
       }
     }
   }
@@ -101,8 +105,8 @@ export default function RegisterPage() {
           <div className="mb-4 flex justify-center">
             <ErpLogo className="h-10" />
           </div>
-          <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-          <CardDescription>Enter your details to register for the ERP system.</CardDescription>
+          <CardTitle className="text-2xl font-bold">{t('registerPage.title')}</CardTitle>
+          <CardDescription>{t('registerPage.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -112,9 +116,9 @@ export default function RegisterPage() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel>{t('common.fullName')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} />
+                      <Input placeholder={t('common.namePlaceholder', {defaultValue: 'John Doe'})} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -125,7 +129,7 @@ export default function RegisterPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('common.email')}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="you@example.com" {...field} />
                     </FormControl>
@@ -138,7 +142,7 @@ export default function RegisterPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t('common.password')}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} />
@@ -162,7 +166,7 @@ export default function RegisterPage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel>{t('common.confirmPassword')}</FormLabel>
                     <FormControl>
                        <div className="relative">
                         <Input type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" {...field} />
@@ -182,17 +186,17 @@ export default function RegisterPage() {
                 )}
               />
               <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Registering..." : "Create Account"}
+                {form.formState.isSubmitting ? t('registerPage.registering') : t('registerPage.registerButton')}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="text-center text-sm">
           <p className="text-muted-foreground">
-            Already have an account?{' '}
+            {t('registerPage.haveAccount')}{' '}
             <Link href="/login" legacyBehavior>
               <a className="font-medium text-primary hover:underline">
-                Login
+                {t('registerPage.loginLink')}
               </a>
             </Link>
           </p>

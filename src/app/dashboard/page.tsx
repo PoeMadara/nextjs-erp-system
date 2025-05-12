@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Mock data - replace with actual data fetching
 const recentSales = [
@@ -30,37 +31,38 @@ const warehouseStatus = [
 ];
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('dashboardPage.title')}</h1>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard 
-          title="Total Revenue" 
+          title={t('dashboardPage.totalRevenue')} 
           value="$15,231.89" 
           icon={DollarSign} 
-          description="+20.1% from last month" 
+          description={t('dashboardPage.fromLastMonth', {value: "20.1"})}
           className="shadow-md hover:shadow-lg transition-shadow"
         />
         <MetricCard 
-          title="New Customers" 
+          title={t('dashboardPage.newCustomers')}
           value="+230" 
           icon={Users} 
-          description="+18.7% from last month"
+          description={t('dashboardPage.fromLastMonth', {value: "18.7"})}
           className="shadow-md hover:shadow-lg transition-shadow"
         />
         <MetricCard 
-          title="Sales" 
+          title={t('dashboardPage.sales')}
           value="+1,234" 
           icon={ShoppingCart} 
-          description="+5.3% from last month"
+          description={t('dashboardPage.fromLastMonth', {value: "5.3"})}
           className="shadow-md hover:shadow-lg transition-shadow"
         />
         <MetricCard 
-          title="Products in Stock" 
+          title={t('dashboardPage.productsInStock')}
           value="5,782" 
           icon={Package} 
-          description="Total items available"
+          description={t('dashboardPage.totalItemsAvailable')}
           className="shadow-md hover:shadow-lg transition-shadow"
         />
       </div>
@@ -72,18 +74,18 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ListChecks className="h-5 w-5 text-primary" />
-              Warehouse Status
+              {t('dashboardPage.warehouseStatus')}
             </CardTitle>
-            <CardDescription>Overview of current warehouse capacity and items.</CardDescription>
+            <CardDescription>{t('dashboardPage.warehouseOverview')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Warehouse</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead className="text-right">Items</TableHead>
-                  <TableHead className="text-right">Capacity</TableHead>
+                  <TableHead>{t('dashboardPage.warehouse')}</TableHead>
+                  <TableHead>{t('dashboardPage.location')}</TableHead>
+                  <TableHead className="text-right">{t('dashboardPage.items')}</TableHead>
+                  <TableHead className="text-right">{t('dashboardPage.capacity')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -104,17 +106,17 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Recent Sales</CardTitle>
-            <CardDescription>Last few sales recorded in the system.</CardDescription>
+            <CardTitle>{t('dashboardPage.recentSales')}</CardTitle>
+            <CardDescription>{t('dashboardPage.recentSalesDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
              <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Invoice ID</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>{t('dashboardPage.invoiceId')}</TableHead>
+                  <TableHead>{t('dashboardPage.customer')}</TableHead>
+                  <TableHead>{t('dashboardPage.date')}</TableHead>
+                  <TableHead className="text-right">{t('dashboardPage.amount')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -133,17 +135,17 @@ export default function DashboardPage() {
 
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Recent Purchase Orders</CardTitle>
-            <CardDescription>Last few purchase orders created.</CardDescription>
+            <CardTitle>{t('dashboardPage.recentPurchaseOrders')}</CardTitle>
+            <CardDescription>{t('dashboardPage.recentPurchaseOrdersDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>{t('dashboardPage.orderId')}</TableHead>
+                  <TableHead>{t('dashboardPage.supplier')}</TableHead>
+                  <TableHead>{t('dashboardPage.date')}</TableHead>
+                  <TableHead className="text-right">{t('dashboardPage.amount')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -164,34 +166,34 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="shadow-sm">
           <CardHeader>
-            <CardTitle>Team Activity</CardTitle>
+            <CardTitle>{t('dashboardPage.teamActivity')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <Image src="https://picsum.photos/seed/teamactivity/400/200" alt="Team Activity Chart" width={400} height={200} className="rounded-md" data-ai-hint="team activity chart" />
-            <p className="text-sm text-muted-foreground mt-2">Placeholder for team activity feed or chart.</p>
+            <Image src="https://picsum.photos/seed/teamactivity/400/200" alt="Team Activity Chart" width={400} height={200} className="rounded-md" data-ai-hint="team activity chart"/>
+            <p className="text-sm text-muted-foreground mt-2">{t('dashboardPage.teamActivityPlaceholder')}</p>
           </CardContent>
         </Card>
         <Card className="shadow-sm">
           <CardHeader>
-            <CardTitle>Notifications</CardTitle>
+            <CardTitle>{t('dashboardPage.notifications')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
-              <li><span className="font-semibold text-primary">New:</span> Low stock alert for Product XYZ.</li>
-              <li><span className="font-semibold text-destructive">Overdue:</span> Invoice #INV-0078 payment.</li>
-              <li><span className="font-semibold text-yellow-500">Pending:</span> Approval for PO #PO-056.</li>
+              <li><span className="font-semibold text-primary">{t('dashboardPage.notificationNew')}</span> {t('dashboardPage.lowStockAlert')}</li>
+              <li><span className="font-semibold text-destructive">{t('dashboardPage.notificationOverdue')}</span> {t('dashboardPage.overdueInvoicePayment')}</li>
+              <li><span className="font-semibold text-yellow-500">{t('dashboardPage.notificationPending')}</span> {t('dashboardPage.pendingPOApproval')}</li>
             </ul>
           </CardContent>
         </Card>
         <Card className="shadow-sm">
           <CardHeader>
-            <CardTitle>Quick Links</CardTitle>
+            <CardTitle>{t('dashboardPage.quickLinks')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
-              <li><a href="/dashboard/facturas/new" className="text-primary hover:underline">Create New Invoice</a></li>
-              <li><a href="/dashboard/clientes/new" className="text-primary hover:underline">Add New Customer</a></li>
-              <li><a href="/dashboard/productos" className="text-primary hover:underline">View Products</a></li>
+              <li><a href="/dashboard/facturas/new" className="text-primary hover:underline">{t('dashboardPage.quickLinkCreateInvoice')}</a></li>
+              <li><a href="/dashboard/clientes/new" className="text-primary hover:underline">{t('dashboardPage.quickLinkAddCustomer')}</a></li>
+              <li><a href="/dashboard/productos" className="text-primary hover:underline">{t('dashboardPage.quickLinkViewProducts')}</a></li>
             </ul>
           </CardContent>
         </Card>

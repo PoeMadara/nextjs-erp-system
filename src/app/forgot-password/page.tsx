@@ -1,9 +1,8 @@
 "use client";
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ErpLogo } from '@/components/icons/ErpLogo';
 import { ArrowLeft } from 'lucide-react';
 import { useForm } from "react-hook-form";
@@ -11,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from '@/hooks/useTranslation';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -20,6 +20,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
@@ -28,11 +29,10 @@ export default function ForgotPasswordPage() {
   });
 
   function onSubmit(data: ForgotPasswordFormValues) {
-    // Simulate API call
     console.log("Password reset requested for:", data.email);
     toast({
-      title: "Password Reset",
-      description: `If an account exists for ${data.email}, a reset link has been sent.`,
+      title: t('forgotPasswordPage.resetToastTitle'),
+      description: t('forgotPasswordPage.resetToastDescription', { email: data.email }),
     });
     form.reset();
   }
@@ -44,9 +44,9 @@ export default function ForgotPasswordPage() {
           <div className="mb-4 flex justify-center">
             <ErpLogo className="h-10" />
           </div>
-          <CardTitle className="text-2xl font-bold">Forgot Password?</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t('forgotPasswordPage.title')}</CardTitle>
           <CardDescription>
-            Enter your email address and we'll send you a link to reset your password.
+            {t('forgotPasswordPage.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -57,7 +57,7 @@ export default function ForgotPasswordPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('common.email')}</FormLabel>
                     <FormControl>
                       <Input placeholder="you@example.com" {...field} />
                     </FormControl>
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
                 )}
               />
               <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Sending..." : "Send Reset Link"}
+                {form.formState.isSubmitting ? t('forgotPasswordPage.sending') : t('forgotPasswordPage.sendResetLinkButton')}
               </Button>
             </form>
           </Form>
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
         <CardFooter className="flex justify-center">
           <Button variant="link" asChild>
             <Link href="/login">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Login
+              <ArrowLeft className="mr-2 h-4 w-4" /> {t('forgotPasswordPage.backToLogin')}
             </Link>
           </Button>
         </CardFooter>

@@ -13,12 +13,14 @@ import { getFacturas } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function FacturasPage() {
   const [facturas, setFacturas] = useState<Factura[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => {
     async function fetchFacturas() {
@@ -27,13 +29,13 @@ export default function FacturasPage() {
         const data = await getFacturas();
         setFacturas(data);
       } catch (error) {
-        toast({ title: "Error", description: "Failed to fetch facturas.", variant: "destructive" });
+        toast({ title: t('common.error'), description: t('facturas.failFetch'), variant: "destructive" });
       } finally {
         setIsLoading(false);
       }
     }
     fetchFacturas();
-  }, [toast]);
+  }, [toast, t]);
 
   const filteredFacturas = useMemo(() => {
     return facturas.filter(factura =>
@@ -46,17 +48,34 @@ export default function FacturasPage() {
 
   const getBadgeVariant = (estado: Factura['estado']) => {
     switch (estado) {
-      case 'Pagada': return 'default'; // Default is usually primary
-      case 'Pendiente': return 'secondary'; // Or another variant like outline
+      case 'Pagada': return 'default'; 
+      case 'Pendiente': return 'secondary'; 
       case 'Cancelada': return 'destructive';
       default: return 'outline';
     }
   };
 
+  const translateStatus = (status: Factura['estado']) => {
+    switch (status) {
+      case 'Pagada': return t('facturas.statusPaid');
+      case 'Pendiente': return t('facturas.statusPending');
+      case 'Cancelada': return t('facturas.statusCancelled');
+      default: return status;
+    }
+  }
+
+  const translateType = (type: Factura['tipo']) => {
+     switch (type) {
+      case 'Venta': return t('facturas.typeSale');
+      case 'Compra': return t('facturas.typePurchase');
+      default: return type;
+    }
+  }
+
   if (isLoading) {
      return (
       <>
-        <PageHeader title="Todas las Facturas" description="View and manage all invoices." actionButton={<Skeleton className="h-10 w-36" />} />
+        <PageHeader title={t('facturas.titleAll')} description={t('common.loading')} actionButton={<Skeleton className="h-10 w-36" />} />
         <div className="mb-4">
           <Skeleton className="h-10 w-full max-w-sm" />
         </div>
@@ -83,12 +102,12 @@ export default function FacturasPage() {
   return (
     <>
       <PageHeader
-        title="Todas las Facturas"
-        description="View and manage all your sales and purchase invoices."
+        title={t('facturas.titleAll')}
+        description={t('facturas.descriptionAll')}
         actionButton={
           <Button asChild className="shadow-sm" disabled>
             <Link href="/dashboard/facturas/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Create New Factura
+              <PlusCircle className="mr-2 h-4 w-4" /> {t('facturas.createNewButton')}
             </Link>
           </Button>
         }
@@ -98,7 +117,7 @@ export default function FacturasPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search facturas by ID, client/supplier name, or type..."
+          placeholder={t('facturas.searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full max-w-md pl-10 shadow-sm"
@@ -109,13 +128,13 @@ export default function FacturasPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Número</TableHead>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Cliente/Proveedor</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('facturas.tableNumber')}</TableHead>
+              <TableHead>{t('facturas.tableDate')}</TableHead>
+              <TableHead>{t('facturas.tableType')}</TableHead>
+              <TableHead>{t('facturas.tableClientSupplier')}</TableHead>
+              <TableHead>{t('facturas.tableTotal')}</TableHead>
+              <TableHead>{t('facturas.tableStatus')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -126,14 +145,14 @@ export default function FacturasPage() {
                   <TableCell>{format(new Date(factura.fecha), 'dd/MM/yyyy')}</TableCell>
                   <TableCell>
                     <Badge variant={factura.tipo === 'Venta' ? 'outline' : 'secondary'}>
-                      {factura.tipo}
+                      {translateType(factura.tipo)}
                     </Badge>
                   </TableCell>
                   <TableCell>{factura.clienteNombre || factura.proveedorNombre || '-'}</TableCell>
                   <TableCell>${factura.totalFactura.toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge variant={getBadgeVariant(factura.estado)}>
-                      {factura.estado}
+                      {translateStatus(factura.estado)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -147,14 +166,14 @@ export default function FacturasPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
                            <Link href={`/dashboard/facturas/${factura.id}/view`}>
-                            <Eye className="mr-2 h-4 w-4" /> View Details
+                            <Eye className="mr-2 h-4 w-4" /> {t('common.viewDetails')}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem disabled>
-                          <Edit className="mr-2 h-4 w-4" /> Edit (Coming soon)
+                          <Edit className="mr-2 h-4 w-4" /> {t('common.edit')} ({t('common.underConstruction').toLowerCase()})
                         </DropdownMenuItem>
                         <DropdownMenuItem disabled className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete (Coming soon)
+                          <Trash2 className="mr-2 h-4 w-4" /> {t('common.delete')} ({t('common.underConstruction').toLowerCase()})
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -164,7 +183,7 @@ export default function FacturasPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
-                  No facturas found.
+                  {t('facturas.noFacturasFound')}
                 </TableCell>
               </TableRow>
             )}

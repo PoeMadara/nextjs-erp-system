@@ -9,12 +9,19 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/contexts/AuthContext';
-import { LogOut, Settings, UserCircle } from "lucide-react";
+import { LogOut, Settings, UserCircle, Globe } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function UserNav() {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
 
   if (!user) {
     return null; // Or a loading indicator
@@ -33,7 +40,6 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border-2 border-primary">
-            {/* Placeholder image, replace with actual user image if available */}
             <AvatarImage src={`https://picsum.photos/seed/${user.email}/40/40`} alt={user.name} data-ai-hint="user avatar" />
             <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
               {getInitials(user.name)}
@@ -54,17 +60,28 @@ export function UserNav() {
         <DropdownMenuGroup>
           <DropdownMenuItem>
             <UserCircle className="mr-2 h-4 w-4" />
-            <span>Profile</span>
+            <span>{t('userNav.profile')}</span>
           </DropdownMenuItem>
           <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
+            <span>{t('userNav.settings')}</span>
           </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Globe className="mr-2 h-4 w-4" />
+              <span>{t('userNav.language')}</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <LanguageSwitcher />
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout}>
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
+          <span>{t('userNav.logout')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

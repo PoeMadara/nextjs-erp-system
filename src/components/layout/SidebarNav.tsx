@@ -25,38 +25,40 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import * as React from 'react';
-
-const mainNavItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/dashboard/clientes', label: 'Clientes', icon: Users },
-  { href: '/dashboard/proveedores', label: 'Proveedores', icon: Truck },
-  { href: '/dashboard/empleados', label: 'Empleados', icon: Briefcase },
-  { href: '/dashboard/productos', label: 'Productos', icon: Package },
-  { 
-    label: 'Facturas', 
-    icon: FileText,
-    subItems: [
-      { href: '/dashboard/facturas/ventas', label: 'Ventas' },
-      { href: '/dashboard/facturas/compras', label: 'Compras' },
-      { href: '/dashboard/facturas', label: 'Todas las Facturas' },
-    ]
-  },
-  { href: '/dashboard/almacen', label: 'Almacén', icon: Warehouse },
-];
+import { useTranslation } from '@/hooks/useTranslation';
 
 export function SidebarNav() {
   const pathname = usePathname();
   const { logout } = useAuth();
+  const { t } = useTranslation();
   const [openAccordion, setOpenAccordion] = React.useState<string | undefined>(undefined);
+
+  const mainNavItems = React.useMemo(() => [
+    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard },
+    { href: '/dashboard/clientes', labelKey: 'sidebar.clientes', icon: Users },
+    { href: '/dashboard/proveedores', labelKey: 'sidebar.proveedores', icon: Truck },
+    { href: '/dashboard/empleados', labelKey: 'sidebar.empleados', icon: Briefcase },
+    { href: '/dashboard/productos', labelKey: 'sidebar.productos', icon: Package },
+    { 
+      labelKey: 'sidebar.facturas', 
+      icon: FileText,
+      subItems: [
+        { href: '/dashboard/facturas/ventas', labelKey: 'sidebar.facturasVentas' },
+        { href: '/dashboard/facturas/compras', labelKey: 'sidebar.facturasCompras' },
+        { href: '/dashboard/facturas', labelKey: 'sidebar.facturasTodas' },
+      ]
+    },
+    { href: '/dashboard/almacen', labelKey: 'sidebar.almacen', icon: Warehouse },
+  ], [t]);
 
   React.useEffect(() => {
     const activeParent = mainNavItems.find(item => 
       item.subItems?.some(subItem => pathname === subItem.href || pathname?.startsWith(subItem.href + '/'))
     );
     if (activeParent) {
-      setOpenAccordion(activeParent.label);
+      setOpenAccordion(t(activeParent.labelKey));
     }
-  }, [pathname]);
+  }, [pathname, mainNavItems, t]);
 
 
   return (
@@ -72,7 +74,7 @@ export function SidebarNav() {
         <Accordion type="single" collapsible value={openAccordion} onValueChange={setOpenAccordion} className="w-full">
           {mainNavItems.map((item) =>
             item.subItems ? (
-              <AccordionItem value={item.label} key={item.label} className="border-none">
+              <AccordionItem value={t(item.labelKey)} key={t(item.labelKey)} className="border-none">
                 <AccordionTrigger 
                   className={cn(
                     "flex items-center w-full px-3 py-2.5 rounded-md text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus:outline-none focus:ring-2 focus:ring-sidebar-ring",
@@ -80,7 +82,7 @@ export function SidebarNav() {
                   )}
                 >
                   <item.icon className="mr-3 h-5 w-5" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </AccordionTrigger>
                 <AccordionContent className="pl-6 pb-0 pt-0">
                   {item.subItems.map((subItem) => (
@@ -94,7 +96,7 @@ export function SidebarNav() {
                         )}
                       >
                         <ChevronRight className="mr-3 h-4 w-4 text-sidebar-accent-foreground/50" />
-                        {subItem.label}
+                        {t(subItem.labelKey)}
                       </a>
                     </Link>
                   ))}
@@ -105,13 +107,13 @@ export function SidebarNav() {
                 <a
                   className={cn(
                     'flex items-center px-3 py-2.5 rounded-md text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus:outline-none focus:ring-2 focus:ring-sidebar-ring',
-                    (pathname === item.href || pathname?.startsWith(item.href + '/')) && item.href !== '/dashboard/facturas' // avoid highlighting main facturas if subitem active
+                    (pathname === item.href || pathname?.startsWith(item.href + '/')) && !mainNavItems.find(i => i.labelKey === 'sidebar.facturas')?.subItems?.some(si => pathname.startsWith(si.href))
                       ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                       : 'text-sidebar-foreground'
                   )}
                 >
                   <item.icon className="mr-3 h-5 w-5" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </a>
               </Link>
             )
@@ -125,7 +127,7 @@ export function SidebarNav() {
           onClick={logout}
         >
           <LogOut className="mr-3 h-5 w-5" />
-          Log Out
+          {t('sidebar.logout')}
         </Button>
       </div>
     </div>

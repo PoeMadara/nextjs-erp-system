@@ -7,7 +7,7 @@ export function ErpLogo(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 200 50"
       width="150"
       height="38"
-      aria-label="ERP Simplified Logo"
+      aria-label="ERP System Logo"
       {...props}
     >
       <rect width="200" height="50" rx="5" fill="hsl(var(--primary))" />
@@ -21,7 +21,7 @@ export function ErpLogo(props: SVGProps<SVGSVGElement>) {
         fontWeight="bold"
         fill="hsl(var(--primary-foreground))"
       >
-        ERP<tspan fill="hsl(var(--primary-foreground))" opacity="0.7"> Simplified</tspan>
+        ERP<tspan fill="hsl(var(--primary-foreground))" opacity="0.7"> System</tspan>
       </text>
     </svg>
   );

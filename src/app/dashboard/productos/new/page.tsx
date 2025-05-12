@@ -1,21 +1,22 @@
-
 "use client";
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Construction } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function NewProductoPage() {
+  const { t } = useTranslation();
   return (
     <>
       <PageHeader
-        title="Create New Producto"
-        description="Add a new product to the catalog."
+        title={t('products.newTitle')}
+        description={t('products.newDescription')}
         actionButton={
           <Button variant="outline" asChild>
             <Link href="/dashboard/productos">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Productos
+              <ArrowLeft className="mr-2 h-4 w-4" /> {t('pageHeader.backTo', {section: t('sidebar.productos')})}
             </Link>
           </Button>
         }
@@ -24,24 +25,24 @@ export default function NewProductoPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary">
             <Construction className="h-6 w-6" />
-            Form Under Construction
+            {t('common.formUnderConstruction')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-lg text-muted-foreground">
-            The form to create a new Producto is currently under development.
+            {t('products.underConstructionMessage')}
           </p>
           <div className="mt-4 p-4 bg-muted rounded-md">
-            <h3 className="font-semibold mb-2">Planned Fields:</h3>
+            <h3 className="font-semibold mb-2">{t('products.formPlannedFields')}:</h3>
             <ul className="list-disc list-inside text-sm space-y-1">
-              <li>Nombre del Producto</li>
-              <li>Descripción</li>
-              <li>Precio de Compra</li>
-              <li>Precio de Venta</li>
-              <li>Porcentaje de IVA</li>
-              <li>Stock Inicial</li>
-              <li>Categoría</li>
-              <li>Referencia/SKU</li>
+              <li>{t('products.fieldProductName')}</li>
+              <li>{t('products.fieldDescription')}</li>
+              <li>{t('products.fieldPurchasePrice')}</li>
+              <li>{t('products.fieldSalePrice')}</li>
+              <li>{t('products.fieldVATPercentage')}</li>
+              <li>{t('products.fieldInitialStock')}</li>
+              <li>{t('products.fieldCategory')}</li>
+              <li>{t('products.fieldReferenceSKU')}</li>
             </ul>
           </div>
         </CardContent>

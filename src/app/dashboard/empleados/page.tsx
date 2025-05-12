@@ -3,21 +3,23 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Construction } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export const metadata = {
-  title: 'Empleados - ERP Simplified',
+  title: 'Empleados - ERP System',
 };
 
 export default function EmpleadosPage() {
+  const { t } = useTranslation();
   return (
     <>
       <PageHeader
-        title="Empleados"
-        description="Manage employee records and access."
+        title={t('employees.title')}
+        description={t('employees.description')}
         actionButton={
           <Button asChild className="shadow-sm" disabled>
             <Link href="/dashboard/empleados/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Add New Empleado
+              <PlusCircle className="mr-2 h-4 w-4" /> {t('employees.addNewEmployeeButton')}
             </Link>
           </Button>
         }
@@ -26,19 +28,19 @@ export default function EmpleadosPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary">
             <Construction className="h-6 w-6" />
-            Under Construction
+            {t('common.underConstruction')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-lg text-muted-foreground">
-            The Empleados management section is currently under development.
+            {t('employees.underConstructionMessage')}
           </p>
            <div className="mt-4 p-4 bg-muted rounded-md">
-            <h3 className="font-semibold mb-2">Planned Features:</h3>
+            <h3 className="font-semibold mb-2">{t('common.plannedFeatures')}:</h3>
             <ul className="list-disc list-inside text-sm space-y-1">
-              <li>View and manage employee profiles.</li>
-              <li>Assign roles and permissions.</li>
-              <li>Track employee activity related to ERP operations.</li>
+              <li>{t('employees.feature1')}</li>
+              <li>{t('employees.feature2')}</li>
+              <li>{t('employees.feature3')}</li>
             </ul>
           </div>
         </CardContent>

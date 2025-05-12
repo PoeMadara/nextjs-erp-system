@@ -3,21 +3,24 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Construction } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export const metadata = {
-  title: 'Facturas de Compra - ERP Simplified',
+  title: 'Facturas de Compra - ERP System',
 };
 
 export default function FacturasComprasPage() {
+  const { t } = useTranslation();
+
   return (
     <>
       <PageHeader
-        title="Facturas de Compra"
-        description="Manage your purchase invoices."
+        title={t('purchaseInvoices.title')}
+        description={t('purchaseInvoices.description')}
         actionButton={
           <Button asChild className="shadow-sm" disabled>
             <Link href="/dashboard/facturas/new?tipo=compra">
-              <PlusCircle className="mr-2 h-4 w-4" /> New Purchase Invoice
+              <PlusCircle className="mr-2 h-4 w-4" /> {t('purchaseInvoices.newPurchaseInvoiceButton')}
             </Link>
           </Button>
         }
@@ -26,12 +29,12 @@ export default function FacturasComprasPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary">
             <Construction className="h-6 w-6" />
-            Under Construction
+            {t('common.underConstruction')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-lg text-muted-foreground">
-            The Purchase Invoices section is currently under development. You can view all invoices in the main "Facturas" section.
+            {t('purchaseInvoices.underConstructionMessage')}
           </p>
         </CardContent>
       </Card>
