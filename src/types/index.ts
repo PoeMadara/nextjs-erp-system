@@ -33,7 +33,7 @@ export interface Empleado {
   isBlocked?: boolean; // For blocking user access
   avatarColor?: string; // For team activity display
   bio?: string; // For user profile
-  emailNotifications?: boolean; // For user settings
+  emailNotifications: boolean; // For user settings, now mandatory
   lastLogin?: string; // ISO Date string for last login
 }
 
@@ -119,8 +119,8 @@ export interface WarehouseSummary {
   location: string;
 }
 
-export type TeamActivityModule = "Facturación" | "Compras" | "Productos" | "Clientes" | "Proveedores" | "Empleados" | "Almacén" | "Sistema" | "Perfil";
-export type TeamActivityAction = "crear" | "modificar" | "eliminar" | "asignar_rol" | "bloquear" | "desbloquear" | "login" | "logout";
+export type TeamActivityModule = "Facturación" | "Compras" | "Productos" | "Clientes" | "Proveedores" | "Empleados" | "Almacén" | "Sistema" | "Perfil" | "Notificaciones";
+export type TeamActivityAction = "crear" | "modificar" | "eliminar" | "asignar_rol" | "bloquear" | "desbloquear" | "login" | "logout" | "enviar";
 
 export interface TeamActivityLog {
   id: string;
@@ -135,3 +135,20 @@ export interface TeamActivityLog {
   entidad_nombre?: string; 
 }
 
+export type NotificationFrequency = 'once' | 'recurring';
+export type NotificationTargetRole = 'admin' | 'moderator' | 'user' | 'all';
+
+
+export interface NotificationConfig {
+  id: string;
+  title: string;
+  message: string;
+  targetRoles: NotificationTargetRole[];
+  frequency: NotificationFrequency;
+  recurringDays?: number; // Only if frequency is 'recurring'
+  lastSent?: string; // ISO Date string
+  createdAt: string; // ISO Date string
+  createdBy: string; // Empleado ID
+  createdByName?: string; // For display
+  isEnabled: boolean; // To enable/disable a recurring notification
+}

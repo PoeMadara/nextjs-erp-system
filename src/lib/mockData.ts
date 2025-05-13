@@ -1,5 +1,5 @@
 
-import type { Cliente, Proveedor, Empleado, Producto, Almacen, Factura, DetalleFactura, EmpleadoRole, FacturaTipo, FacturaEstado, CurrencyCode, TeamActivityLog, TeamActivityModule, TeamActivityAction } from '@/types';
+import type { Cliente, Proveedor, Empleado, Producto, Almacen, Factura, DetalleFactura, EmpleadoRole, FacturaTipo, FacturaEstado, CurrencyCode, TeamActivityLog, TeamActivityModule, TeamActivityAction, NotificationConfig, NotificationTargetRole } from '@/types';
 import { subDays, subHours, subMinutes } from 'date-fns';
 
 let clientes: Cliente[] = [
@@ -62,6 +62,7 @@ const getNextAvatarColor = () => {
 }
 
 let teamActivityLogs: TeamActivityLog[] = []; 
+let notificationConfigs: NotificationConfig[] = [];
 
 const LOG_LIMIT = 20;
 
@@ -243,7 +244,7 @@ export const getEmpleados = async (): Promise<Empleado[]> => [...empleados];
 export const getEmpleadoById = async (id: string): Promise<Empleado | undefined> => empleados.find(e => e.id === id);
 export const getEmpleadoByEmail = async (email: string): Promise<Empleado | undefined> => empleados.find(e => e.email.toLowerCase() === email.toLowerCase());
 
-export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked' | 'role' | 'avatarColor'> & {password?: string, role?: EmpleadoRole}, actingUserId?: string, t?: (key: string, params?: any) => string): Promise<Empleado> => {
+export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked' | 'role' | 'avatarColor' | 'emailNotifications'> & {password?: string, role?: EmpleadoRole}, actingUserId?: string, t?: (key: string, params?: any) => string): Promise<Empleado> => {
   const role: EmpleadoRole = empleadoData.role || (empleados.length === 0 ? 'admin' : 'user');
   const newEmpleado: Empleado = { 
     nombre: empleadoData.nombre,
@@ -255,7 +256,7 @@ export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked
     password: empleadoData.password || 'password123',
     avatarColor: getNextAvatarColor(),
     bio: empleadoData.bio || '',
-    emailNotifications: empleadoData.emailNotifications ?? true,
+    emailNotifications: true, // Default to true
     lastLogin: empleadoData.lastLogin || new Date().toISOString(),
   };
   empleados.push(newEmpleado);
@@ -761,6 +762,140 @@ export const getTeamActivityLogs = async (limit: number = LOG_LIMIT): Promise<Te
     .slice(0, limit);
 };
 
+// Notification Configurations CRUD
+export const getNotificationConfigs = async (): Promise<NotificationConfig[]> => {
+  return notificationConfigs.map(nc => ({
+    ...nc,
+    createdByName: empleados.find(e => e.id === nc.createdBy)?.nombre || 'Unknown User'
+  }));
+};
+
+export const getNotificationConfigById = async (id: string): Promise<NotificationConfig | undefined> => {
+  const config = notificationConfigs.find(nc => nc.id === id);
+  if (!config) return undefined;
+  return {
+    ...config,
+    createdByName: empleados.find(e => e.id === config.createdBy)?.nombre || 'Unknown User'
+  }
+};
+
+export const addNotificationConfig = async (
+  configData: Omit<NotificationConfig, 'id' | 'createdAt' | 'lastSent' | 'createdByName'>,
+  actingUserId: string,
+  t: (key: string, params?: any) => string
+): Promise<NotificationConfig> => {
+  const creator = await getEmpleadoById(actingUserId);
+  const newConfig: NotificationConfig = {
+    ...configData,
+    id: generateId('NOTIF', notificationConfigs),
+    createdAt: new Date().toISOString(),
+    createdBy: actingUserId,
+    createdByName: creator?.nombre || 'System',
+    isEnabled: true, // Default to enabled
+  };
+  notificationConfigs.push(newConfig);
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Notificaciones',
+    accion: 'crear',
+    descripcionKey: 'teamActivity.log.notificationConfigCreated',
+    descripcionParams: { entidadNombre: newConfig.title },
+    entidad_id: newConfig.id,
+    entidad_nombre: newConfig.title,
+    t,
+  });
+  return newConfig;
+};
+
+export const updateNotificationConfig = async (
+  id: string,
+  updates: Partial<Omit<NotificationConfig, 'id' | 'createdAt' | 'createdBy' | 'createdByName'>>,
+  actingUserId: string,
+  t: (key: string, params?: any) => string
+): Promise<NotificationConfig | null> => {
+  const index = notificationConfigs.findIndex(nc => nc.id === id);
+  if (index === -1) return null;
+  notificationConfigs[index] = { ...notificationConfigs[index], ...updates };
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Notificaciones',
+    accion: 'modificar',
+    descripcionKey: 'teamActivity.log.notificationConfigUpdated',
+    descripcionParams: { entidadNombre: notificationConfigs[index].title },
+    entidad_id: notificationConfigs[index].id,
+    entidad_nombre: notificationConfigs[index].title,
+    t,
+  });
+  return {
+    ...notificationConfigs[index],
+    createdByName: empleados.find(e => e.id === notificationConfigs[index].createdBy)?.nombre || 'Unknown User'
+  };
+};
+
+export const deleteNotificationConfig = async (id: string, actingUserId: string, t: (key: string, params?: any) => string): Promise<boolean> => {
+  const configToDelete = notificationConfigs.find(nc => nc.id === id);
+  if (!configToDelete) return false;
+  const initialLength = notificationConfigs.length;
+  notificationConfigs = notificationConfigs.filter(nc => nc.id !== id);
+  const success = notificationConfigs.length < initialLength;
+  if (success) {
+    await addTeamActivityLog({
+      usuario_id: actingUserId,
+      modulo: 'Notificaciones',
+      accion: 'eliminar',
+      descripcionKey: 'teamActivity.log.notificationConfigDeleted',
+      descripcionParams: { entidadNombre: configToDelete.title },
+      entidad_id: configToDelete.id,
+      entidad_nombre: configToDelete.title,
+      t,
+    });
+  }
+  return success;
+};
+
+export const sendNotificationByConfig = async (configId: string, actingUserId: string, t: (key: string, params?: any) => string): Promise<{success: boolean, message?: string}> => {
+  const config = await getNotificationConfigById(configId);
+  if (!config) {
+    return { success: false, message: t('notifications.configNotFound') };
+  }
+
+  const allUsers = await getEmpleados();
+  const targetUsers = allUsers.filter(emp => {
+    if (!emp.emailNotifications) return false;
+    if (config.targetRoles.includes('all')) return true;
+    return config.targetRoles.some(targetRole => emp.role === targetRole);
+  });
+
+  if (targetUsers.length === 0) {
+    return { success: false, message: t('notifications.noTargetUsers') };
+  }
+
+  // Simulate sending email
+  targetUsers.forEach(emp => {
+    console.log(`Simulated email sent to ${emp.email}:`);
+    console.log(`Subject: ${config.title}`);
+    console.log(`Body: ${config.message}`);
+  });
+
+  // Update lastSent and log activity
+  const now = new Date().toISOString();
+  await updateNotificationConfig(config.id, { lastSent: now }, actingUserId, t); // This will also log the update of the config
+  
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Notificaciones',
+    accion: 'enviar',
+    descripcionKey: 'teamActivity.log.notificationSent',
+    descripcionParams: { entidadNombre: config.title, count: targetUsers.length },
+    entidad_id: config.id,
+    entidad_nombre: config.title,
+    t,
+  });
+  
+  return { success: true, message: t('notifications.sentSuccess', {count: targetUsers.length})};
+};
+
+
 // Ensure initial admin user is created if no users exist
 if (empleados.length === 0) {
   addEmpleado({
@@ -769,7 +904,7 @@ if (empleados.length === 0) {
     password: 'password123', // Default password for initial admin
     role: 'admin',
     bio: 'Default administrator account.',
-    emailNotifications: true,
+    // emailNotifications is now defaulted to true in addEmpleado itself
     lastLogin: new Date().toISOString()
   });
 }

@@ -1,3 +1,4 @@
+
 "use client";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -13,7 +14,8 @@ import {
   LogOut,
   Settings,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Bell // Added Bell for Notifications
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ErpLogo } from '@/components/icons/ErpLogo';
@@ -29,27 +31,34 @@ import { useTranslation } from '@/hooks/useTranslation';
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth(); // Added user from useAuth
   const { t } = useTranslation();
   const [openAccordion, setOpenAccordion] = React.useState<string | undefined>(undefined);
 
-  const mainNavItems = React.useMemo(() => [
-    { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard },
-    { href: '/dashboard/clientes', labelKey: 'sidebar.clientes', icon: Users },
-    { href: '/dashboard/proveedores', labelKey: 'sidebar.proveedores', icon: Truck },
-    { href: '/dashboard/empleados', labelKey: 'sidebar.empleados', icon: Briefcase },
-    { href: '/dashboard/productos', labelKey: 'sidebar.productos', icon: Package },
-    { 
-      labelKey: 'sidebar.facturas', 
-      icon: FileText,
-      subItems: [
-        { href: '/dashboard/facturas/ventas', labelKey: 'sidebar.facturasVentas' },
-        { href: '/dashboard/facturas/compras', labelKey: 'sidebar.facturasCompras' },
-        { href: '/dashboard/facturas', labelKey: 'sidebar.facturasTodas' },
-      ]
-    },
-    { href: '/dashboard/almacen', labelKey: 'sidebar.almacen', icon: Warehouse },
-  ], [t]); // Removed 't' from dependencies as it's stable from useTranslation
+  const mainNavItems = React.useMemo(() => {
+    const items = [
+      { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: LayoutDashboard },
+      { href: '/dashboard/clientes', labelKey: 'sidebar.clientes', icon: Users },
+      { href: '/dashboard/proveedores', labelKey: 'sidebar.proveedores', icon: Truck },
+      { href: '/dashboard/empleados', labelKey: 'sidebar.empleados', icon: Briefcase },
+      { href: '/dashboard/productos', labelKey: 'sidebar.productos', icon: Package },
+      { 
+        labelKey: 'sidebar.facturas', 
+        icon: FileText,
+        subItems: [
+          { href: '/dashboard/facturas/ventas', labelKey: 'sidebar.facturasVentas' },
+          { href: '/dashboard/facturas/compras', labelKey: 'sidebar.facturasCompras' },
+          { href: '/dashboard/facturas', labelKey: 'sidebar.facturasTodas' },
+        ]
+      },
+      { href: '/dashboard/almacen', labelKey: 'sidebar.almacen', icon: Warehouse },
+    ];
+
+    if (user && (user.role === 'admin' || user.role === 'moderator')) {
+      items.push({ href: '/dashboard/notificaciones', labelKey: 'sidebar.notificaciones', icon: Bell });
+    }
+    return items;
+  }, [t, user]); 
 
   React.useEffect(() => {
     const activeParent = mainNavItems.find(item => 
@@ -57,6 +66,11 @@ export function SidebarNav() {
     );
     if (activeParent) {
       setOpenAccordion(t(activeParent.labelKey));
+    } else {
+      const directActiveItem = mainNavItems.find(item => pathname === item.href || pathname?.startsWith(item.href + '/'));
+      if (directActiveItem && !directActiveItem.subItems) {
+        setOpenAccordion(undefined); // Close accordion if a direct link is active
+      }
     }
   }, [pathname, mainNavItems, t]);
 
