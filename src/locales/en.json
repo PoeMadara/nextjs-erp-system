@@ -399,6 +399,7 @@
     "createButton": "Create Employee",
     "successDelete": "Employee {name} deleted successfully.",
     "failDelete": "Failed to delete employee {name}.",
+    "failDeleteLastAdmin": "Cannot delete the last administrator.",
     "failFetch": "Failed to fetch employees.",
     "failFetchDetails": "Failed to fetch employee details.",
     "notFound": "Employee not found.",

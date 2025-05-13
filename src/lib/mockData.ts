@@ -245,25 +245,26 @@ export const getEmpleadoById = async (id: string): Promise<Empleado | undefined>
 export const getEmpleadoByEmail = async (email: string): Promise<Empleado | undefined> => empleados.find(e => e.email.toLowerCase() === email.toLowerCase());
 
 export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked' | 'role' | 'avatarColor' | 'emailNotifications'> & {password?: string, role?: EmpleadoRole}, actingUserId?: string, t?: (key: string, params?: any) => string): Promise<Empleado> => {
+  // Determine role: if 'role' is provided in empleadoData, use it. Otherwise, if it's the first employee, make them admin. Else, default to 'user'.
   const role: EmpleadoRole = empleadoData.role || (empleados.length === 0 ? 'admin' : 'user');
+  
   const newEmpleado: Empleado = { 
     nombre: empleadoData.nombre,
     email: empleadoData.email,
     telefono: empleadoData.telefono,
-    id: generateId('EMP', empleados),
+    id: generateId('EMP', empleados), // Generate ID before pushing to ensure empleados.length is correct for role determination
     role: role, 
     isBlocked: false, 
-    password: empleadoData.password || 'password123',
+    password: empleadoData.password || 'password123', // Default password, consider security implications for real apps
     avatarColor: getNextAvatarColor(),
     bio: empleadoData.bio || '',
     emailNotifications: true, // Default to true
     lastLogin: empleadoData.lastLogin || new Date().toISOString(),
   };
+  
   empleados.push(newEmpleado);
-  if (empleados.length === 1 && newEmpleado.role !== 'admin') {
-    newEmpleado.role = 'admin'; 
-  }
-  if(actingUserId && t){
+
+  if(actingUserId && t){ // Only log if actingUserId and t are provided (i.e., not during initial programmatic creation if any)
      await addTeamActivityLog({
         usuario_id: actingUserId,
         modulo: 'Empleados',
@@ -321,8 +322,15 @@ export const updateEmpleado = async (id: string, updates: Partial<Empleado>, act
     logData.accion = updates.isBlocked ? 'bloquear' : 'desbloquear';
     logData.descripcionKey = updates.isBlocked ? 'teamActivity.log.empleadoBloqueado' : 'teamActivity.log.empleadoDesbloqueado';
   } else {
-    logData.accion = 'modificar';
-    logData.descripcionKey = 'teamActivity.log.empleadoModificado';
+    // Generic modification if no specific field above matches but other fields might have changed
+    const hasOtherChanges = Object.keys(updates).some(key => key !== 'lastLogin' && (updates as any)[key] !== (currentEmpleado as any)[key]);
+    if (hasOtherChanges) {
+        logData.accion = 'modificar';
+        logData.descripcionKey = 'teamActivity.log.empleadoModificado';
+    } else {
+        // If only lastLogin changed, or no significant changes, don't log a generic "modified"
+        return empleados[index];
+    }
   }
   
   if(logData.accion && logData.descripcionKey && logData.modulo) {
@@ -341,7 +349,8 @@ export const deleteEmpleado = async (id: string, actingUserId: string, t: (key: 
       const adminCount = empleados.filter(e => e.role === 'admin').length;
       if (adminCount <= 1) {
         console.warn("Cannot delete the last admin.");
-        return false; 
+        // Potentially throw an error or return a specific message
+        throw new Error(t('employees.failDeleteLastAdmin'));
       }
     }
     const initialLength = empleados.length;
@@ -895,16 +904,15 @@ export const sendNotificationByConfig = async (configId: string, actingUserId: s
   return { success: true, message: t('notifications.sentSuccess', {count: targetUsers.length})};
 };
 
-
-// Ensure initial admin user is created if no users exist
-if (empleados.length === 0) {
-  addEmpleado({
-    nombre: 'Admin ERP',
-    email: 'admin@erpsystem.com',
-    password: 'password123', // Default password for initial admin
-    role: 'admin',
-    bio: 'Default administrator account.',
-    // emailNotifications is now defaulted to true in addEmpleado itself
-    lastLogin: new Date().toISOString()
-  });
-}
+// The initial default admin user creation has been removed.
+// The logic within addEmpleado now handles making the first registered user an admin.
+// if (empleados.length === 0) {
+//   addEmpleado({
+//     nombre: 'Admin ERP',
+//     email: 'admin@erpsystem.com',
+//     password: 'password123', 
+//     role: 'admin',
+//     bio: 'Default administrator account.',
+//     lastLogin: new Date().toISOString()
+//   });
+// }

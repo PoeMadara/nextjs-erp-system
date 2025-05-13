@@ -399,6 +399,7 @@
     "createButton": "Crear Empleado",
     "successDelete": "Empleado {name} eliminado correctamente.",
     "failDelete": "Error al eliminar el empleado {name}.",
+    "failDeleteLastAdmin": "No se puede eliminar al último administrador.",
     "failFetch": "Error al cargar los empleados.",
     "failFetchDetails": "Error al cargar los detalles del empleado.",
     "notFound": "Empleado no encontrado.",
