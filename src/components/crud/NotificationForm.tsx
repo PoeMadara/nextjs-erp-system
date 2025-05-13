@@ -1,3 +1,4 @@
+
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -194,8 +195,19 @@ export function NotificationForm({
                   <FormItem>
                     <FormLabel>{t('notifications.form.recurringDaysLabel')}</FormLabel>
                     <FormControl>
-                      <Input type="number" min="1" placeholder={t('notifications.form.recurringDaysPlaceholder')} {...field} 
-                        onChange={event => field.onChange(+event.target.value)} // Ensure value is number
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        placeholder={t('notifications.form.recurringDaysPlaceholder')} 
+                        name={field.name}
+                        onBlur={field.onBlur}
+                        ref={field.ref}
+                        disabled={field.disabled}
+                        value={field.value === undefined ? '' : String(field.value)}
+                        onChange={event => {
+                          const value = event.target.value;
+                          field.onChange(value === '' ? undefined : +value);
+                        }}
                       />
                     </FormControl>
                      <FormDescription>{t('notifications.form.recurringDaysDescription')}</FormDescription>
@@ -214,3 +226,4 @@ export function NotificationForm({
     </Card>
   );
 }
+
