@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FacturaForm, type FacturaFormValues } from "@/components/crud/FacturaForm";
 import { format, parseISO } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 
 const NO_WAREHOUSE_SENTINEL_VALUE = "__NO_WAREHOUSE_SENTINEL__";
 
@@ -21,6 +22,7 @@ export default function EditFacturaPage() {
   const params = useParams();
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth(); // Get user from context
   const [factura, setFactura] = useState<Factura | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,7 +55,15 @@ export default function EditFacturaPage() {
   }, [id, router, toast, t]);
 
   const handleSubmit = async (values: FacturaFormValues) => {
-    if (!factura) return;
+    if (!factura || !user) { // Check for user
+        toast({
+            title: t('common.error'),
+            description: !factura ? t('facturas.notFound') : "User not authenticated.",
+            variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+    }
     setIsSubmitting(true);
     
     const facturaToUpdate = {
@@ -64,7 +74,8 @@ export default function EditFacturaPage() {
     };
 
     try {
-      await updateFacturaApi(factura.id, facturaToUpdate as Factura); 
+      // Pass user.id and t to updateFacturaApi
+      await updateFacturaApi(factura.id, facturaToUpdate as Factura, user.id, t); 
       toast({
         title: t('common.success'),
         description: t('facturas.successUpdate', { id: factura.id }),
@@ -73,7 +84,7 @@ export default function EditFacturaPage() {
     } catch (error) {
       toast({
         title: t('common.error'),
-        description: t('facturas.failUpdate', { id: factura.id }),
+        description: error instanceof Error ? error.message : t('facturas.failUpdate', { id: factura.id }),
         variant: "destructive",
       });
     } finally {
@@ -140,7 +151,7 @@ export default function EditFacturaPage() {
     fecha: parseISO(factura.fecha), 
     clienteId: factura.clienteId || undefined,
     proveedorId: factura.proveedorId || undefined,
-    almacenId: factura.almacenId || "", // Ensure it's "" if undefined for the form's Select logic
+    almacenId: factura.almacenId || "", 
     detalles: factura.detalles.map(d => ({
         ...d,
         productoId: d.productoId || '', 

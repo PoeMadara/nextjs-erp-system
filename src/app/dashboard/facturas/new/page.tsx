@@ -12,6 +12,7 @@ import { addFactura } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
 import type { FacturaTipo } from '@/types';
 import { format } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
 
 const NO_WAREHOUSE_SENTINEL_VALUE = "__NO_WAREHOUSE_SENTINEL__";
 
@@ -20,6 +21,7 @@ export default function NewFacturaPage() {
   const searchParams = useSearchParams();
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { user } = useAuth(); // Get user from context
 
   const [initialType, setInitialType] = useState<FacturaTipo | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,6 +38,15 @@ export default function NewFacturaPage() {
   }, [searchParams]);
 
   const handleSubmit = async (values: FacturaFormValues) => {
+    if (!user) { // Check if user is available
+        toast({
+            title: t('common.error'),
+            description: "User not authenticated.",
+            variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+    }
     setIsSubmitting(true);
     
     const facturaToCreate = {
@@ -45,7 +56,8 @@ export default function NewFacturaPage() {
     };
 
     try {
-      const newFactura = await addFactura(facturaToCreate);
+      // Pass user.id and t to addFactura
+      const newFactura = await addFactura(facturaToCreate, user.id, t); 
       toast({
         title: t('common.success'),
         description: t('facturas.successCreate', { id: newFactura.id }),
@@ -55,7 +67,7 @@ export default function NewFacturaPage() {
       console.error("Error creating invoice:", error);
       toast({
         title: t('common.error'),
-        description: t('facturas.failCreate'),
+        description: error instanceof Error ? error.message : t('facturas.failCreate'),
         variant: "destructive",
       });
     } finally {
