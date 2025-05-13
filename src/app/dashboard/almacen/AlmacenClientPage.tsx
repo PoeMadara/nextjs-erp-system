@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -8,20 +9,22 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, PlusCircle, Edit, Trash2, Search, Warehouse as WarehouseIcon } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import type { Almacen } from '@/types';
-import { getAlmacenes } from '@/lib/mockData'; // Assuming deleteAlmacen will be added later
+import { getAlmacenes, deleteAlmacen as deleteAlmacenApi } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/useTranslation';
-// import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'; // For delete functionality
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AlmacenClientPage() {
   const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  // const [isDeleting, setIsDeleting] = useState(false);
-  // const [almacenToDelete, setAlmacenToDelete] = useState<Almacen | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [almacenToDelete, setAlmacenToDelete] = useState<Almacen | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   useEffect(() => {
     async function fetchAlmacenes() {
@@ -41,28 +44,32 @@ export default function AlmacenClientPage() {
   const filteredAlmacenes = useMemo(() => {
     return almacenes.filter(almacen =>
       almacen.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (almacen.ubicacion && almacen.ubicacion.toLowerCase().includes(searchTerm.toLowerCase()))
+      (almacen.ubicacion && almacen.ubicacion.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (almacen.capacidad && almacen.capacidad.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [almacenes, searchTerm]);
 
-  // const handleDeleteAlmacen = async () => {
-  //   if (!almacenToDelete) return;
-  //   setIsDeleting(true);
-  //   try {
-  //     // await deleteAlmacenApi(almacenToDelete.id); // This function needs to be created in mockData.ts
-  //     setAlmacenes(prev => prev.filter(a => a.id !== almacenToDelete.id));
-  //     toast({ title: t('common.success'), description: `Almacén ${almacenToDelete.nombre} eliminado.` });
-  //   } catch (error) {
-  //     toast({ title: t('common.error'), description: `Error al eliminar almacén ${almacenToDelete.nombre}.`, variant: "destructive" });
-  //   } finally {
-  //     setIsDeleting(false);
-  //     setAlmacenToDelete(null);
-  //   }
-  // };
+  const handleDeleteAlmacen = async () => {
+    if (!almacenToDelete || !user) {
+      toast({ title: t('common.error'), description: t('warehouse.failDelete', {name: almacenToDelete?.nombre || ''}), variant: "destructive" });
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      await deleteAlmacenApi(almacenToDelete.id, user.id, t); 
+      setAlmacenes(prev => prev.filter(a => a.id !== almacenToDelete.id));
+      toast({ title: t('common.success'), description: t('warehouse.successDelete', { name: almacenToDelete.nombre }) });
+    } catch (error) {
+      toast({ title: t('common.error'), description: t('warehouse.failDelete', { name: almacenToDelete.nombre }), variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+      setAlmacenToDelete(null);
+    }
+  };
 
-  // const openDeleteDialog = (almacen: Almacen) => {
-  //   setAlmacenToDelete(almacen);
-  // };
+  const openDeleteDialog = (almacen: Almacen) => {
+    setAlmacenToDelete(almacen);
+  };
 
   if (isLoading) {
     return (
@@ -75,13 +82,13 @@ export default function AlmacenClientPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                {[...Array(4)].map((_, i) => <TableHead key={i}><Skeleton className="h-6 w-24" /></TableHead>)}
+                {[...Array(5)].map((_, i) => <TableHead key={i}><Skeleton className="h-6 w-24" /></TableHead>)}
               </TableRow>
             </TableHeader>
             <TableBody>
               {[...Array(3)].map((_, i) => (
                 <TableRow key={i}>
-                  {[...Array(4)].map((_, j) => <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>)}
+                  {[...Array(5)].map((_, j) => <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>)}
                 </TableRow>
               ))}
             </TableBody>
@@ -98,7 +105,7 @@ export default function AlmacenClientPage() {
         title={t('warehouse.title')}
         description={t('warehouse.description')}
         actionButton={
-          <Button asChild className="shadow-sm" disabled>
+          <Button asChild className="shadow-sm">
             <Link href="/dashboard/almacen/new">
               <PlusCircle className="mr-2 h-4 w-4" /> {t('warehouse.addNewWarehouseButton')}
             </Link>
@@ -124,6 +131,7 @@ export default function AlmacenClientPage() {
               <TableHead>{t('warehouse.tableId')}</TableHead>
               <TableHead>{t('warehouse.tableName')}</TableHead>
               <TableHead>{t('warehouse.tableLocation')}</TableHead>
+              <TableHead>{t('warehouse.tableCapacity')}</TableHead>
               <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
@@ -134,6 +142,7 @@ export default function AlmacenClientPage() {
                   <TableCell className="font-medium">{almacen.id}</TableCell>
                   <TableCell>{almacen.nombre}</TableCell>
                   <TableCell>{almacen.ubicacion || '-'}</TableCell>
+                  <TableCell>{almacen.capacidad || '-'}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -143,12 +152,13 @@ export default function AlmacenClientPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem disabled> {/* Replace with Link for edit page when created */}
-                          <Edit className="mr-2 h-4 w-4" /> {t('common.edit')} ({t('common.underConstruction').toLowerCase()})
+                        <DropdownMenuItem asChild>
+                           <Link href={`/dashboard/almacen/${almacen.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" /> {t('common.edit')}
+                          </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem disabled className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                          {/* onClick={() => openDeleteDialog(almacen)} */}
-                          <Trash2 className="mr-2 h-4 w-4" /> {t('common.delete')} ({t('common.underConstruction').toLowerCase()})
+                        <DropdownMenuItem onClick={() => openDeleteDialog(almacen)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                          <Trash2 className="mr-2 h-4 w-4" /> {t('common.delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -157,7 +167,7 @@ export default function AlmacenClientPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   {t('warehouse.noWarehousesFound')}
                 </TableCell>
               </TableRow>
@@ -166,22 +176,23 @@ export default function AlmacenClientPage() {
         </Table>
       </div>
 
-      {/* <AlertDialog open={!!almacenToDelete} onOpenChange={() => setAlmacenToDelete(null)}>
+      <AlertDialog open={!!almacenToDelete} onOpenChange={() => setAlmacenToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t('warehouse.deleteDialogTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the warehouse "{almacenToDelete?.nombre}".
+              {t('warehouse.deleteDialogDescription', { name: almacenToDelete?.nombre })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteAlmacen} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? t('common.deleting') : t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog> */}
+      </AlertDialog>
     </>
   );
 }
+

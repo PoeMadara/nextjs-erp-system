@@ -15,8 +15,8 @@ let proveedores: Proveedor[] = [
 let empleados: Empleado[] = [];
 
 let almacenes: Almacen[] = [
-  { id: 'ALM001', nombre: 'Almacén Central', ubicacion: 'Calle Logística 1, Polígono Central' },
-  { id: 'ALM002', nombre: 'Almacén Tienda', ubicacion: 'Trastienda, Calle Comercial 5' },
+  { id: 'ALM001', nombre: 'Almacén Central', ubicacion: 'Calle Logística 1, Polígono Central', capacidad: '1000 m2', personaContacto: 'Jefe Almacén', telefonoContacto: '926000000', notas: 'Recepción principal de mercancías.' },
+  { id: 'ALM002', nombre: 'Almacén Tienda', ubicacion: 'Trastienda, Calle Comercial 5', capacidad: '200 unidades', notas: 'Stock para tienda física.' },
 ];
 
 let productos: Producto[] = [
@@ -61,15 +61,14 @@ const getNextAvatarColor = () => {
   return color;
 }
 
-let teamActivityLogs: TeamActivityLog[] = []; // Initialize empty, will be populated by actions
+let teamActivityLogs: TeamActivityLog[] = []; 
 
 const LOG_LIMIT = 20;
 
-// Helper to generate next ID
 const generateId = (prefix: string, currentItems: {id: string}[]) => {
   const maxNum = currentItems.reduce((max, item) => {
     if (!item || !item.id) return max;
-    const numStr = item.id.replace(prefix, '');
+    const numStr = item.id.replace(prefix, '').replace(/^.*-/, ''); // Handles FV2024-00001 like IDs too
     if (numStr && /^\d+$/.test(numStr)) {
         const num = parseInt(numStr, 10);
         return Math.max(max, num);
@@ -79,22 +78,20 @@ const generateId = (prefix: string, currentItems: {id: string}[]) => {
   return `${prefix}${(maxNum + 1).toString().padStart(3, '0')}`;
 };
 
-// Team Activity Log Management
 interface AddTeamActivityLogData {
   usuario_id: string;
   modulo: TeamActivityModule;
   accion: TeamActivityAction;
   descripcionKey: string;
-  descripcionParams?: Record<string, string | number | undefined>;
+  descripcionParams?: Record<string, string | number | undefined | null>;
   entidad_id?: string;
   entidad_nombre?: string;
-  t: (key: string, params?: any) => string; // Translation function
+  t: (key: string, params?: any) => string; 
 }
 
 export const addTeamActivityLog = async (logData: AddTeamActivityLogData): Promise<TeamActivityLog> => {
   const actingUser = await getEmpleadoById(logData.usuario_id);
   if (!actingUser) {
-    // Fallback or throw error - for now, log with a generic user if not found
     console.warn(`Activity Log: User with ID ${logData.usuario_id} not found. Logging as System.`);
   }
 
@@ -103,7 +100,7 @@ export const addTeamActivityLog = async (logData: AddTeamActivityLogData): Promi
 
   const descripcion = logData.t(logData.descripcionKey, {
     ...logData.descripcionParams,
-    userName: userName, // Add userName to params for direct use in translation string
+    userName: userName,
   });
   
   const newLog: TeamActivityLog = {
@@ -113,15 +110,15 @@ export const addTeamActivityLog = async (logData: AddTeamActivityLogData): Promi
     avatar_color: userAvatarColor,
     modulo: logData.modulo,
     accion: logData.accion,
-    descripcion: descripcion, // Store the final translated string
+    descripcion: descripcion, 
     timestamp: new Date().toISOString(),
     entidad_id: logData.entidad_id,
     entidad_nombre: logData.entidad_nombre,
   };
 
-  teamActivityLogs.unshift(newLog); // Add to the beginning
+  teamActivityLogs.unshift(newLog); 
   if (teamActivityLogs.length > LOG_LIMIT) {
-    teamActivityLogs = teamActivityLogs.slice(0, LOG_LIMIT); // Keep only the latest 20
+    teamActivityLogs = teamActivityLogs.slice(0, LOG_LIMIT); 
   }
   return newLog;
 };
@@ -189,21 +186,56 @@ export const deleteCliente = async (id: string, actingUserId: string, t: (key: s
 // Proveedores CRUD
 export const getProveedores = async (): Promise<Proveedor[]> => [...proveedores];
 export const getProveedorById = async (id: string): Promise<Proveedor | undefined> => proveedores.find(p => p.id === id);
-export const addProveedor = async (proveedor: Omit<Proveedor, 'id'>): Promise<Proveedor> => {
-  const newProveedor = { ...proveedor, id: generateId('PRO', proveedores) };
+export const addProveedor = async (proveedorData: Omit<Proveedor, 'id'>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Proveedor> => {
+  const newProveedor = { ...proveedorData, id: generateId('PRO', proveedores) };
   proveedores.push(newProveedor);
+   await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Proveedores',
+    accion: 'crear',
+    descripcionKey: 'teamActivity.log.proveedorCreado',
+    descripcionParams: { entidadNombre: newProveedor.nombre },
+    entidad_id: newProveedor.id,
+    entidad_nombre: newProveedor.nombre,
+    t,
+  });
   return newProveedor;
 };
-export const updateProveedor = async (id: string, updates: Partial<Proveedor>): Promise<Proveedor | null> => {
+export const updateProveedor = async (id: string, updates: Partial<Proveedor>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Proveedor | null> => {
   const index = proveedores.findIndex(p => p.id === id);
   if (index === -1) return null;
   proveedores[index] = { ...proveedores[index], ...updates };
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Proveedores',
+    accion: 'modificar',
+    descripcionKey: 'teamActivity.log.proveedorModificado',
+    descripcionParams: { entidadNombre: proveedores[index].nombre },
+    entidad_id: proveedores[index].id,
+    entidad_nombre: proveedores[index].nombre,
+    t,
+  });
   return proveedores[index];
 };
-export const deleteProveedor = async (id: string): Promise<boolean> => {
+export const deleteProveedor = async (id: string, actingUserId: string, t: (key: string, params?: any) => string): Promise<boolean> => {
+   const proveedorToDelete = proveedores.find(p => p.id === id);
+   if(!proveedorToDelete) return false;
    const initialLength = proveedores.length;
    proveedores = proveedores.filter(p => p.id !== id);
-   return proveedores.length < initialLength;
+   const success = proveedores.length < initialLength;
+   if(success){
+        await addTeamActivityLog({
+            usuario_id: actingUserId,
+            modulo: 'Proveedores',
+            accion: 'eliminar',
+            descripcionKey: 'teamActivity.log.proveedorEliminado',
+            descripcionParams: { entidadNombre: proveedorToDelete.nombre },
+            entidad_id: proveedorToDelete.id,
+            entidad_nombre: proveedorToDelete.nombre,
+            t,
+        });
+   }
+   return success;
 };
 
 // Empleados CRUD
@@ -211,7 +243,7 @@ export const getEmpleados = async (): Promise<Empleado[]> => [...empleados];
 export const getEmpleadoById = async (id: string): Promise<Empleado | undefined> => empleados.find(e => e.id === id);
 export const getEmpleadoByEmail = async (email: string): Promise<Empleado | undefined> => empleados.find(e => e.email.toLowerCase() === email.toLowerCase());
 
-export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked' | 'role' | 'avatarColor'> & {password?: string, role?: EmpleadoRole}): Promise<Empleado> => {
+export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked' | 'role' | 'avatarColor'> & {password?: string, role?: EmpleadoRole}, actingUserId?: string, t?: (key: string, params?: any) => string): Promise<Empleado> => {
   const role: EmpleadoRole = empleadoData.role || (empleados.length === 0 ? 'admin' : 'user');
   const newEmpleado: Empleado = { 
     ...empleadoData, 
@@ -225,8 +257,18 @@ export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked
   if (empleados.length === 1 && newEmpleado.role !== 'admin') {
     newEmpleado.role = 'admin'; 
   }
-  // Log this action if t function is available (e.g. from a system call or if passed)
-  // For now, registration logs separately if needed.
+  if(actingUserId && t){
+     await addTeamActivityLog({
+        usuario_id: actingUserId,
+        modulo: 'Empleados',
+        accion: 'crear',
+        descripcionKey: 'teamActivity.log.empleadoCreado',
+        descripcionParams: { entidadNombre: newEmpleado.nombre },
+        entidad_id: newEmpleado.id,
+        entidad_nombre: newEmpleado.nombre,
+        t,
+      });
+  }
   return newEmpleado;
 };
 
@@ -234,11 +276,10 @@ export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado,
   const index = empleados.findIndex(e => e.id === id);
   if (index === -1) return null;
   
-  const currentEmpleado = {...empleados[index]}; // copy for comparison
+  const currentEmpleado = {...empleados[index]}; 
   const { password, avatarColor, ...restOfUpdates } = updates as any; 
   empleados[index] = { ...currentEmpleado, ...restOfUpdates };
 
-  // Log role change
   if (updates.role && updates.role !== currentEmpleado.role) {
     await addTeamActivityLog({
       usuario_id: actingUserId,
@@ -250,9 +291,7 @@ export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado,
       entidad_nombre: empleados[index].nombre,
       t,
     });
-  }
-  // Log block/unblock status
-  if (updates.isBlocked !== undefined && updates.isBlocked !== currentEmpleado.isBlocked) {
+  } else if (updates.isBlocked !== undefined && updates.isBlocked !== currentEmpleado.isBlocked) {
      await addTeamActivityLog({
       usuario_id: actingUserId,
       modulo: 'Empleados',
@@ -263,10 +302,7 @@ export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado,
       entidad_nombre: empleados[index].nombre,
       t,
     });
-  }
-  
-  // Generic update log if no specific action was logged above for role/block
-  if (!(updates.role && updates.role !== currentEmpleado.role) && !(updates.isBlocked !== undefined && updates.isBlocked !== currentEmpleado.isBlocked)) {
+  } else {
       await addTeamActivityLog({
         usuario_id: actingUserId,
         modulo: 'Empleados',
@@ -281,23 +317,6 @@ export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado,
 
   return empleados[index];
 };
-
-export const updateEmpleadoBlockedStatus = async (id: string, isBlocked: boolean, actingUserId: string, t: (key: string, params?: any) => string): Promise<Empleado | null> => {
-  const index = empleados.findIndex(e => e.id === id);
-  if (index === -1) return null;
-  empleados[index].isBlocked = isBlocked;
-   await addTeamActivityLog({
-      usuario_id: actingUserId,
-      modulo: 'Empleados',
-      accion: isBlocked ? 'bloquear' : 'desbloquear',
-      descripcionKey: isBlocked ? 'teamActivity.log.empleadoBloqueado' : 'teamActivity.log.empleadoDesbloqueado',
-      descripcionParams: { entidadNombre: empleados[index].nombre },
-      entidad_id: empleados[index].id,
-      entidad_nombre: empleados[index].nombre,
-      t,
-    });
-  return empleados[index];
-}
 
 export const deleteEmpleado = async (id: string, actingUserId: string, t: (key: string, params?: any) => string): Promise<boolean> => {
     const empleadoToDelete = empleados.find(e => e.id === id);
@@ -332,42 +351,112 @@ export const deleteEmpleado = async (id: string, actingUserId: string, t: (key: 
 // Productos CRUD
 export const getProductos = async (): Promise<Producto[]> => [...productos];
 export const getProductoById = async (id: string): Promise<Producto | undefined> => productos.find(p => p.id === id);
-export const addProducto = async (producto: Omit<Producto, 'id'>): Promise<Producto> => {
-  const newProducto = { ...producto, id: generateId('PROD', productos) };
+export const addProducto = async (productoData: Omit<Producto, 'id'>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Producto> => {
+  const newProducto = { ...productoData, id: generateId('PROD', productos) };
   productos.push(newProducto);
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Productos',
+    accion: 'crear',
+    descripcionKey: 'teamActivity.log.productoCreado',
+    descripcionParams: { entidadNombre: newProducto.nombre },
+    entidad_id: newProducto.id,
+    entidad_nombre: newProducto.nombre,
+    t,
+  });
   return newProducto;
 };
-export const updateProducto = async (id: string, updates: Partial<Producto>): Promise<Producto | null> => {
+export const updateProducto = async (id: string, updates: Partial<Producto>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Producto | null> => {
   const index = productos.findIndex(p => p.id === id);
   if (index === -1) return null;
   productos[index] = { ...productos[index], ...updates };
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Productos',
+    accion: 'modificar',
+    descripcionKey: 'teamActivity.log.productoModificado',
+    descripcionParams: { entidadNombre: productos[index].nombre },
+    entidad_id: productos[index].id,
+    entidad_nombre: productos[index].nombre,
+    t,
+  });
   return productos[index];
 };
-export const deleteProducto = async (id: string): Promise<boolean> => {
+export const deleteProducto = async (id: string, actingUserId: string, t: (key: string, params?: any) => string): Promise<boolean> => {
+    const productoToDelete = productos.find(p => p.id === id);
+    if(!productoToDelete) return false;
     const initialLength = productos.length;
     productos = productos.filter(p => p.id !== id);
-    return productos.length < initialLength;
+    const success = productos.length < initialLength;
+    if(success){
+         await addTeamActivityLog({
+            usuario_id: actingUserId,
+            modulo: 'Productos',
+            accion: 'eliminar',
+            descripcionKey: 'teamActivity.log.productoEliminado',
+            descripcionParams: { entidadNombre: productoToDelete.nombre },
+            entidad_id: productoToDelete.id,
+            entidad_nombre: productoToDelete.nombre,
+            t,
+        });
+    }
+    return success;
 };
 
 
 // Almacenes CRUD
 export const getAlmacenes = async (): Promise<Almacen[]> => [...almacenes];
 export const getAlmacenById = async (id: string): Promise<Almacen | undefined> => almacenes.find(a => a.id === id);
-export const addAlmacen = async (almacen: Omit<Almacen, 'id'>): Promise<Almacen> => {
-  const newAlmacen = { ...almacen, id: generateId('ALM', almacenes) };
+export const addAlmacen = async (almacenData: Omit<Almacen, 'id'>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Almacen> => {
+  const newAlmacen = { ...almacenData, id: generateId('ALM', almacenes) };
   almacenes.push(newAlmacen);
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Almacén',
+    accion: 'crear',
+    descripcionKey: 'teamActivity.log.almacenCreado',
+    descripcionParams: { entidadNombre: newAlmacen.nombre },
+    entidad_id: newAlmacen.id,
+    entidad_nombre: newAlmacen.nombre,
+    t,
+  });
   return newAlmacen;
 };
-export const updateAlmacen = async (id: string, updates: Partial<Almacen>): Promise<Almacen | null> => {
+export const updateAlmacen = async (id: string, updates: Partial<Almacen>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Almacen | null> => {
   const index = almacenes.findIndex(a => a.id === id);
   if (index === -1) return null;
   almacenes[index] = { ...almacenes[index], ...updates };
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Almacén',
+    accion: 'modificar',
+    descripcionKey: 'teamActivity.log.almacenModificado',
+    descripcionParams: { entidadNombre: almacenes[index].nombre },
+    entidad_id: almacenes[index].id,
+    entidad_nombre: almacenes[index].nombre,
+    t,
+  });
   return almacenes[index];
 };
-export const deleteAlmacen = async (id: string): Promise<boolean> => {
+export const deleteAlmacen = async (id: string, actingUserId: string, t: (key: string, params?: any) => string): Promise<boolean> => {
+    const almacenToDelete = almacenes.find(a => a.id === id);
+    if(!almacenToDelete) return false;
     const initialLength = almacenes.length;
     almacenes = almacenes.filter(a => a.id !== id);
-    return almacenes.length < initialLength;
+    const success = almacenes.length < initialLength;
+    if(success){
+        await addTeamActivityLog({
+            usuario_id: actingUserId,
+            modulo: 'Almacén',
+            accion: 'eliminar',
+            descripcionKey: 'teamActivity.log.almacenEliminado',
+            descripcionParams: { entidadNombre: almacenToDelete.nombre },
+            entidad_id: almacenToDelete.id,
+            entidad_nombre: almacenToDelete.nombre,
+            t,
+        });
+    }
+    return success;
 };
 
 // Facturas
@@ -412,20 +501,22 @@ const adjustStock = (productoId: string, cantidad: number, tipoAjuste: 'incremen
   }
 };
 
-export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombre' | 'proveedorNombre' | 'empleadoNombre' >): Promise<Factura> => {
+export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombre' | 'proveedorNombre' | 'empleadoNombre' >, actingUserId: string, t: (key: string, params?: any) => string): Promise<Factura> => {
   if (facturaData.tipo === 'Venta' && facturaData.estado !== 'Cancelada') {
     for (const detalle of facturaData.detalles) {
       const producto = productos.find(p => p.id === detalle.productoId);
-      if (!producto) throw new Error(`Producto con ID ${detalle.productoId} no encontrado.`);
+      if (!producto) throw new Error(t('facturas.validation.productNotFound', {productId: detalle.productoId}));
       if (producto.stock < detalle.cantidad) {
-        throw new Error(`No hay suficiente stock para ${producto.nombre}. Stock disponible: ${producto.stock}, Solicitado: ${detalle.cantidad}.`);
+        throw new Error(t('facturas.validation.insufficientStock', {productName: producto.nombre, availableStock: producto.stock, requestedQuantity: detalle.cantidad}));
       }
     }
   }
 
-  const nextIdNum = facturas.length > 0 ? Math.max(...facturas.map(f => parseInt(f.id.split('-')[1])).filter(num => !isNaN(num))) + 1 : 1;
-  const prefix = facturaData.tipo === 'Venta' ? 'FV' : 'FC';
-  const newId = `${prefix}${new Date().getFullYear()}-${nextIdNum.toString().padStart(5, '0')}`;
+  const yearPrefix = facturaData.tipo === 'Venta' ? 'FV' : 'FC';
+  const year = new Date(facturaData.fecha).getFullYear();
+  const yearFacturas = facturas.filter(f => f.id.startsWith(`${yearPrefix}${year}-`));
+  const nextIdNum = yearFacturas.length > 0 ? Math.max(...yearFacturas.map(f => parseInt(f.id.split('-')[1])).filter(num => !isNaN(num))) + 1 : 1;
+  const newId = `${yearPrefix}${year}-${nextIdNum.toString().padStart(5, '0')}`;
   
   const processedDetalles = facturaData.detalles.map((d, index) => {
     const producto = productos.find(p => p.id === d.productoId);
@@ -462,11 +553,24 @@ export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombr
       }
     });
   }
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Facturación',
+    accion: 'crear',
+    descripcionKey: 'teamActivity.log.facturaCreada',
+    descripcionParams: { 
+        entidadNombre: newFactura.id, 
+        tipoFactura: t(newFactura.tipo === 'Venta' ? 'facturas.typeSale' : 'facturas.typePurchase'), 
+        clienteProveedorNombre: newFactura.tipo === 'Venta' ? clientes.find(c => c.id === newFactura.clienteId)?.nombre : proveedores.find(p => p.id === newFactura.proveedorId)?.nombre 
+    },
+    entidad_id: newFactura.id,
+    t,
+  });
   return newFactura;
 };
 
 
-export const updateFactura = async (id: string, updates: Partial<Factura>): Promise<Factura | null> => {
+export const updateFactura = async (id: string, updates: Partial<Factura>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Factura | null> => {
   const index = facturas.findIndex(f => f.id === id);
   if (index === -1) return null;
 
@@ -495,6 +599,7 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
   tentativeUpdatedFactura.totalIva = parseFloat(newTotalIva.toFixed(2));
   tentativeUpdatedFactura.totalFactura = parseFloat((newBaseImponible + newTotalIva).toFixed(2));
 
+  // Revert original stock changes if original factura wasn't cancelled
   if (originalFactura.estado !== 'Cancelada') {
     originalFactura.detalles.forEach(detalle => {
       if (originalFactura.tipo === 'Venta') {
@@ -505,19 +610,22 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
     });
   }
 
+  // Apply new stock changes if new factura isn't cancelled
   if (tentativeUpdatedFactura.estado !== 'Cancelada') {
     if (tentativeUpdatedFactura.tipo === 'Venta') {
       for (const detalle of tentativeUpdatedFactura.detalles) {
         const producto = productos.find(p => p.id === detalle.productoId);
-        if (!producto) throw new Error(`Producto con ID ${detalle.productoId} no encontrado.`);
-        if (producto.stock < detalle.cantidad) {
+        if (!producto) throw new Error(t('facturas.validation.productNotFound', {productId: detalle.productoId}));
+        const currentStockAfterRevert = producto.stock; // Stock after original sale was reverted
+        if (currentStockAfterRevert < detalle.cantidad) {
+          // If stock is insufficient, revert the revert and throw error
           if (originalFactura.estado !== 'Cancelada') {
             originalFactura.detalles.forEach(d => {
               if (originalFactura.tipo === 'Venta') adjustStock(d.productoId, d.cantidad, 'decrement');
               else if (originalFactura.tipo === 'Compra') adjustStock(d.productoId, d.cantidad, 'increment');
             });
           }
-          throw new Error(`No hay suficiente stock para ${producto.nombre}. Stock disponible: ${producto.stock}, Solicitado: ${detalle.cantidad}.`);
+          throw new Error(t('facturas.validation.insufficientStock', {productName: producto.nombre, availableStock: currentStockAfterRevert, requestedQuantity: detalle.cantidad}));
         }
       }
     }
@@ -532,6 +640,17 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
   
   facturas[index] = tentativeUpdatedFactura;
   
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Facturación',
+    accion: 'modificar',
+    descripcionKey: 'teamActivity.log.facturaModificada',
+    descripcionParams: { entidadNombre: facturas[index].id },
+    entidad_id: facturas[index].id,
+    entidad_nombre: facturas[index].id,
+    t,
+  });
+
   const updatedFactura = facturas[index];
   return {
     ...updatedFactura,
@@ -541,7 +660,7 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
   };
 };
 
-export const deleteFactura = async (id: string): Promise<boolean> => {
+export const deleteFactura = async (id: string, actingUserId: string, t: (key: string, params?: any) => string): Promise<boolean> => {
   const index = facturas.findIndex(f => f.id === id);
   if (index === -1) return false;
 
@@ -558,6 +677,15 @@ export const deleteFactura = async (id: string): Promise<boolean> => {
   }
 
   facturas.splice(index, 1);
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Facturación',
+    accion: 'eliminar',
+    descripcionKey: 'teamActivity.log.facturaEliminada',
+    descripcionParams: { entidadNombre: facturaToDelete.id },
+    entidad_id: facturaToDelete.id,
+    t,
+  });
   return true;
 };
 
@@ -592,11 +720,11 @@ export const getRecentOrders = async (limit: number = 2): Promise<Array<{id: str
 };
 
 export const getWarehouseStatus = async (): Promise<Array<{name: string, capacity: string, items: number, location: string }>> => {
-  if (almacenes.length === 0) return []; // Prevent division by zero if no warehouses
+  if (almacenes.length === 0) return []; 
   return almacenes.map(alm => ({
     name: alm.nombre,
-    capacity: `${Math.floor(Math.random() * 40) + 50}%`, 
-    items: productos.reduce((sum, p) => sum + p.stock, 0) / almacenes.length, 
+    capacity: alm.capacidad || 'N/A', 
+    items: productos.reduce((sum, p) => sum + p.stock, 0) / almacenes.length, // Simplified: average stock across warehouses
     location: alm.ubicacion || 'N/A',
   }));
 };
@@ -609,15 +737,46 @@ export const getTotalStockValue = async (): Promise<{totalStock: number, totalRe
 };
 
 
-// Team Activity Logs
 export const getTeamActivityLogs = async (limit: number = LOG_LIMIT): Promise<TeamActivityLog[]> => {
-  return [...teamActivityLogs] // Return a copy
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) // ensure sorted
+  return [...teamActivityLogs] 
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) 
     .slice(0, limit);
 };
 
-// Initial logs can be added here if needed, for demo purposes
-// addTeamActivityLog({ usuario_id: 'EMP001', modulo: 'Sistema', accion: 'login', t: (k,p) => `User Admin ERP logged in.`, descripcionKey: 'teamActivity.log.login', descripcionParams: {userName: "Admin ERP"}});
-// This requires 't' to be available globally or passed, which is tricky here.
-// Initial logs are better added as static data or through an init script.
-// For now, logs will only appear after user actions.
+// Initial example log to test the feed (will be overwritten by new logs if actions are performed)
+// This assumes an employee with ID 'EMP001' exists.
+// If not, you might need to adjust or ensure one is created first for this to work.
+// For example, if `addEmpleado` in AuthContext for the first user logs an activity.
+
+/*
+// Example initial log:
+if (empleados.find(e => e.id === 'EMP001')) {
+    const exampleT = (key: string, params?: any) => { // Simple mock t function for initial log
+        let str = key;
+        if (params) {
+            Object.keys(params).forEach(pKey => {
+                str = str.replace(`{${pKey}}`, params[pKey]);
+            });
+        }
+        return str;
+    };
+    addTeamActivityLog({
+        usuario_id: 'EMP001',
+        modulo: 'Sistema',
+        accion: 'login',
+        descripcionKey: 'teamActivity.log.login',
+        descripcionParams: { userName: empleados.find(e => e.id === 'EMP001')?.nombre || 'Admin' },
+        t: exampleT
+    });
+}
+*/
+
+// To ensure team activity feed is populated upon initial load or actions
+// Call addTeamActivityLog in relevant functions:
+// - AuthContext: login, logout, register (if register creates an employee and logs their creation)
+// - Clientes: addCliente, updateCliente, deleteCliente
+// - Proveedores: addProveedor, updateProveedor, deleteProveedor
+// - Empleados: updateEmpleado (especially for role/block changes), deleteEmpleado
+// - Productos: addProducto, updateProducto, deleteProducto
+// - Facturas: addFactura, updateFactura, deleteFactura
+// - Almacenes: addAlmacen, updateAlmacen, deleteAlmacen (to be implemented)

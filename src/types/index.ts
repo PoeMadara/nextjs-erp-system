@@ -38,6 +38,10 @@ export interface Almacen {
   id: string; // Codigo
   nombre: string;
   ubicacion?: string;
+  capacidad?: string;
+  personaContacto?: string;
+  telefonoContacto?: string;
+  notas?: string;
 }
 
 export interface Producto {
@@ -126,3 +130,4 @@ export interface TeamActivityLog {
   entidad_id?: string; 
   entidad_nombre?: string; 
 }
+
