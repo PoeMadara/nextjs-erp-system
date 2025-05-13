@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -14,6 +15,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/contexts/AuthContext';
+import { PaginationControls } from '@/components/shared/PaginationControls';
+
+const ITEMS_PER_PAGE = 25;
 
 export default function ProveedorClientPage() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
@@ -21,6 +25,7 @@ export default function ProveedorClientPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [proveedorToDelete, setProveedorToDelete] = useState<Proveedor | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -40,13 +45,29 @@ export default function ProveedorClientPage() {
     fetchProveedores();
   }, [toast, t]);
 
-  const filteredProveedores = useMemo(() => {
+  const filteredProveedoresData = useMemo(() => {
     return proveedores.filter(proveedor =>
       proveedor.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       proveedor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       proveedor.nif.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [proveedores, searchTerm]);
+
+  const totalPages = Math.ceil(filteredProveedoresData.length / ITEMS_PER_PAGE);
+
+  const paginatedProveedores = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredProveedoresData.slice(startIndex, endIndex);
+  }, [filteredProveedoresData, currentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    } else if (totalPages === 0 && currentPage > 1) {
+        setCurrentPage(1);
+    }
+  }, [searchTerm, totalPages, currentPage]);
 
   const handleDeleteProveedor = async () => {
     if (!proveedorToDelete || !user) {
@@ -56,7 +77,27 @@ export default function ProveedorClientPage() {
     setIsDeleting(true);
     try {
       await deleteProveedorApi(proveedorToDelete.id, user.id, t);
-      setProveedores(prev => prev.filter(p => p.id !== proveedorToDelete.id));
+      const updatedProveedores = proveedores.filter(p => p.id !== proveedorToDelete.id);
+      setProveedores(updatedProveedores);
+
+      const newFilteredData = updatedProveedores.filter(proveedor =>
+        proveedor.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        proveedor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        proveedor.nif.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      const newTotalPages = Math.ceil(newFilteredData.length / ITEMS_PER_PAGE);
+
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      } else if (newTotalPages === 0) { 
+        setCurrentPage(1);
+      } else {
+        const itemsOnCurrentPage = newFilteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).length;
+        if (itemsOnCurrentPage === 0 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+      }
+      
       toast({ title: t('common.success'), description: t('suppliers.successDelete', { name: proveedorToDelete.nombre }) });
     } catch (error) {
       toast({ title: t('common.error'), description: t('suppliers.failDelete', { name: proveedorToDelete.nombre }), variant: "destructive" });
@@ -117,7 +158,10 @@ export default function ProveedorClientPage() {
           type="search"
           placeholder={t('suppliers.searchPlaceholder')}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
           className="w-full max-w-md pl-10 shadow-sm"
         />
       </div>
@@ -135,8 +179,8 @@ export default function ProveedorClientPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProveedores.length > 0 ? (
-              filteredProveedores.map((proveedor) => (
+            {paginatedProveedores.length > 0 ? (
+              paginatedProveedores.map((proveedor) => (
                 <TableRow key={proveedor.id}>
                   <TableCell className="font-medium">{proveedor.id}</TableCell>
                   <TableCell>{proveedor.nombre}</TableCell>
@@ -168,13 +212,21 @@ export default function ProveedorClientPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  {t('suppliers.noSuppliersFound')}
+                  {searchTerm ? t('suppliers.noSuppliersFound') : t('common.loading')}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={ITEMS_PER_PAGE}
+        totalItems={filteredProveedoresData.length}
+      />
 
       <AlertDialog open={!!proveedorToDelete} onOpenChange={() => setProveedorToDelete(null)}>
         <AlertDialogContent>

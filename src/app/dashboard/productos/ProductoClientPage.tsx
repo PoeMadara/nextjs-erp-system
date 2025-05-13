@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -15,6 +16,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { PaginationControls } from '@/components/shared/PaginationControls';
+
+const ITEMS_PER_PAGE = 25;
 
 export default function ProductoClientPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -22,6 +26,7 @@ export default function ProductoClientPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [productoToDelete, setProductoToDelete] = useState<Producto | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -41,13 +46,30 @@ export default function ProductoClientPage() {
     fetchProductos();
   }, [toast, t]);
 
-  const filteredProductos = useMemo(() => {
+  const filteredProductosData = useMemo(() => {
     return productos.filter(producto =>
       producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (producto.codigo && producto.codigo.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (producto.referencia && producto.referencia.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (producto.categoria && producto.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [productos, searchTerm]);
+
+  const totalPages = Math.ceil(filteredProductosData.length / ITEMS_PER_PAGE);
+
+  const paginatedProductos = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredProductosData.slice(startIndex, endIndex);
+  }, [filteredProductosData, currentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    } else if (totalPages === 0 && currentPage > 1) {
+        setCurrentPage(1);
+    }
+  }, [searchTerm, totalPages, currentPage]);
 
   const handleDeleteProducto = async () => {
     if (!productoToDelete || !user) {
@@ -57,7 +79,28 @@ export default function ProductoClientPage() {
     setIsDeleting(true);
     try {
       await deleteProductoApi(productoToDelete.id, user.id, t);
-      setProductos(prev => prev.filter(p => p.id !== productoToDelete.id));
+      const updatedProductos = productos.filter(p => p.id !== productoToDelete.id);
+      setProductos(updatedProductos);
+
+      const newFilteredData = updatedProductos.filter(producto =>
+        producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (producto.codigo && producto.codigo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (producto.referencia && producto.referencia.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (producto.categoria && producto.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      const newTotalPages = Math.ceil(newFilteredData.length / ITEMS_PER_PAGE);
+
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      } else if (newTotalPages === 0) { 
+        setCurrentPage(1);
+      } else {
+         const itemsOnCurrentPage = newFilteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).length;
+        if (itemsOnCurrentPage === 0 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+      }
+
       toast({ title: t('common.success'), description: t('products.successDelete', { name: productoToDelete.nombre }) });
     } catch (error) {
       toast({ title: t('common.error'), description: t('products.failDelete', { name: productoToDelete.nombre }), variant: "destructive" });
@@ -118,7 +161,10 @@ export default function ProductoClientPage() {
           type="search"
           placeholder={t('products.searchPlaceholder')}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
           className="w-full max-w-md pl-10 shadow-sm"
         />
       </div>
@@ -127,7 +173,8 @@ export default function ProductoClientPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('products.tableId')}</TableHead>
+              <TableHead>{t('products.tableCode')}</TableHead>
+              <TableHead>{t('products.tableRef')}</TableHead>
               <TableHead>{t('products.tableName')}</TableHead>
               <TableHead>{t('products.tableCategory')}</TableHead>
               <TableHead className="text-right">{t('products.tablePrice')}</TableHead>
@@ -136,10 +183,11 @@ export default function ProductoClientPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProductos.length > 0 ? (
-              filteredProductos.map((producto) => (
+            {paginatedProductos.length > 0 ? (
+              paginatedProductos.map((producto) => (
                 <TableRow key={producto.id}>
-                  <TableCell className="font-medium">{producto.referencia || producto.id}</TableCell>
+                  <TableCell className="font-medium">{producto.codigo}</TableCell>
+                  <TableCell>{producto.referencia || '-'}</TableCell>
                   <TableCell>{producto.nombre}</TableCell>
                   <TableCell>{producto.categoria ? <Badge variant="outline">{producto.categoria}</Badge> : '-'}</TableCell>
                   <TableCell className="text-right">${producto.precioVenta.toFixed(2)}</TableCell>
@@ -168,14 +216,22 @@ export default function ProductoClientPage() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  {t('products.noProductsFound')}
+                <TableCell colSpan={7} className="h-24 text-center">
+                  {searchTerm ? t('products.noProductsFound') : t('common.loading')}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={ITEMS_PER_PAGE}
+        totalItems={filteredProductosData.length}
+      />
 
       <AlertDialog open={!!productoToDelete} onOpenChange={() => setProductoToDelete(null)}>
         <AlertDialogContent>

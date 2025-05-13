@@ -259,7 +259,8 @@
     "searchCurrency": "Search currency...",
     "noCurrencyFound": "No currency found.",
     "validation": {
-      "insufficientStock": "Not enough stock for {productName}. Available: {availableStock}, Requested: {requestedQuantity}."
+      "insufficientStock": "Not enough stock for {productName}. Available: {availableStock}, Requested: {requestedQuantity}.",
+      "productNotFound": "Product with ID {productId} not found."
     }
   },
   "facturaForm": {
@@ -384,6 +385,8 @@
     "tableEmail": "Email",
     "tablePhone": "Phone",
     "tableRole": "Role",
+    "statusActive": "Active",
+    "statusBlocked": "Blocked",
     "noEmployeesFound": "No employees found.",
     "deleteDialogTitle": "Are you sure?",
     "deleteDialogDescription": "This action will permanently delete the employee \"{name}\".",
@@ -578,6 +581,12 @@
     "log.almacenEliminado": "{userName} deleted warehouse {entidadNombre}.",
     "log.login": "{userName} logged in.",
     "log.logout": "{userName} logged out."
+  },
+  "pagination": {
+    "showing": "Showing {start} to {end} of {total} results",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {currentPage} of {totalPages}"
   }
 }
 

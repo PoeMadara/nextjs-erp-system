@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -15,6 +16,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { PaginationControls } from '@/components/shared/PaginationControls';
+
+const ITEMS_PER_PAGE = 25;
 
 export default function EmpleadoClientPage() {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
@@ -22,6 +26,7 @@ export default function EmpleadoClientPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [empleadoToDelete, setEmpleadoToDelete] = useState<Empleado | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -40,14 +45,31 @@ export default function EmpleadoClientPage() {
 
   useEffect(() => {
     fetchEmpleados();
-  }, [toast, t]);
+  }, [toast, t]); // Removed fetchEmpleados from deps to avoid re-fetch on state change
 
-  const filteredEmpleados = useMemo(() => {
+  const filteredEmpleadosData = useMemo(() => {
     return empleados.filter(empleado =>
       empleado.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       empleado.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [empleados, searchTerm]);
+  
+  const totalPages = Math.ceil(filteredEmpleadosData.length / ITEMS_PER_PAGE);
+
+  const paginatedEmpleados = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredEmpleadosData.slice(startIndex, endIndex);
+  }, [filteredEmpleadosData, currentPage]);
+  
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    } else if (totalPages === 0 && currentPage > 1) {
+        setCurrentPage(1);
+    }
+  }, [searchTerm, totalPages, currentPage]);
+
 
   const handleDeleteEmpleado = async () => {
     if (!empleadoToDelete || !user) {
@@ -57,7 +79,26 @@ export default function EmpleadoClientPage() {
     setIsDeleting(true);
     try {
       await deleteEmpleadoApi(empleadoToDelete.id, user.id, t);
-      setEmpleados(prev => prev.filter(e => e.id !== empleadoToDelete.id));
+      const updatedEmpleados = empleados.filter(e => e.id !== empleadoToDelete.id);
+      setEmpleados(updatedEmpleados);
+
+      const newFilteredData = updatedEmpleados.filter(empleado =>
+        empleado.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        empleado.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      const newTotalPages = Math.ceil(newFilteredData.length / ITEMS_PER_PAGE);
+
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      } else if (newTotalPages === 0) { 
+        setCurrentPage(1);
+      } else {
+         const itemsOnCurrentPage = newFilteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).length;
+        if (itemsOnCurrentPage === 0 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+      }
+      
       toast({ title: t('common.success'), description: t('employees.successDelete', { name: empleadoToDelete.nombre }) });
     } catch (error) {
       const errorMessage = (error instanceof Error) ? error.message : t('employees.failDelete', { name: empleadoToDelete.nombre });
@@ -110,15 +151,12 @@ export default function EmpleadoClientPage() {
   const canPerformAction = (targetEmployee: Empleado): boolean => {
     if (!user) return false;
     if (user.role === 'admin') {
-        // Admins can manage anyone except themselves for blocking/deleting.
-        // They can change their own role, but that's handled in the edit form.
-        return user.id !== targetEmployee.id || targetEmployee.id === user.id; // Allows role edit for self, but not block/delete for self via this table
+        return user.id !== targetEmployee.id || targetEmployee.id === user.id; 
     }
     if (user.role === 'moderator') {
-      // Moderators can manage users, but not admins or other moderators.
       return targetEmployee.role === 'user';
     }
-    return false; // Users can't manage anyone.
+    return false; 
   };
 
   const isSelf = (employeeId: string): boolean => {
@@ -137,13 +175,13 @@ export default function EmpleadoClientPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                {[...Array(6)].map((_, i) => <TableHead key={i}><Skeleton className="h-6 w-24" /></TableHead>)}
+                {[...Array(7)].map((_, i) => <TableHead key={i}><Skeleton className="h-6 w-24" /></TableHead>)}
               </TableRow>
             </TableHeader>
             <TableBody>
               {[...Array(3)].map((_, i) => (
                 <TableRow key={i}>
-                  {[...Array(6)].map((_, j) => <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>)}
+                  {[...Array(7)].map((_, j) => <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>)}
                 </TableRow>
               ))}
             </TableBody>
@@ -175,7 +213,10 @@ export default function EmpleadoClientPage() {
           type="search"
           placeholder={t('employees.searchPlaceholder')}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
           className="w-full max-w-md pl-10 shadow-sm"
         />
       </div>
@@ -194,8 +235,8 @@ export default function EmpleadoClientPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredEmpleados.length > 0 ? (
-              filteredEmpleados.map((empleado) => (
+            {paginatedEmpleados.length > 0 ? (
+              paginatedEmpleados.map((empleado) => (
                 <TableRow key={empleado.id} className={empleado.isBlocked ? "bg-muted/50" : ""}>
                   <TableCell className="font-medium">{empleado.id}</TableCell>
                   <TableCell>{empleado.nombre}</TableCell>
@@ -224,7 +265,7 @@ export default function EmpleadoClientPage() {
                               <Edit className="mr-2 h-4 w-4" /> {t('common.edit')}
                             </Link>
                           </DropdownMenuItem>
-                          {!isSelf(empleado.id) && ( // Prevent blocking/deleting self
+                          {!isSelf(empleado.id) && ( 
                             <>
                               <DropdownMenuItem onClick={() => handleToggleBlockUser(empleado)}>
                                 {empleado.isBlocked ? (
@@ -248,13 +289,21 @@ export default function EmpleadoClientPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
-                  {t('employees.noEmployeesFound')}
+                  {searchTerm ? t('employees.noEmployeesFound') : t('common.loading')}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={ITEMS_PER_PAGE}
+        totalItems={filteredEmpleadosData.length}
+      />
 
       <AlertDialog open={!!empleadoToDelete} onOpenChange={() => setEmpleadoToDelete(null)}>
         <AlertDialogContent>

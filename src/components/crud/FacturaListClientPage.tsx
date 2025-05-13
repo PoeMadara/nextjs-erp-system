@@ -1,6 +1,5 @@
 
 "use client";
-import type { ReactNode } from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -20,17 +19,20 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/contexts/AuthContext';
+import { PaginationControls } from '@/components/shared/PaginationControls';
 
 interface FacturaListClientPageProps {
   pageTitleKey: string;
   pageDescriptionKey: string;
   newButtonTextKey: string;
-  newButtonLink?: string; // Made optional, will be constructed if not provided
+  newButtonLink?: string; 
   invoiceTypeFilter?: FacturaTipo;
   hideNewButton?: boolean;
 }
 
 const ALL_CURRENCIES: CurrencyCode[] = ['EUR', 'USD', 'GBP']; 
+const ITEMS_PER_PAGE = 25;
 
 export default function FacturaListClientPage({
   pageTitleKey,
@@ -46,8 +48,10 @@ export default function FacturaListClientPage({
   const [facturaToDelete, setFacturaToDelete] = useState<Factura | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedCurrencies, setSelectedCurrencies] = useState<Set<CurrencyCode>>(new Set(ALL_CURRENCIES));
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth(); 
 
   useEffect(() => {
     async function fetchFacturas() {
@@ -64,7 +68,7 @@ export default function FacturaListClientPage({
     fetchFacturas();
   }, [toast, t]);
 
-  const filteredFacturas = useMemo(() => {
+  const filteredFacturasData = useMemo(() => {
     let currentFacturas = facturas;
     if (invoiceTypeFilter) {
       currentFacturas = facturas.filter(factura => factura.tipo === invoiceTypeFilter);
@@ -82,6 +86,23 @@ export default function FacturaListClientPage({
       factura.moneda.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [facturas, searchTerm, invoiceTypeFilter, selectedCurrencies]);
+
+  const totalPages = Math.ceil(filteredFacturasData.length / ITEMS_PER_PAGE);
+
+  const paginatedFacturas = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredFacturasData.slice(startIndex, endIndex);
+  }, [filteredFacturasData, currentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    } else if (totalPages === 0 && currentPage > 1) {
+        setCurrentPage(1);
+    }
+  }, [searchTerm, selectedCurrencies, invoiceTypeFilter, totalPages, currentPage]);
+
 
   const getBadgeVariant = (estado: Factura['estado']) => {
     switch (estado) {
@@ -110,11 +131,49 @@ export default function FacturaListClientPage({
   }
 
   const handleDeleteFactura = async () => {
-    if (!facturaToDelete) return;
+    if (!facturaToDelete || !user) { 
+        toast({
+            title: t('common.error'),
+            description: !facturaToDelete ? t('facturas.notFound') : "User not authenticated.",
+            variant: "destructive",
+        });
+        setIsDeleting(false);
+        return;
+    }
     setIsDeleting(true);
     try {
-      await deleteFacturaApi(facturaToDelete.id);
-      setFacturas(prev => prev.filter(f => f.id !== facturaToDelete.id));
+      await deleteFacturaApi(facturaToDelete.id, user.id, t); 
+      const updatedFacturas = facturas.filter(f => f.id !== facturaToDelete.id);
+      setFacturas(updatedFacturas);
+
+      // Recalculate based on new facturas list and current filters
+      let currentFilteredFacturas = updatedFacturas;
+      if (invoiceTypeFilter) {
+        currentFilteredFacturas = currentFilteredFacturas.filter(factura => factura.tipo === invoiceTypeFilter);
+      }
+      if (selectedCurrencies.size < ALL_CURRENCIES.length) {
+        currentFilteredFacturas = currentFilteredFacturas.filter(factura => selectedCurrencies.has(factura.moneda));
+      }
+      const newFilteredData = currentFilteredFacturas.filter(factura =>
+        factura.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (factura.clienteNombre && factura.clienteNombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (factura.proveedorNombre && factura.proveedorNombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        factura.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        factura.moneda.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      const newTotalPages = Math.ceil(newFilteredData.length / ITEMS_PER_PAGE);
+
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      } else if (newTotalPages === 0) {
+        setCurrentPage(1);
+      } else {
+        const itemsOnCurrentPage = newFilteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).length;
+        if (itemsOnCurrentPage === 0 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+      }
+
       toast({ title: t('common.success'), description: t('facturas.successDelete', { id: facturaToDelete.id }) });
     } catch (error) {
       toast({ title: t('common.error'), description: t('facturas.failDelete', { id: facturaToDelete.id }), variant: "destructive" });
@@ -136,9 +195,14 @@ export default function FacturaListClientPage({
       } else {
         newSet.add(currency);
       }
-      return newSet.size === 0 ? new Set(ALL_CURRENCIES) : newSet;
+      // If no currency is selected after toggle, select all.
+      // This handles the case where user unchecks the last selected currency.
+      const finalSet = newSet.size === 0 ? new Set(ALL_CURRENCIES) : newSet;
+      setCurrentPage(1); // Reset page on filter change
+      return finalSet;
     });
   };
+
 
   const newButtonLink = providedNewButtonLink || 
                         (invoiceTypeFilter === 'Venta' ? '/dashboard/facturas/new?tipo=venta' 
@@ -197,7 +261,10 @@ export default function FacturaListClientPage({
             type="search"
             placeholder={t('facturas.searchPlaceholder')}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full max-w-md pl-10 shadow-sm"
             />
         </div>
@@ -205,7 +272,7 @@ export default function FacturaListClientPage({
             <PopoverTrigger asChild>
             <Button variant="outline" className="shadow-sm">
                 <Filter className="mr-2 h-4 w-4" />
-                {t('facturas.filterByCurrency')} ({selectedCurrencies.size})
+                {t('facturas.filterByCurrency')} ({selectedCurrencies.size === ALL_CURRENCIES.length ? t('common.all') : selectedCurrencies.size})
             </Button>
             </PopoverTrigger>
             <PopoverContent className="w-56 p-0" align="end">
@@ -223,7 +290,7 @@ export default function FacturaListClientPage({
                         {currency}
                         <Checkbox
                         checked={selectedCurrencies.has(currency)}
-                        onCheckedChange={() => toggleCurrencyFilter(currency)}
+                        // onCheckedChange={() => toggleCurrencyFilter(currency)} // Let onSelect handle it
                         className="ml-2"
                         />
                     </CommandItem>
@@ -251,8 +318,8 @@ export default function FacturaListClientPage({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredFacturas.length > 0 ? (
-              filteredFacturas.map((factura) => (
+            {paginatedFacturas.length > 0 ? (
+              paginatedFacturas.map((factura) => (
                 <TableRow key={factura.id}>
                   <TableCell className="font-medium">{factura.id}</TableCell>
                   <TableCell>{format(new Date(factura.fecha), 'dd/MM/yyyy')}</TableCell>
@@ -299,13 +366,22 @@ export default function FacturaListClientPage({
             ) : (
               <TableRow>
                 <TableCell colSpan={8} className="h-24 text-center">
-                  {t('facturas.noFacturasFound')}
+                  {searchTerm || (selectedCurrencies.size < ALL_CURRENCIES.length) || invoiceTypeFilter ? t('facturas.noFacturasFound') : t('common.loading')}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={ITEMS_PER_PAGE}
+        totalItems={filteredFacturasData.length}
+      />
+
       <AlertDialog open={!!facturaToDelete} onOpenChange={() => setFacturaToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Edit, Trash2, Search, Warehouse as WarehouseIcon } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Edit, Trash2, Search } from 'lucide-react'; // Removed WarehouseIcon as it's not used directly here
 import { PageHeader } from '@/components/shared/PageHeader';
 import type { Almacen } from '@/types';
 import { getAlmacenes, deleteAlmacen as deleteAlmacenApi } from '@/lib/mockData';
@@ -15,6 +15,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/useTranslation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { PaginationControls } from '@/components/shared/PaginationControls';
+
+const ITEMS_PER_PAGE = 25;
 
 export default function AlmacenClientPage() {
   const [almacenes, setAlmacenes] = useState<Almacen[]>([]);
@@ -22,6 +25,7 @@ export default function AlmacenClientPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [almacenToDelete, setAlmacenToDelete] = useState<Almacen | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -41,13 +45,29 @@ export default function AlmacenClientPage() {
     fetchAlmacenes();
   }, [toast, t]);
 
-  const filteredAlmacenes = useMemo(() => {
+  const filteredAlmacenesData = useMemo(() => {
     return almacenes.filter(almacen =>
       almacen.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (almacen.ubicacion && almacen.ubicacion.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (almacen.capacidad && almacen.capacidad.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [almacenes, searchTerm]);
+
+  const totalPages = Math.ceil(filteredAlmacenesData.length / ITEMS_PER_PAGE);
+
+  const paginatedAlmacenes = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredAlmacenesData.slice(startIndex, endIndex);
+  }, [filteredAlmacenesData, currentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    } else if (totalPages === 0 && currentPage > 1) {
+        setCurrentPage(1);
+    }
+  }, [searchTerm, totalPages, currentPage]);
 
   const handleDeleteAlmacen = async () => {
     if (!almacenToDelete || !user) {
@@ -57,7 +77,27 @@ export default function AlmacenClientPage() {
     setIsDeleting(true);
     try {
       await deleteAlmacenApi(almacenToDelete.id, user.id, t); 
-      setAlmacenes(prev => prev.filter(a => a.id !== almacenToDelete.id));
+      const updatedAlmacenes = almacenes.filter(a => a.id !== almacenToDelete.id);
+      setAlmacenes(updatedAlmacenes);
+
+      const newFilteredData = updatedAlmacenes.filter(almacen =>
+        almacen.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (almacen.ubicacion && almacen.ubicacion.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (almacen.capacidad && almacen.capacidad.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      const newTotalPages = Math.ceil(newFilteredData.length / ITEMS_PER_PAGE);
+
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      } else if (newTotalPages === 0) { 
+        setCurrentPage(1);
+      } else {
+         const itemsOnCurrentPage = newFilteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).length;
+        if (itemsOnCurrentPage === 0 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+      }
+
       toast({ title: t('common.success'), description: t('warehouse.successDelete', { name: almacenToDelete.nombre }) });
     } catch (error) {
       toast({ title: t('common.error'), description: t('warehouse.failDelete', { name: almacenToDelete.nombre }), variant: "destructive" });
@@ -119,7 +159,10 @@ export default function AlmacenClientPage() {
           type="search"
           placeholder={t('warehouse.searchPlaceholder')}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
           className="w-full max-w-md pl-10 shadow-sm"
         />
       </div>
@@ -136,8 +179,8 @@ export default function AlmacenClientPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAlmacenes.length > 0 ? (
-              filteredAlmacenes.map((almacen) => (
+            {paginatedAlmacenes.length > 0 ? (
+              paginatedAlmacenes.map((almacen) => (
                 <TableRow key={almacen.id}>
                   <TableCell className="font-medium">{almacen.id}</TableCell>
                   <TableCell>{almacen.nombre}</TableCell>
@@ -168,13 +211,21 @@ export default function AlmacenClientPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
-                  {t('warehouse.noWarehousesFound')}
+                  {searchTerm ? t('warehouse.noWarehousesFound') : t('common.loading')}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={ITEMS_PER_PAGE}
+        totalItems={filteredAlmacenesData.length}
+      />
 
       <AlertDialog open={!!almacenToDelete} onOpenChange={() => setAlmacenToDelete(null)}>
         <AlertDialogContent>
@@ -195,4 +246,3 @@ export default function AlmacenClientPage() {
     </>
   );
 }
-

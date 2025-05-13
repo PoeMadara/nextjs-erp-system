@@ -259,7 +259,8 @@
     "searchCurrency": "Buscar moneda...",
     "noCurrencyFound": "No se encontró la moneda.",
     "validation": {
-      "insufficientStock": "No hay stock suficiente para {productName}. Disponible: {availableStock}, Solicitado: {requestedQuantity}."
+      "insufficientStock": "No hay stock suficiente para {productName}. Disponible: {availableStock}, Solicitado: {requestedQuantity}.",
+      "productNotFound": "Producto con ID {productId} no encontrado."
     }
   },
   "facturaForm": {
@@ -384,6 +385,8 @@
     "tableEmail": "Email",
     "tablePhone": "Teléfono",
     "tableRole": "Rol",
+    "statusActive": "Activo",
+    "statusBlocked": "Bloqueado",
     "noEmployeesFound": "No se encontraron empleados.",
     "deleteDialogTitle": "¿Estás seguro?",
     "deleteDialogDescription": "Esta acción eliminará permanentemente al empleado \"{name}\".",
@@ -578,6 +581,12 @@
     "log.almacenEliminado": "{userName} eliminó el almacén {entidadNombre}.",
     "log.login": "{userName} inició sesión.",
     "log.logout": "{userName} cerró sesión."
+  },
+  "pagination": {
+    "showing": "Mostrando {start} a {end} de {total} resultados",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "pageOf": "Página {currentPage} de {totalPages}"
   }
 }
 

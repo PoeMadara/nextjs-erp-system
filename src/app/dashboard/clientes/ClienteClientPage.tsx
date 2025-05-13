@@ -15,6 +15,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/contexts/AuthContext';
+import { PaginationControls } from '@/components/shared/PaginationControls';
+
+const ITEMS_PER_PAGE = 25;
 
 export default function ClienteClientPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -22,6 +25,7 @@ export default function ClienteClientPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -41,13 +45,30 @@ export default function ClienteClientPage() {
     fetchClientes();
   }, [toast, t]);
 
-  const filteredClientes = useMemo(() => {
+  const filteredClientesData = useMemo(() => {
     return clientes.filter(cliente =>
       cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cliente.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (cliente.nif && cliente.nif.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [clientes, searchTerm]);
+
+  const totalPages = Math.ceil(filteredClientesData.length / ITEMS_PER_PAGE);
+
+  const paginatedClientes = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredClientesData.slice(startIndex, endIndex);
+  }, [filteredClientesData, currentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    } else if (totalPages === 0 && currentPage > 1) {
+        setCurrentPage(1);
+    }
+  }, [searchTerm, totalPages, currentPage]);
+
 
   const handleDeleteCliente = async () => {
     if (!clienteToDelete || !user) {
@@ -57,7 +78,29 @@ export default function ClienteClientPage() {
     setIsDeleting(true);
     try {
       await deleteClienteApi(clienteToDelete.id, user.id, t);
-      setClientes(prev => prev.filter(c => c.id !== clienteToDelete.id));
+      const updatedClientes = clientes.filter(c => c.id !== clienteToDelete.id);
+      setClientes(updatedClientes);
+      
+      // Recalculate total pages based on the updated list and current search term
+      const newFilteredData = updatedClientes.filter(cliente =>
+        cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cliente.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cliente.nif && cliente.nif.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      const newTotalPages = Math.ceil(newFilteredData.length / ITEMS_PER_PAGE);
+
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      } else if (newTotalPages === 0) { 
+        setCurrentPage(1);
+      } else {
+         // Check if current page became empty
+        const itemsOnCurrentPage = newFilteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).length;
+        if (itemsOnCurrentPage === 0 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+      }
+
       toast({ title: t('common.success'), description: t('clientes.successDelete', { name: clienteToDelete.nombre }) });
     } catch (error) {
       toast({ title: t('common.error'), description: t('clientes.failDelete', { name: clienteToDelete.nombre }), variant: "destructive" });
@@ -119,7 +162,10 @@ export default function ClienteClientPage() {
           type="search"
           placeholder={t('clientes.searchPlaceholder')}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1); // Reset to first page on search
+          }}
           className="w-full max-w-md pl-10 shadow-sm"
         />
       </div>
@@ -137,8 +183,8 @@ export default function ClienteClientPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredClientes.length > 0 ? (
-              filteredClientes.map((cliente) => (
+            {paginatedClientes.length > 0 ? (
+              paginatedClientes.map((cliente) => (
                 <TableRow key={cliente.id}>
                   <TableCell className="font-medium">{cliente.id}</TableCell>
                   <TableCell>{cliente.nombre}</TableCell>
@@ -170,13 +216,21 @@ export default function ClienteClientPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  {t('clientes.noClientesFound')}
+                  {searchTerm ? t('clientes.noClientesFound') : t('common.loading')} 
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
+
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={ITEMS_PER_PAGE}
+        totalItems={filteredClientesData.length}
+      />
 
       <AlertDialog open={!!clienteToDelete} onOpenChange={() => setClienteToDelete(null)}>
         <AlertDialogContent>
