@@ -67,7 +67,7 @@ export function NotificationForm({
       message: defaultValues?.message || "",
       targetRoles: defaultValues?.targetRoles || [],
       frequency: defaultValues?.frequency || 'once',
-      recurringDays: defaultValues?.recurringDays || undefined,
+      recurringDays: defaultValues?.recurringDays === undefined ? undefined : Number(defaultValues.recurringDays),
     },
   });
 
@@ -199,14 +199,11 @@ export function NotificationForm({
                         type="number" 
                         min="1" 
                         placeholder={t('notifications.form.recurringDaysPlaceholder')} 
-                        name={field.name}
-                        onBlur={field.onBlur}
-                        ref={field.ref}
-                        disabled={field.disabled}
-                        value={field.value === undefined ? '' : String(field.value)}
+                        {...field}
+                        value={field.value === undefined ? '' : String(field.value)} // Handle undefined for empty input
                         onChange={event => {
                           const value = event.target.value;
-                          field.onChange(value === '' ? undefined : +value);
+                          field.onChange(value === '' ? undefined : Number(value)); // Convert to number or undefined
                         }}
                       />
                     </FormControl>
@@ -226,4 +223,3 @@ export function NotificationForm({
     </Card>
   );
 }
-
