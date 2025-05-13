@@ -1,4 +1,6 @@
+
 "use client";
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,8 +30,9 @@ export function UserNav() {
   }
 
   const getInitials = (name: string) => {
+    if (!name) return "??";
     const names = name.split(' ');
-    if (names.length > 1) {
+    if (names.length > 1 && names[0] && names[names.length - 1]) {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
@@ -58,13 +61,17 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <UserCircle className="mr-2 h-4 w-4" />
-            <span>{t('userNav.profile')}</span>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/profile">
+              <UserCircle className="mr-2 h-4 w-4" />
+              <span>{t('userNav.profile')}</span>
+            </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>{t('userNav.settings')}</span>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/settings">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>{t('userNav.settings')}</span>
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>

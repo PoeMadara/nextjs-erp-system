@@ -1,8 +1,9 @@
+
 "use client";
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { getEmpleadoByEmail, addEmpleado as addUserToMockData } from '@/lib/mockData';
+import { getEmpleadoByEmail, addEmpleado as addUserToMockData, updateEmpleado as updateEmpleadoInMockData } from '@/lib/mockData';
 import type { Empleado, EmpleadoRole } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation'; 
 
@@ -11,6 +12,7 @@ interface User {
   name: string;
   email: string;
   role: EmpleadoRole;
+  lastLogin?: string; 
 }
 
 interface AuthContextType {
@@ -20,6 +22,7 @@ interface AuthContextType {
   logout: () => void;
   register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message?: string }>;
   isLoading: boolean;
+  updateUserInContext: (updatedUserFields: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,7 +33,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  // t will be initialized after LanguageProvider is mounted
   const { t } = useTranslation(); 
 
 
@@ -50,13 +52,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
+  const updateUserInContext = useCallback((updatedUserFields: Partial<User>) => {
+    setUser(prevUser => {
+      if (!prevUser) return null;
+      const newUser = { ...prevUser, ...updatedUserFields };
+      try {
+        localStorage.setItem('erpUser', JSON.stringify(newUser));
+      } catch (error) {
+        console.error("Failed to update user in localStorage", error);
+      }
+      return newUser;
+    });
+  }, []);
+
   const login = useCallback(async (email: string, password?: string): Promise<{ success: boolean; message?: string }> => {
     setIsLoading(true);
     
     const targetEmpleado: Empleado | undefined = await getEmpleadoByEmail(email);
 
     if (targetEmpleado) {
-      // In a real app, you would compare hashed passwords. Here, we simulate.
       if (targetEmpleado.password && password !== targetEmpleado.password) {
           setIsLoading(false);
           return { success: false, message: t('loginPage.loginFailed') };
@@ -66,19 +80,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
         return { success: false, message: t('loginPage.userBlocked') };
       }
-
+      
+      const lastLoginTime = new Date().toISOString();
       const userData: User = { 
         id: targetEmpleado.id, 
         name: targetEmpleado.nombre, 
         email: targetEmpleado.email,
-        role: targetEmpleado.role 
+        role: targetEmpleado.role,
+        lastLogin: lastLoginTime,
       };
       try {
         localStorage.setItem('erpUser', JSON.stringify(userData));
+        // Update lastLogin in mockData as well
+        await updateEmpleadoInMockData(targetEmpleado.id, { lastLogin: lastLoginTime }, targetEmpleado.id, t, true); // true to skip logging
       } catch (error) {
-        console.error("Failed to set user in localStorage", error);
+        console.error("Failed to set user in localStorage or update mockData", error);
         setIsLoading(false);
-        return { success: false, message: t('common.error') }; // Generic storage error
+        return { success: false, message: t('common.error') };
       }
       setUser(userData);
       setIsAuthenticated(true);
@@ -112,8 +130,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, message: t('registerPage.emailExistsError') };
     }
     
-    // Pass password to addEmpleado for mock storage
-    const newEmpleado = await addUserToMockData({ nombre: name, email, password });
+    const newEmpleadoData: Partial<Empleado> = { 
+        nombre: name, 
+        email, 
+        password, 
+        bio: '', 
+        emailNotifications: true,
+        lastLogin: new Date().toISOString() 
+    };
+    
+    const newEmpleado = await addUserToMockData(newEmpleadoData as Omit<Empleado, 'id' | 'isBlocked' | 'role' | 'avatarColor'> & {password?: string, role?: EmpleadoRole});
 
     setIsLoading(false);
     if (newEmpleado) {
@@ -129,8 +155,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const authAccessRoutes = ['/login', '/forgot-password', '/register'];
     if (!isLoading && isAuthenticated && authAccessRoutes.includes(pathname || '')) {
-       // Allow staying on /register if registration was just successful to see the toast
-       // A more robust solution might involve a query param or state.
        if(pathname !== '/register' || (pathname === '/register' && !router.asPath.includes('?fromSuccess=true')) ) { 
          router.replace('/dashboard');
        }
@@ -139,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, register, isLoading }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, register, isLoading, updateUserInContext }}>
       {children}
     </AuthContext.Provider>
   );

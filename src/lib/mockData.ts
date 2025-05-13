@@ -1,3 +1,4 @@
+
 import type { Cliente, Proveedor, Empleado, Producto, Almacen, Factura, DetalleFactura, EmpleadoRole, FacturaTipo, FacturaEstado, CurrencyCode, TeamActivityLog, TeamActivityModule, TeamActivityAction } from '@/types';
 import { subDays, subHours, subMinutes } from 'date-fns';
 
@@ -19,10 +20,10 @@ let almacenes: Almacen[] = [
 ];
 
 let productos: Producto[] = [
-  { id: 'PROD001', nombre: 'Portátil Modelo X', descripcion: 'Portátil 15 pulgadas, 16GB RAM, 512GB SSD', precioCompra: 600.00, precioVenta: 899.99, iva: 21.00, stock: 50, categoria: 'Electrónica', referencia: 'LX15-512'},
-  { id: 'PROD002', nombre: 'Monitor 24 pulgadas', descripcion: 'Monitor LED Full HD', precioCompra: 120.00, precioVenta: 179.50, iva: 21.00, stock: 120, categoria: 'Periféricos', referencia: 'MON24-FHD' },
-  { id: 'PROD003', nombre: 'Teclado Mecánico RGB', descripcion: 'Teclado mecánico con retroiluminación RGB', precioCompra: 45.00, precioVenta: 79.90, iva: 21.00, stock: 75, categoria: 'Periféricos', referencia: 'TEC-MEC-RGB' },
-  { id: 'PROD004', nombre: 'Ratón Inalámbrico Ergo', descripcion: 'Ratón ergonómico inalámbrico', precioCompra: 20.00, precioVenta: 35.00, iva: 21.00, stock: 200, categoria: 'Periféricos', referencia: 'RAT-ERG-WL' },
+  { id: 'PROD001', codigo: 'P001', nombre: 'Portátil Modelo X', descripcion: 'Portátil 15 pulgadas, 16GB RAM, 512GB SSD', precioCompra: 600.00, precioVenta: 899.99, iva: 21.00, stock: 50, categoria: 'Electrónica', referencia: 'LX15-512'},
+  { id: 'PROD002', codigo: 'P002', nombre: 'Monitor 24 pulgadas', descripcion: 'Monitor LED Full HD', precioCompra: 120.00, precioVenta: 179.50, iva: 21.00, stock: 120, categoria: 'Periféricos', referencia: 'MON24-FHD' },
+  { id: 'PROD003', codigo: 'P003', nombre: 'Teclado Mecánico RGB', descripcion: 'Teclado mecánico con retroiluminación RGB', precioCompra: 45.00, precioVenta: 79.90, iva: 21.00, stock: 75, categoria: 'Periféricos', referencia: 'TEC-MEC-RGB' },
+  { id: 'PROD004', codigo: 'P004', nombre: 'Ratón Inalámbrico Ergo', descripcion: 'Ratón ergonómico inalámbrico', precioCompra: 20.00, precioVenta: 35.00, iva: 21.00, stock: 200, categoria: 'Periféricos', referencia: 'RAT-ERG-WL' },
 ];
 
 let facturas: Factura[] = [
@@ -245,12 +246,17 @@ export const getEmpleadoByEmail = async (email: string): Promise<Empleado | unde
 export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked' | 'role' | 'avatarColor'> & {password?: string, role?: EmpleadoRole}, actingUserId?: string, t?: (key: string, params?: any) => string): Promise<Empleado> => {
   const role: EmpleadoRole = empleadoData.role || (empleados.length === 0 ? 'admin' : 'user');
   const newEmpleado: Empleado = { 
-    ...empleadoData, 
+    nombre: empleadoData.nombre,
+    email: empleadoData.email,
+    telefono: empleadoData.telefono,
     id: generateId('EMP', empleados),
     role: role, 
     isBlocked: false, 
     password: empleadoData.password || 'password123',
-    avatarColor: getNextAvatarColor()
+    avatarColor: getNextAvatarColor(),
+    bio: empleadoData.bio || '',
+    emailNotifications: empleadoData.emailNotifications ?? true,
+    lastLogin: empleadoData.lastLogin || new Date().toISOString(),
   };
   empleados.push(newEmpleado);
   if (empleados.length === 1 && newEmpleado.role !== 'admin') {
@@ -271,48 +277,57 @@ export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked
   return newEmpleado;
 };
 
-export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado, 'password' | 'avatarColor'>>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Empleado | null> => {
+export const updateEmpleado = async (id: string, updates: Partial<Empleado>, actingUserId: string, t: (key: string, params?: any) => string, skipLog: boolean = false): Promise<Empleado | null> => {
   const index = empleados.findIndex(e => e.id === id);
   if (index === -1) return null;
   
   const currentEmpleado = {...empleados[index]}; 
-  const { password, avatarColor, ...restOfUpdates } = updates as any; 
-  empleados[index] = { ...currentEmpleado, ...restOfUpdates };
+  empleados[index] = { ...currentEmpleado, ...updates };
 
-  if (updates.role && updates.role !== currentEmpleado.role) {
-    await addTeamActivityLog({
-      usuario_id: actingUserId,
-      modulo: 'Empleados',
-      accion: 'asignar_rol',
-      descripcionKey: 'teamActivity.log.empleadoRolAsignado',
-      descripcionParams: { rol: t(`employees.role${updates.role.charAt(0).toUpperCase() + updates.role.slice(1)}`), entidadNombre: empleados[index].nombre },
-      entidad_id: empleados[index].id,
-      entidad_nombre: empleados[index].nombre,
-      t,
-    });
-  } else if (updates.isBlocked !== undefined && updates.isBlocked !== currentEmpleado.isBlocked) {
-     await addTeamActivityLog({
-      usuario_id: actingUserId,
-      modulo: 'Empleados',
-      accion: updates.isBlocked ? 'bloquear' : 'desbloquear',
-      descripcionKey: updates.isBlocked ? 'teamActivity.log.empleadoBloqueado' : 'teamActivity.log.empleadoDesbloqueado',
-      descripcionParams: { entidadNombre: empleados[index].nombre },
-      entidad_id: empleados[index].id,
-      entidad_nombre: empleados[index].nombre,
-      t,
-    });
-  } else {
-      await addTeamActivityLog({
-        usuario_id: actingUserId,
-        modulo: 'Empleados',
-        accion: 'modificar',
-        descripcionKey: 'teamActivity.log.empleadoModificado',
-        descripcionParams: { entidadNombre: empleados[index].nombre },
-        entidad_id: empleados[index].id,
-        entidad_nombre: empleados[index].nombre,
-        t,
-    });
+  if (skipLog) {
+    return empleados[index];
   }
+  
+  let logData: Partial<AddTeamActivityLogData> = {
+    usuario_id: actingUserId,
+    modulo: 'Empleados', // Default, can be overridden
+    entidad_id: empleados[index].id,
+    entidad_nombre: empleados[index].nombre,
+    t,
+  };
+
+  if (updates.bio !== undefined && updates.bio !== currentEmpleado.bio) {
+    logData.modulo = 'Perfil';
+    logData.accion = 'modificar';
+    logData.descripcionKey = 'teamActivity.log.perfilBioActualizado';
+  } else if (updates.email !== undefined && updates.email !== currentEmpleado.email) {
+     logData.modulo = 'Perfil';
+     logData.accion = 'modificar';
+     logData.descripcionKey = 'teamActivity.log.perfilEmailActualizado';
+  } else if (updates.password !== undefined && updates.password !== currentEmpleado.password) { // Note: password check is simplistic
+     logData.modulo = 'Perfil';
+     logData.accion = 'modificar';
+     logData.descripcionKey = 'teamActivity.log.perfilContrasenaActualizada';
+  } else if (updates.emailNotifications !== undefined && updates.emailNotifications !== currentEmpleado.emailNotifications) {
+     logData.modulo = 'Perfil';
+     logData.accion = 'modificar';
+     logData.descripcionKey = 'teamActivity.log.perfilNotificacionesActualizadas';
+  } else if (updates.role && updates.role !== currentEmpleado.role) {
+    logData.accion = 'asignar_rol';
+    logData.descripcionKey = 'teamActivity.log.empleadoRolAsignado';
+    logData.descripcionParams = { rol: t(`employees.role${updates.role.charAt(0).toUpperCase() + updates.role.slice(1)}`), entidadNombre: empleados[index].nombre };
+  } else if (updates.isBlocked !== undefined && updates.isBlocked !== currentEmpleado.isBlocked) {
+    logData.accion = updates.isBlocked ? 'bloquear' : 'desbloquear';
+    logData.descripcionKey = updates.isBlocked ? 'teamActivity.log.empleadoBloqueado' : 'teamActivity.log.empleadoDesbloqueado';
+  } else {
+    logData.accion = 'modificar';
+    logData.descripcionKey = 'teamActivity.log.empleadoModificado';
+  }
+  
+  if(logData.accion && logData.descripcionKey && logData.modulo) {
+    await addTeamActivityLog(logData as AddTeamActivityLogData);
+  }
+
 
   return empleados[index];
 };
@@ -351,7 +366,11 @@ export const deleteEmpleado = async (id: string, actingUserId: string, t: (key: 
 export const getProductos = async (): Promise<Producto[]> => [...productos];
 export const getProductoById = async (id: string): Promise<Producto | undefined> => productos.find(p => p.id === id);
 export const addProducto = async (productoData: Omit<Producto, 'id'>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Producto> => {
-  const newProducto = { ...productoData, id: generateId('PROD', productos) };
+  const newProducto: Producto = { 
+      ...productoData, 
+      id: generateId('PROD', productos),
+      codigo: productoData.codigo || generateId('P', productos.filter(p => p.codigo?.startsWith("P"))), // Ensure unique product code
+  };
   productos.push(newProducto);
   await addTeamActivityLog({
     usuario_id: actingUserId,
@@ -741,3 +760,16 @@ export const getTeamActivityLogs = async (limit: number = LOG_LIMIT): Promise<Te
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) 
     .slice(0, limit);
 };
+
+// Ensure initial admin user is created if no users exist
+if (empleados.length === 0) {
+  addEmpleado({
+    nombre: 'Admin ERP',
+    email: 'admin@erpsystem.com',
+    password: 'password123', // Default password for initial admin
+    role: 'admin',
+    bio: 'Default administrator account.',
+    emailNotifications: true,
+    lastLogin: new Date().toISOString()
+  });
+}

@@ -32,6 +32,9 @@ export interface Empleado {
   password?: string; // For mock authentication simulation
   isBlocked?: boolean; // For blocking user access
   avatarColor?: string; // For team activity display
+  bio?: string; // For user profile
+  emailNotifications?: boolean; // For user settings
+  lastLogin?: string; // ISO Date string for last login
 }
 
 export interface Almacen {
@@ -46,6 +49,7 @@ export interface Almacen {
 
 export interface Producto {
   id: string; // Codigo
+  codigo?: string; // Unique product code
   nombre: string;
   descripcion?: string;
   precioCompra: number;
@@ -115,7 +119,7 @@ export interface WarehouseSummary {
   location: string;
 }
 
-export type TeamActivityModule = "Facturación" | "Compras" | "Productos" | "Clientes" | "Proveedores" | "Empleados" | "Almacén" | "Sistema";
+export type TeamActivityModule = "Facturación" | "Compras" | "Productos" | "Clientes" | "Proveedores" | "Empleados" | "Almacén" | "Sistema" | "Perfil";
 export type TeamActivityAction = "crear" | "modificar" | "eliminar" | "asignar_rol" | "bloquear" | "desbloquear" | "login" | "logout";
 
 export interface TeamActivityLog {
