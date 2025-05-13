@@ -31,13 +31,17 @@ interface EmpleadoFormProps {
   defaultValues?: Partial<Empleado>;
   isSubmitting?: boolean;
   submitButtonText?: string;
+  canEditRole?: boolean; // New prop
+  isEditingSelf?: boolean; // New prop
 }
 
 export function EmpleadoForm({ 
   onSubmit, 
   defaultValues, 
   isSubmitting = false, 
-  submitButtonText 
+  submitButtonText,
+  canEditRole = true, // Default to true for new employee form
+  isEditingSelf = false 
 }: EmpleadoFormProps) {
   const { t } = useTranslation();
   const empleadoSchema = makeEmpleadoSchema(t);
@@ -109,7 +113,11 @@ export function EmpleadoForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('employeeForm.roleLabel')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                    disabled={!canEditRole || (isEditingSelf && field.value === 'admin' && roles.filter(r => r === 'admin').length <=1 )} // Disable if cannot edit role or if editing self and is last admin
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder={t('employees.selectRole')} />
@@ -117,7 +125,12 @@ export function EmpleadoForm({
                     </FormControl>
                     <SelectContent>
                       {roles.map(role => (
-                        <SelectItem key={role} value={role}>
+                        <SelectItem 
+                          key={role} 
+                          value={role}
+                          // Prevent demoting the last admin, or self if last admin
+                          disabled={isEditingSelf && field.value === 'admin' && role !== 'admin' && empleados.filter(e => e.role === 'admin').length <= 1}
+                        >
                           {t(`employees.role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
                         </SelectItem>
                       ))}

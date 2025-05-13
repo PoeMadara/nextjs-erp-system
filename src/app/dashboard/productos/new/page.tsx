@@ -9,17 +9,23 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function NewProductoPage() {
   const { toast } = useToast();
   const router = useRouter();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (values: ProductoFormValues) => {
+    if (!user) {
+      toast({ title: t('common.error'), description: "User not authenticated for this action.", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const newProducto = await addProducto(values);
+      const newProducto = await addProducto(values, user.id, t);
       toast({
         title: t('common.success'),
         description: t('products.successCreate', {name: newProducto.nombre }),

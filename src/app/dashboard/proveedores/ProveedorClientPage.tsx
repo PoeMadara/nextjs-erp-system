@@ -13,6 +13,7 @@ import { getProveedores, deleteProveedor as deleteProveedorApi } from '@/lib/moc
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProveedorClientPage() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
@@ -22,6 +23,7 @@ export default function ProveedorClientPage() {
   const [proveedorToDelete, setProveedorToDelete] = useState<Proveedor | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   useEffect(() => {
     async function fetchProveedores() {
@@ -47,10 +49,13 @@ export default function ProveedorClientPage() {
   }, [proveedores, searchTerm]);
 
   const handleDeleteProveedor = async () => {
-    if (!proveedorToDelete) return;
+    if (!proveedorToDelete || !user) {
+        toast({ title: t('common.error'), description: !proveedorToDelete ? t('suppliers.notFound') : "User not authenticated.", variant: "destructive" });
+        return;
+    }
     setIsDeleting(true);
     try {
-      await deleteProveedorApi(proveedorToDelete.id);
+      await deleteProveedorApi(proveedorToDelete.id, user.id, t);
       setProveedores(prev => prev.filter(p => p.id !== proveedorToDelete.id));
       toast({ title: t('common.success'), description: t('suppliers.successDelete', { name: proveedorToDelete.nombre }) });
     } catch (error) {

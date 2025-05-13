@@ -9,18 +9,23 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function NewEmpleadoPage() {
   const { toast } = useToast();
-  const router = useRouter();
+  const { router } = useRouter();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (values: EmpleadoFormValues) => {
+    if (!user) {
+      toast({ title: t('common.error'), description: "User not authenticated for this action.", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      // Ensure password isn't sent if form doesn't include it / or handle as needed
-      const newEmpleado = await addEmpleado(values);
+      const newEmpleado = await addEmpleado(values, user.id, t);
       toast({
         title: t('common.success'),
         description: t('employees.successCreate', {name: newEmpleado.nombre }),

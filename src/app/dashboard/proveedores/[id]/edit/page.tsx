@@ -11,12 +11,14 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function EditProveedorPage() {
-  const router = useRouter();
-  const params = useParams();
+  const { router } = useRouter();
+  const { params } = useParams();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [proveedor, setProveedor] = useState<Proveedor | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,10 +52,13 @@ export default function EditProveedorPage() {
   }, [id, router, toast, t]);
 
   const handleSubmit = async (values: ProveedorFormValues) => {
-    if (!proveedor) return;
+    if (!proveedor || !user) {
+       toast({ title: t('common.error'), description: !proveedor ? t('suppliers.notFound') : "User not authenticated.", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await updateProveedor(proveedor.id, values);
+      await updateProveedor(proveedor.id, values, user.id, t);
       toast({
         title: t('common.success'),
         description: t('suppliers.successUpdate', { name: values.nombre }),

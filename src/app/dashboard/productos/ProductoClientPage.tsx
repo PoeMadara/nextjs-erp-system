@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProductoClientPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -23,6 +24,7 @@ export default function ProductoClientPage() {
   const [productoToDelete, setProductoToDelete] = useState<Producto | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   useEffect(() => {
     async function fetchProductos() {
@@ -48,10 +50,13 @@ export default function ProductoClientPage() {
   }, [productos, searchTerm]);
 
   const handleDeleteProducto = async () => {
-    if (!productoToDelete) return;
+    if (!productoToDelete || !user) {
+        toast({ title: t('common.error'), description: !productoToDelete ? t('products.notFound') : "User not authenticated.", variant: "destructive" });
+        return;
+    }
     setIsDeleting(true);
     try {
-      await deleteProductoApi(productoToDelete.id);
+      await deleteProductoApi(productoToDelete.id, user.id, t);
       setProductos(prev => prev.filter(p => p.id !== productoToDelete.id));
       toast({ title: t('common.success'), description: t('products.successDelete', { name: productoToDelete.nombre }) });
     } catch (error) {

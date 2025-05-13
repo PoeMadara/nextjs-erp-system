@@ -11,12 +11,14 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function EditProductoPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [producto, setProducto] = useState<Producto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,10 +52,13 @@ export default function EditProductoPage() {
   }, [id, router, toast, t]);
 
   const handleSubmit = async (values: ProductoFormValues) => {
-    if (!producto) return;
+    if (!producto || !user) {
+       toast({ title: t('common.error'), description: !producto ? t('products.notFound') : "User not authenticated.", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await updateProducto(producto.id, values);
+      await updateProducto(producto.id, values, user.id, t);
       toast({
         title: t('common.success'),
         description: t('products.successUpdate', { name: values.nombre }),

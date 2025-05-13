@@ -1,4 +1,3 @@
-
 import type { Cliente, Proveedor, Empleado, Producto, Almacen, Factura, DetalleFactura, EmpleadoRole, FacturaTipo, FacturaEstado, CurrencyCode, TeamActivityLog, TeamActivityModule, TeamActivityAction } from '@/types';
 import { subDays, subHours, subMinutes } from 'date-fns';
 
@@ -742,41 +741,3 @@ export const getTeamActivityLogs = async (limit: number = LOG_LIMIT): Promise<Te
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) 
     .slice(0, limit);
 };
-
-// Initial example log to test the feed (will be overwritten by new logs if actions are performed)
-// This assumes an employee with ID 'EMP001' exists.
-// If not, you might need to adjust or ensure one is created first for this to work.
-// For example, if `addEmpleado` in AuthContext for the first user logs an activity.
-
-/*
-// Example initial log:
-if (empleados.find(e => e.id === 'EMP001')) {
-    const exampleT = (key: string, params?: any) => { // Simple mock t function for initial log
-        let str = key;
-        if (params) {
-            Object.keys(params).forEach(pKey => {
-                str = str.replace(`{${pKey}}`, params[pKey]);
-            });
-        }
-        return str;
-    };
-    addTeamActivityLog({
-        usuario_id: 'EMP001',
-        modulo: 'Sistema',
-        accion: 'login',
-        descripcionKey: 'teamActivity.log.login',
-        descripcionParams: { userName: empleados.find(e => e.id === 'EMP001')?.nombre || 'Admin' },
-        t: exampleT
-    });
-}
-*/
-
-// To ensure team activity feed is populated upon initial load or actions
-// Call addTeamActivityLog in relevant functions:
-// - AuthContext: login, logout, register (if register creates an employee and logs their creation)
-// - Clientes: addCliente, updateCliente, deleteCliente
-// - Proveedores: addProveedor, updateProveedor, deleteProveedor
-// - Empleados: updateEmpleado (especially for role/block changes), deleteEmpleado
-// - Productos: addProducto, updateProducto, deleteProducto
-// - Facturas: addFactura, updateFactura, deleteFactura
-// - Almacenes: addAlmacen, updateAlmacen, deleteAlmacen (to be implemented)
