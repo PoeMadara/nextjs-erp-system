@@ -1,3 +1,4 @@
+
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -16,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Empleado, EmpleadoRole } from "@/types";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 
 const makeEmpleadoSchema = (t: (key: string, params?: Record<string, string | number>) => string) => z.object({
   nombre: z.string().min(2, { message: t('employees.validation.nameMinLength', { count: 2 }) }),
@@ -31,8 +33,9 @@ interface EmpleadoFormProps {
   defaultValues?: Partial<Empleado>;
   isSubmitting?: boolean;
   submitButtonText?: string;
-  canEditRole?: boolean; // New prop
-  isEditingSelf?: boolean; // New prop
+  canEditRole?: boolean; 
+  isEditingSelf?: boolean; 
+  allEmpleados?: Empleado[]; // For checking admin count
 }
 
 export function EmpleadoForm({ 
@@ -40,10 +43,12 @@ export function EmpleadoForm({
   defaultValues, 
   isSubmitting = false, 
   submitButtonText,
-  canEditRole = true, // Default to true for new employee form
-  isEditingSelf = false 
+  canEditRole = true, 
+  isEditingSelf = false,
+  allEmpleados = [] 
 }: EmpleadoFormProps) {
   const { t } = useTranslation();
+  const { user } = useAuth(); // Get current user to check if they are the last admin
   const empleadoSchema = makeEmpleadoSchema(t);
   
   const form = useForm<EmpleadoFormValues>({
@@ -59,6 +64,10 @@ export function EmpleadoForm({
   const actualSubmitButtonText = submitButtonText || (defaultValues?.id ? t('employees.updateButton') : t('employees.createButton'));
 
   const roles: EmpleadoRole[] = ['admin', 'moderator', 'user'];
+
+  // Determine if the current user (if editing self) is the last admin
+  const isLastAdmin = isEditingSelf && defaultValues?.role === 'admin' && allEmpleados.filter(e => e.role === 'admin').length <= 1;
+
 
   return (
     <Card className="max-w-2xl mx-auto shadow-lg mt-6">
@@ -116,7 +125,7 @@ export function EmpleadoForm({
                   <Select 
                     onValueChange={field.onChange} 
                     defaultValue={field.value}
-                    disabled={!canEditRole || (isEditingSelf && field.value === 'admin' && roles.filter(r => r === 'admin').length <=1 )} // Disable if cannot edit role or if editing self and is last admin
+                    disabled={!canEditRole || isLastAdmin } 
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -128,14 +137,15 @@ export function EmpleadoForm({
                         <SelectItem 
                           key={role} 
                           value={role}
-                          // Prevent demoting the last admin, or self if last admin
-                          disabled={isEditingSelf && field.value === 'admin' && role !== 'admin' && empleados.filter(e => e.role === 'admin').length <= 1}
+                          // Disable demoting if this user is the last admin
+                          disabled={isLastAdmin && role !== 'admin'}
                         >
                           {t(`employees.role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                   {isLastAdmin && <p className="text-sm text-destructive mt-1">{t('employees.failDeleteLastAdmin')}</p>}
                   <FormMessage />
                 </FormItem>
               )}

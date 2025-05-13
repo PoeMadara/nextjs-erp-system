@@ -1,9 +1,10 @@
+
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { EmpleadoForm, type EmpleadoFormValues } from "@/components/crud/EmpleadoForm";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { getEmpleadoById, updateEmpleado } from "@/lib/mockData";
+import { getEmpleadoById, updateEmpleado, getEmpleados } from "@/lib/mockData"; // Added getEmpleados
 import type { Empleado } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,25 +15,31 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function EditEmpleadoPage() {
-  const { router } = useRouter();
-  const { params } = useParams();
+  const router = useRouter();
+  const params = useParams();
   const { toast } = useToast();
   const { t } = useTranslation();
   const { user } = useAuth();
   const [empleado, setEmpleado] = useState<Empleado | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [allEmpleados, setAllEmpleados] = useState<Empleado[]>([]); // For admin count check
 
-  const id = typeof params.id === 'string' ? params.id : '';
+  const id = params && typeof params.id === 'string' ? params.id : '';
 
   useEffect(() => {
     if (id) {
-      const fetchEmpleado = async () => {
+      const fetchEmpleadoAndAll = async () => {
         setIsLoading(true);
         try {
-          const data = await getEmpleadoById(id);
+          const [data, allEmpsData] = await Promise.all([
+            getEmpleadoById(id),
+            getEmpleados() // Fetch all employees for admin count
+          ]);
+          
           if (data) {
             setEmpleado(data);
+            setAllEmpleados(allEmpsData);
           } else {
             toast({ title: t('common.error'), description: t('employees.notFound'), variant: "destructive" });
             router.push("/dashboard/empleados");
@@ -44,7 +51,7 @@ export default function EditEmpleadoPage() {
           setIsLoading(false);
         }
       };
-      fetchEmpleado();
+      fetchEmpleadoAndAll();
     } else {
       toast({ title: t('common.error'), description: t('employees.invalidId'), variant: "destructive" });
       router.push("/dashboard/empleados"); 
@@ -56,6 +63,18 @@ export default function EditEmpleadoPage() {
       toast({ title: t('common.error'), description: !empleado ? t('employees.notFound') : "User not authenticated.", variant: "destructive" });
       return;
     }
+
+    // Prevent demoting the last admin
+    if (empleado.role === 'admin' && values.role !== 'admin') {
+      const adminCount = allEmpleados.filter(e => e.role === 'admin').length;
+      if (adminCount <= 1) {
+        toast({ title: t('common.error'), description: t('employees.failDeleteLastAdmin'), variant: "destructive" });
+        // Optionally reset the role in the form if you want to prevent submission
+        // form.setValue('role', empleado.role); 
+        return;
+      }
+    }
+    
     // Prevent non-admin from changing role of admin or self if not admin
     if (user.role !== 'admin') {
         if (empleado.role === 'admin' && values.role !== 'admin') {
@@ -80,7 +99,7 @@ export default function EditEmpleadoPage() {
     } catch (error) {
       toast({
         title: t('common.error'),
-        description: t('employees.failUpdate'),
+        description: (error instanceof Error) ? error.message : t('employees.failUpdate'),
         variant: "destructive",
       });
     } finally {
@@ -132,7 +151,9 @@ export default function EditEmpleadoPage() {
   }
 
   const isEditingSelf = user?.id === empleado.id;
-  const canEditRole = user?.role === 'admin' || (user?.role === 'moderator' && empleado.role === 'user' && !isEditingSelf) ;
+  // Admin can edit any role. Moderator can edit 'user' roles, but not their own if they are 'moderator'.
+  const canEditRole = user?.role === 'admin' || 
+                      (user?.role === 'moderator' && empleado.role === 'user' && !isEditingSelf);
 
 
   return (
@@ -155,6 +176,7 @@ export default function EditEmpleadoPage() {
         submitButtonText={t('employees.updateButton')}
         canEditRole={canEditRole}
         isEditingSelf={isEditingSelf}
+        allEmpleados={allEmpleados} // Pass all employees to the form
       />
     </>
   );
