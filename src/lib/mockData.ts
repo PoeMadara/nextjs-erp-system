@@ -12,11 +12,7 @@ let proveedores: Proveedor[] = [
   { id: 'PRO002', nombre: 'Material Oficina Global', nif: 'A87654321', direccion: 'Calle Comercio 7', poblacion: 'Valdepeñas', telefono: '926777888', email: 'ventas@materialoficina.com', personaContacto: 'Lucía Admin', terminosPago: 'Al contado' },
 ];
 
-let empleados: Empleado[] = [
-  // Initial admin will be created on first registration.
-  // { id: 'EMP001', nombre: 'Admin ERP', email: 'admin@example.com', role: 'admin', password: 'password', isBlocked: false, avatarColor: '#3498db' },
-  // { id: 'EMP002', nombre: 'Laura García', email: 'laura@example.com', role: 'user', password: 'password', isBlocked: false, avatarColor: '#e74c3c' },
-];
+let empleados: Empleado[] = [];
 
 let almacenes: Almacen[] = [
   { id: 'ALM001', nombre: 'Almacén Central', ubicacion: 'Calle Logística 1, Polígono Central' },
@@ -32,28 +28,28 @@ let productos: Producto[] = [
 
 let facturas: Factura[] = [
   { 
-    id: 'FV2024-00001', fecha: '2024-05-10', tipo: 'Venta', clienteId: 'CLI001', empleadoId: empleados.find(e => e.email === 'admin@example.com')?.id || 'EMP001', almacenId: 'ALM001', 
+    id: 'FV2024-00001', fecha: '2024-05-10', tipo: 'Venta', clienteId: 'CLI001', empleadoId: 'EMP001', almacenId: 'ALM001', 
     baseImponible: 179.50, totalIva: 37.69, totalFactura: 217.19, estado: 'Pagada', moneda: 'EUR',
     detalles: [
       { id: 'DET001', productoId: 'PROD002', productoNombre: 'Monitor 24 pulgadas', cantidad: 1, precioUnitario: 179.50, porcentajeIva: 21.00, subtotal: 179.50, subtotalConIva: 217.195 }
     ],
-    clienteNombre: 'Juan Pérez', empleadoNombre: empleados.find(e => e.email === 'admin@example.com')?.nombre || 'Admin ERP'
+    clienteNombre: 'Juan Pérez', empleadoNombre: 'Admin ERP'
   },
   { 
-    id: 'FC2024-00001', fecha: '2024-06-15', tipo: 'Compra', proveedorId: 'PRO001', empleadoId: empleados.find(e => e.email === 'laura@example.com')?.id || 'EMP002', almacenId: 'ALM001', 
+    id: 'FC2024-00001', fecha: '2024-06-15', tipo: 'Compra', proveedorId: 'PRO001', empleadoId: 'EMP002', almacenId: 'ALM001', 
     baseImponible: 600.00, totalIva: 126.00, totalFactura: 726.00, estado: 'Pendiente', moneda: 'USD',
     detalles: [
       { id: 'DET002', productoId: 'PROD001', productoNombre: 'Portátil Modelo X', cantidad: 1, precioUnitario: 600.00, porcentajeIva: 21.00, subtotal: 600.00, subtotalConIva: 726.00 }
     ],
-    proveedorNombre: 'Suministros Informáticos SL', empleadoNombre: empleados.find(e => e.email === 'laura@example.com')?.nombre || 'Laura García'
+    proveedorNombre: 'Suministros Informáticos SL', empleadoNombre: 'Laura García'
   },
    { 
-    id: 'FV2024-00002', fecha: '2024-07-01', tipo: 'Venta', clienteId: 'CLI002', empleadoId: empleados.find(e => e.email === 'admin@example.com')?.id || 'EMP001', almacenId: 'ALM002', 
+    id: 'FV2024-00002', fecha: '2024-07-01', tipo: 'Venta', clienteId: 'CLI002', empleadoId: 'EMP001', almacenId: 'ALM002', 
     baseImponible: 79.90, totalIva: 16.78, totalFactura: 96.68, estado: 'Pendiente', moneda: 'GBP',
     detalles: [
       { id: 'DET003', productoId: 'PROD003', productoNombre: 'Teclado Mecánico RGB', cantidad: 1, precioUnitario: 79.90, porcentajeIva: 21.00, subtotal: 79.90, subtotalConIva: 96.679 }
     ],
-    clienteNombre: 'Ana López', empleadoNombre: empleados.find(e => e.email === 'admin@example.com')?.nombre || 'Admin ERP'
+    clienteNombre: 'Ana López', empleadoNombre: 'Admin ERP'
   },
 ];
 
@@ -65,73 +61,14 @@ const getNextAvatarColor = () => {
   return color;
 }
 
-let teamActivityLogs: TeamActivityLog[] = [
-  {
-    id: 'ACT001',
-    usuario_id: 'EMP001',
-    nombre_usuario: 'Admin ERP',
-    avatar_color: '#3498db',
-    modulo: 'Facturación',
-    accion: 'crear',
-    descripcion: 'Generó la factura FV2024-00001 para Juan Pérez por 217.19 EUR',
-    timestamp: subMinutes(new Date(), 5).toISOString(),
-    entidad_id: 'FV2024-00001',
-    entidad_nombre: 'Factura FV2024-00001'
-  },
-  {
-    id: 'ACT002',
-    usuario_id: 'EMP002',
-    nombre_usuario: 'Laura García',
-    avatar_color: '#e74c3c',
-    modulo: 'Productos',
-    accion: 'modificar',
-    descripcion: 'Actualizó el stock del producto Portátil Modelo X',
-    timestamp: subHours(new Date(), 1).toISOString(),
-    entidad_id: 'PROD001',
-    entidad_nombre: 'Portátil Modelo X'
-  },
-  {
-    id: 'ACT003',
-    usuario_id: 'EMP001',
-    nombre_usuario: 'Admin ERP',
-    avatar_color: '#3498db',
-    modulo: 'Clientes',
-    accion: 'crear',
-    descripcion: 'Añadió al cliente Ana López',
-    timestamp: subHours(new Date(), 3).toISOString(),
-    entidad_id: 'CLI002',
-    entidad_nombre: 'Ana López'
-  },
-  {
-    id: 'ACT004',
-    usuario_id: 'EMP002',
-    nombre_usuario: 'Laura García',
-    avatar_color: '#e74c3c',
-    modulo: 'Proveedores',
-    accion: 'eliminar',
-    descripcion: 'Eliminó el proveedor Material Oficina Global',
-    timestamp: subDays(new Date(), 1).toISOString(),
-    entidad_id: 'PRO002',
-    entidad_nombre: 'Material Oficina Global'
-  },
-   {
-    id: 'ACT005',
-    usuario_id: 'EMP001',
-    nombre_usuario: 'Admin ERP',
-    avatar_color: '#3498db',
-    modulo: 'Empleados',
-    accion: 'asignar',
-    descripcion: 'Asignó el rol de Moderador a Laura García',
-    timestamp: subDays(new Date(), 2).toISOString(),
-    entidad_id: 'EMP002',
-    entidad_nombre: 'Laura García'
-  }
-];
+let teamActivityLogs: TeamActivityLog[] = []; // Initialize empty, will be populated by actions
 
+const LOG_LIMIT = 20;
 
 // Helper to generate next ID
 const generateId = (prefix: string, currentItems: {id: string}[]) => {
   const maxNum = currentItems.reduce((max, item) => {
+    if (!item || !item.id) return max;
     const numStr = item.id.replace(prefix, '');
     if (numStr && /^\d+$/.test(numStr)) {
         const num = parseInt(numStr, 10);
@@ -142,26 +79,112 @@ const generateId = (prefix: string, currentItems: {id: string}[]) => {
   return `${prefix}${(maxNum + 1).toString().padStart(3, '0')}`;
 };
 
+// Team Activity Log Management
+interface AddTeamActivityLogData {
+  usuario_id: string;
+  modulo: TeamActivityModule;
+  accion: TeamActivityAction;
+  descripcionKey: string;
+  descripcionParams?: Record<string, string | number | undefined>;
+  entidad_id?: string;
+  entidad_nombre?: string;
+  t: (key: string, params?: any) => string; // Translation function
+}
+
+export const addTeamActivityLog = async (logData: AddTeamActivityLogData): Promise<TeamActivityLog> => {
+  const actingUser = await getEmpleadoById(logData.usuario_id);
+  if (!actingUser) {
+    // Fallback or throw error - for now, log with a generic user if not found
+    console.warn(`Activity Log: User with ID ${logData.usuario_id} not found. Logging as System.`);
+  }
+
+  const userName = actingUser?.nombre || 'System';
+  const userAvatarColor = actingUser?.avatarColor || getNextAvatarColor();
+
+  const descripcion = logData.t(logData.descripcionKey, {
+    ...logData.descripcionParams,
+    userName: userName, // Add userName to params for direct use in translation string
+  });
+  
+  const newLog: TeamActivityLog = {
+    id: generateId('ACT', teamActivityLogs),
+    usuario_id: logData.usuario_id,
+    nombre_usuario: userName,
+    avatar_color: userAvatarColor,
+    modulo: logData.modulo,
+    accion: logData.accion,
+    descripcion: descripcion, // Store the final translated string
+    timestamp: new Date().toISOString(),
+    entidad_id: logData.entidad_id,
+    entidad_nombre: logData.entidad_nombre,
+  };
+
+  teamActivityLogs.unshift(newLog); // Add to the beginning
+  if (teamActivityLogs.length > LOG_LIMIT) {
+    teamActivityLogs = teamActivityLogs.slice(0, LOG_LIMIT); // Keep only the latest 20
+  }
+  return newLog;
+};
+
 
 // Clientes CRUD
 export const getClientes = async (): Promise<Cliente[]> => [...clientes];
 export const getClienteById = async (id: string): Promise<Cliente | undefined> => clientes.find(c => c.id === id);
-export const addCliente = async (cliente: Omit<Cliente, 'id'>): Promise<Cliente> => {
-  const newCliente = { ...cliente, id: generateId('CLI', clientes) };
+
+export const addCliente = async (clienteData: Omit<Cliente, 'id'>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Cliente> => {
+  const newCliente = { ...clienteData, id: generateId('CLI', clientes) };
   clientes.push(newCliente);
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Clientes',
+    accion: 'crear',
+    descripcionKey: 'teamActivity.log.clienteCreado',
+    descripcionParams: { entidadNombre: newCliente.nombre },
+    entidad_id: newCliente.id,
+    entidad_nombre: newCliente.nombre,
+    t,
+  });
   return newCliente;
 };
-export const updateCliente = async (id: string, updates: Partial<Cliente>): Promise<Cliente | null> => {
+
+export const updateCliente = async (id: string, updates: Partial<Cliente>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Cliente | null> => {
   const index = clientes.findIndex(c => c.id === id);
   if (index === -1) return null;
   clientes[index] = { ...clientes[index], ...updates };
+  await addTeamActivityLog({
+    usuario_id: actingUserId,
+    modulo: 'Clientes',
+    accion: 'modificar',
+    descripcionKey: 'teamActivity.log.clienteModificado',
+    descripcionParams: { entidadNombre: clientes[index].nombre },
+    entidad_id: clientes[index].id,
+    entidad_nombre: clientes[index].nombre,
+    t,
+  });
   return clientes[index];
 };
-export const deleteCliente = async (id: string): Promise<boolean> => {
+
+export const deleteCliente = async (id: string, actingUserId: string, t: (key: string, params?: any) => string): Promise<boolean> => {
+  const clienteToDelete = clientes.find(c => c.id === id);
+  if (!clienteToDelete) return false;
   const initialLength = clientes.length;
   clientes = clientes.filter(c => c.id !== id);
-  return clientes.length < initialLength;
+  const success = clientes.length < initialLength;
+  if (success) {
+    await addTeamActivityLog({
+      usuario_id: actingUserId,
+      modulo: 'Clientes',
+      accion: 'eliminar',
+      descripcionKey: 'teamActivity.log.clienteEliminado',
+      descripcionParams: { entidadNombre: clienteToDelete.nombre },
+      entidad_id: clienteToDelete.id,
+      entidad_nombre: clienteToDelete.nombre,
+      t,
+    });
+  }
+  return success;
 };
+
 
 // Proveedores CRUD
 export const getProveedores = async (): Promise<Proveedor[]> => [...proveedores];
@@ -200,50 +223,110 @@ export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked
   };
   empleados.push(newEmpleado);
   if (empleados.length === 1 && newEmpleado.role !== 'admin') {
-    newEmpleado.role = 'admin'; // Ensure first registered user is admin
+    newEmpleado.role = 'admin'; 
   }
+  // Log this action if t function is available (e.g. from a system call or if passed)
+  // For now, registration logs separately if needed.
   return newEmpleado;
 };
 
-export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado, 'password' | 'avatarColor'>>): Promise<Empleado | null> => {
+export const updateEmpleado = async (id: string, updates: Partial<Omit<Empleado, 'password' | 'avatarColor'>>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Empleado | null> => {
   const index = empleados.findIndex(e => e.id === id);
   if (index === -1) return null;
   
-  const currentEmpleado = empleados[index];
-  // Ensure role cannot be changed if there's only one admin and this is that admin
-  if (updates.role && currentEmpleado.role === 'admin' && updates.role !== 'admin') {
-    const adminCount = empleados.filter(e => e.role === 'admin').length;
-    if (adminCount <= 1) {
-      // Prevent changing the role of the last admin
-      console.warn("Cannot change role of the last admin.");
-      delete updates.role; // or return an error / throw
-    }
-  }
-
+  const currentEmpleado = {...empleados[index]}; // copy for comparison
   const { password, avatarColor, ...restOfUpdates } = updates as any; 
   empleados[index] = { ...currentEmpleado, ...restOfUpdates };
+
+  // Log role change
+  if (updates.role && updates.role !== currentEmpleado.role) {
+    await addTeamActivityLog({
+      usuario_id: actingUserId,
+      modulo: 'Empleados',
+      accion: 'asignar_rol',
+      descripcionKey: 'teamActivity.log.empleadoRolAsignado',
+      descripcionParams: { rol: t(`employees.role${updates.role.charAt(0).toUpperCase() + updates.role.slice(1)}`), entidadNombre: empleados[index].nombre },
+      entidad_id: empleados[index].id,
+      entidad_nombre: empleados[index].nombre,
+      t,
+    });
+  }
+  // Log block/unblock status
+  if (updates.isBlocked !== undefined && updates.isBlocked !== currentEmpleado.isBlocked) {
+     await addTeamActivityLog({
+      usuario_id: actingUserId,
+      modulo: 'Empleados',
+      accion: updates.isBlocked ? 'bloquear' : 'desbloquear',
+      descripcionKey: updates.isBlocked ? 'teamActivity.log.empleadoBloqueado' : 'teamActivity.log.empleadoDesbloqueado',
+      descripcionParams: { entidadNombre: empleados[index].nombre },
+      entidad_id: empleados[index].id,
+      entidad_nombre: empleados[index].nombre,
+      t,
+    });
+  }
+  
+  // Generic update log if no specific action was logged above for role/block
+  if (!(updates.role && updates.role !== currentEmpleado.role) && !(updates.isBlocked !== undefined && updates.isBlocked !== currentEmpleado.isBlocked)) {
+      await addTeamActivityLog({
+        usuario_id: actingUserId,
+        modulo: 'Empleados',
+        accion: 'modificar',
+        descripcionKey: 'teamActivity.log.empleadoModificado',
+        descripcionParams: { entidadNombre: empleados[index].nombre },
+        entidad_id: empleados[index].id,
+        entidad_nombre: empleados[index].nombre,
+        t,
+    });
+  }
+
   return empleados[index];
 };
 
-export const updateEmpleadoBlockedStatus = async (id: string, isBlocked: boolean): Promise<Empleado | null> => {
+export const updateEmpleadoBlockedStatus = async (id: string, isBlocked: boolean, actingUserId: string, t: (key: string, params?: any) => string): Promise<Empleado | null> => {
   const index = empleados.findIndex(e => e.id === id);
   if (index === -1) return null;
   empleados[index].isBlocked = isBlocked;
+   await addTeamActivityLog({
+      usuario_id: actingUserId,
+      modulo: 'Empleados',
+      accion: isBlocked ? 'bloquear' : 'desbloquear',
+      descripcionKey: isBlocked ? 'teamActivity.log.empleadoBloqueado' : 'teamActivity.log.empleadoDesbloqueado',
+      descripcionParams: { entidadNombre: empleados[index].nombre },
+      entidad_id: empleados[index].id,
+      entidad_nombre: empleados[index].nombre,
+      t,
+    });
   return empleados[index];
 }
 
-export const deleteEmpleado = async (id: string): Promise<boolean> => {
+export const deleteEmpleado = async (id: string, actingUserId: string, t: (key: string, params?: any) => string): Promise<boolean> => {
     const empleadoToDelete = empleados.find(e => e.id === id);
+    if (!empleadoToDelete) return false;
+
     if (empleadoToDelete?.role === 'admin') {
       const adminCount = empleados.filter(e => e.role === 'admin').length;
       if (adminCount <= 1) {
         console.warn("Cannot delete the last admin.");
-        return false; // Prevent deletion
+        return false; 
       }
     }
     const initialLength = empleados.length;
     empleados = empleados.filter(e => e.id !== id);
-    return empleados.length < initialLength;
+    const success = empleados.length < initialLength;
+
+    if (success) {
+      await addTeamActivityLog({
+        usuario_id: actingUserId,
+        modulo: 'Empleados',
+        accion: 'eliminar',
+        descripcionKey: 'teamActivity.log.empleadoEliminado',
+        descripcionParams: { entidadNombre: empleadoToDelete.nombre },
+        entidad_id: empleadoToDelete.id,
+        entidad_nombre: empleadoToDelete.nombre,
+        t,
+      });
+    }
+    return success;
 };
 
 // Productos CRUD
@@ -330,7 +413,6 @@ const adjustStock = (productoId: string, cantidad: number, tipoAjuste: 'incremen
 };
 
 export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombre' | 'proveedorNombre' | 'empleadoNombre' >): Promise<Factura> => {
-  // Stock Validation for Sales
   if (facturaData.tipo === 'Venta' && facturaData.estado !== 'Cancelada') {
     for (const detalle of facturaData.detalles) {
       const producto = productos.find(p => p.id === detalle.productoId);
@@ -371,7 +453,6 @@ export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombr
   };
   facturas.push(newFactura);
 
-  // Adjust Stock
   if (newFactura.estado !== 'Cancelada') {
     newFactura.detalles.forEach(detalle => {
       if (newFactura.tipo === 'Venta') {
@@ -389,9 +470,8 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
   const index = facturas.findIndex(f => f.id === id);
   if (index === -1) return null;
 
-  const originalFactura = { ...facturas[index], detalles: [...facturas[index].detalles.map(d => ({...d}))] }; // Deep copy for details
+  const originalFactura = { ...facturas[index], detalles: [...facturas[index].detalles.map(d => ({...d}))] }; 
 
-  // Tentatively apply updates to a copy to perform validations
   const tentativeUpdatedFactura: Factura = {
     ...originalFactura,
     ...updates,
@@ -406,18 +486,15 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
             subtotal: parseFloat(subtotal.toFixed(2)),
             subtotalConIva: parseFloat(subtotalConIva.toFixed(2)),
         };
-    }) : [...originalFactura.detalles], // if no details in updates, use original
+    }) : [...originalFactura.detalles], 
   };
 
-  // Recalculate totals for tentative updated factura
   const newBaseImponible = tentativeUpdatedFactura.detalles.reduce((sum, d) => sum + (d.subtotal || 0), 0);
   const newTotalIva = tentativeUpdatedFactura.detalles.reduce((sum, d) => sum + ((d.subtotalConIva || 0) - (d.subtotal || 0)), 0);
   tentativeUpdatedFactura.baseImponible = parseFloat(newBaseImponible.toFixed(2));
   tentativeUpdatedFactura.totalIva = parseFloat(newTotalIva.toFixed(2));
   tentativeUpdatedFactura.totalFactura = parseFloat((newBaseImponible + newTotalIva).toFixed(2));
 
-
-  // 1. Revert stock changes from original invoice state if it wasn't cancelled
   if (originalFactura.estado !== 'Cancelada') {
     originalFactura.detalles.forEach(detalle => {
       if (originalFactura.tipo === 'Venta') {
@@ -428,15 +505,12 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
     });
   }
 
-  // 2. Stock Validation & Application for the new/updated invoice state
   if (tentativeUpdatedFactura.estado !== 'Cancelada') {
     if (tentativeUpdatedFactura.tipo === 'Venta') {
       for (const detalle of tentativeUpdatedFactura.detalles) {
         const producto = productos.find(p => p.id === detalle.productoId);
         if (!producto) throw new Error(`Producto con ID ${detalle.productoId} no encontrado.`);
-        // Stock check is against current available stock (after potential reversal)
         if (producto.stock < detalle.cantidad) {
-          // If validation fails, we must revert the stock reversal for original invoice
           if (originalFactura.estado !== 'Cancelada') {
             originalFactura.detalles.forEach(d => {
               if (originalFactura.tipo === 'Venta') adjustStock(d.productoId, d.cantidad, 'decrement');
@@ -447,7 +521,6 @@ export const updateFactura = async (id: string, updates: Partial<Factura>): Prom
         }
       }
     }
-    // Apply new stock changes
     tentativeUpdatedFactura.detalles.forEach(detalle => {
       if (tentativeUpdatedFactura.tipo === 'Venta') {
         adjustStock(detalle.productoId, detalle.cantidad, 'decrement');
@@ -474,7 +547,6 @@ export const deleteFactura = async (id: string): Promise<boolean> => {
 
   const facturaToDelete = facturas[index];
 
-  // Revert stock changes if the invoice wasn't cancelled
   if (facturaToDelete.estado !== 'Cancelada') {
     facturaToDelete.detalles.forEach(detalle => {
       if (facturaToDelete.tipo === 'Venta') {
@@ -520,10 +592,11 @@ export const getRecentOrders = async (limit: number = 2): Promise<Array<{id: str
 };
 
 export const getWarehouseStatus = async (): Promise<Array<{name: string, capacity: string, items: number, location: string }>> => {
+  if (almacenes.length === 0) return []; // Prevent division by zero if no warehouses
   return almacenes.map(alm => ({
     name: alm.nombre,
     capacity: `${Math.floor(Math.random() * 40) + 50}%`, 
-    items: productos.reduce((sum, p) => sum + p.stock, 0) / (almacenes.length || 1), // Distribute total stock somewhat evenly for demo
+    items: productos.reduce((sum, p) => sum + p.stock, 0) / almacenes.length, 
     location: alm.ubicacion || 'N/A',
   }));
 };
@@ -537,38 +610,14 @@ export const getTotalStockValue = async (): Promise<{totalStock: number, totalRe
 
 
 // Team Activity Logs
-export const getTeamActivityLogs = async (limit: number = 5): Promise<TeamActivityLog[]> => {
-  return [...teamActivityLogs]
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+export const getTeamActivityLogs = async (limit: number = LOG_LIMIT): Promise<TeamActivityLog[]> => {
+  return [...teamActivityLogs] // Return a copy
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) // ensure sorted
     .slice(0, limit);
 };
 
-export const addTeamActivityLog = async (
-  usuario_id: string,
-  modulo: TeamActivityModule,
-  accion: TeamActivityAction,
-  descripcion: string,
-  entidad_id?: string,
-  entidad_nombre?: string
-): Promise<TeamActivityLog> => {
-  const usuario = await getEmpleadoById(usuario_id);
-  if (!usuario) throw new Error("Usuario no encontrado para registrar actividad.");
-
-  const newLog: TeamActivityLog = {
-    id: generateId('ACT', teamActivityLogs),
-    usuario_id,
-    nombre_usuario: usuario.nombre,
-    avatar_color: usuario.avatarColor || getNextAvatarColor(), // Assign color if missing
-    modulo,
-    accion,
-    descripcion,
-    timestamp: new Date().toISOString(),
-    entidad_id,
-    entidad_nombre,
-  };
-  teamActivityLogs.unshift(newLog); // Add to the beginning for recent first
-  if (teamActivityLogs.length > 100) { // Keep a reasonable limit for mock data
-    teamActivityLogs.pop();
-  }
-  return newLog;
-};
+// Initial logs can be added here if needed, for demo purposes
+// addTeamActivityLog({ usuario_id: 'EMP001', modulo: 'Sistema', accion: 'login', t: (k,p) => `User Admin ERP logged in.`, descripcionKey: 'teamActivity.log.login', descripcionParams: {userName: "Admin ERP"}});
+// This requires 't' to be available globally or passed, which is tricky here.
+// Initial logs are better added as static data or through an init script.
+// For now, logs will only appear after user actions.

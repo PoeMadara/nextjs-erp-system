@@ -111,19 +111,18 @@ export interface WarehouseSummary {
   location: string;
 }
 
-export type TeamActivityModule = "Facturación" | "Compras" | "Productos" | "Clientes" | "Proveedores" | "Empleados" | "Sistema";
-export type TeamActivityAction = "crear" | "modificar" | "eliminar" | "asignar" | "login" | "logout" | "bloquear" | "desbloquear";
+export type TeamActivityModule = "Facturación" | "Compras" | "Productos" | "Clientes" | "Proveedores" | "Empleados" | "Almacén" | "Sistema";
+export type TeamActivityAction = "crear" | "modificar" | "eliminar" | "asignar_rol" | "bloquear" | "desbloquear" | "login" | "logout";
 
 export interface TeamActivityLog {
   id: string;
   usuario_id: string;
   nombre_usuario: string;
-  avatar_color: string; // Hex color string like '#FF5733'
+  avatar_color: string; 
   modulo: TeamActivityModule;
-  accion: TeamActivityAction;
-  descripcion: string; // e.g., "Carlos generó una factura de cliente por 150 €"
+  accion: TeamActivityAction; // The verb, e.g., 'crear', 'modificar'
+  descripcion: string; // The detailed, final, potentially localized message
   timestamp: string; // ISO Date string
-  entidad_id?: string; // Optional: ID of the entity affected (e.g., facturaId, clienteId)
-  entidad_nombre?: string; // Optional: Name of the entity for quick display
+  entidad_id?: string; 
+  entidad_nombre?: string; 
 }
-

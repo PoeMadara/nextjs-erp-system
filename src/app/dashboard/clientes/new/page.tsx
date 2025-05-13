@@ -1,3 +1,4 @@
+
 "use client";
 import { ClienteForm, type ClienteFormValues } from "@/components/crud/ClienteForm";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -9,17 +10,23 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function NewClientePage() {
   const { toast } = useToast();
   const router = useRouter();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (values: ClienteFormValues) => {
+    if (!user) {
+      toast({ title: t('common.error'), description: "User not authenticated for this action.", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const newCliente = await addCliente(values);
+      const newCliente = await addCliente(values, user.id, t);
       toast({
         title: t('common.success'),
         description: t('clientes.successCreate', {name: newCliente.nombre }),

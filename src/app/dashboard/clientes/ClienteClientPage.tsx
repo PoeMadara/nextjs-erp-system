@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -13,6 +14,7 @@ import { getClientes, deleteCliente as deleteClienteApi } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ClienteClientPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -22,6 +24,7 @@ export default function ClienteClientPage() {
   const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   useEffect(() => {
     async function fetchClientes() {
@@ -47,10 +50,13 @@ export default function ClienteClientPage() {
   }, [clientes, searchTerm]);
 
   const handleDeleteCliente = async () => {
-    if (!clienteToDelete) return;
+    if (!clienteToDelete || !user) {
+        toast({ title: t('common.error'), description: !clienteToDelete ? t('clientes.notFound') : "User not authenticated.", variant: "destructive" });
+        return;
+    }
     setIsDeleting(true);
     try {
-      await deleteClienteApi(clienteToDelete.id);
+      await deleteClienteApi(clienteToDelete.id, user.id, t);
       setClientes(prev => prev.filter(c => c.id !== clienteToDelete.id));
       toast({ title: t('common.success'), description: t('clientes.successDelete', { name: clienteToDelete.nombre }) });
     } catch (error) {

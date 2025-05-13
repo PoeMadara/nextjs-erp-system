@@ -1,3 +1,4 @@
+
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -11,12 +12,14 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function EditClientePage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,17 +47,19 @@ export default function EditClientePage() {
       };
       fetchCliente();
     } else {
-      // Should not happen if routing is correct, but good to handle
       toast({ title: t('common.error'), description: t('clientes.invalidId'), variant: "destructive" });
       router.push("/dashboard/clientes"); 
     }
   }, [id, router, toast, t]);
 
   const handleSubmit = async (values: ClienteFormValues) => {
-    if (!cliente) return;
+    if (!cliente || !user) {
+       toast({ title: t('common.error'), description: !cliente ? t('clientes.notFound') : "User not authenticated.", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await updateCliente(cliente.id, values);
+      await updateCliente(cliente.id, values, user.id, t);
       toast({
         title: t('common.success'),
         description: t('clientes.successUpdate', { name: values.nombre }),
@@ -99,8 +104,6 @@ export default function EditClientePage() {
   }
 
   if (!cliente) {
-    // This case should ideally be handled by the redirect in useEffect,
-    // but as a fallback:
     return (
       <PageHeader 
         title={t('common.error')} 

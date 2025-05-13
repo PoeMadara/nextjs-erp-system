@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Users, FileText, ShoppingCart, Package, Briefcase, Settings } from 'lucide-react';
+import { Users, FileText, ShoppingCart, Package, Briefcase, Settings, Warehouse as WarehouseIcon } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 
 const getModuleIcon = (module: TeamActivityLog['modulo']) => {
@@ -19,14 +19,16 @@ const getModuleIcon = (module: TeamActivityLog['modulo']) => {
     case 'Compras': return <ShoppingCart className="h-4 w-4 text-muted-foreground" />;
     case 'Productos': return <Package className="h-4 w-4 text-muted-foreground" />;
     case 'Clientes': return <Users className="h-4 w-4 text-muted-foreground" />;
-    case 'Proveedores': return <Users className="h-4 w-4 text-muted-foreground" />;
-    case 'Empleados': return <Briefcase className="h-4 w-4 text-muted-foreground" />;
+    case 'Proveedores': return <Briefcase className="h-4 w-4 text-muted-foreground" />; // Changed icon for suppliers
+    case 'Empleados': return <Users className="h-4 w-4 text-muted-foreground" />; // Changed icon for employees
+    case 'Almacén': return <WarehouseIcon className="h-4 w-4 text-muted-foreground" />;
     case 'Sistema': return <Settings className="h-4 w-4 text-muted-foreground" />;
     default: return <Users className="h-4 w-4 text-muted-foreground" />;
   }
 };
 
 const getInitials = (name: string) => {
+    if (!name) return '??';
     const names = name.split(' ');
     if (names.length > 1 && names[0] && names[names.length - 1]) {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
@@ -44,7 +46,7 @@ export function TeamActivityCard() {
     async function fetchActivities() {
       setIsLoading(true);
       try {
-        const data = await getTeamActivityLogs(7); // Fetch more for scrolling
+        const data = await getTeamActivityLogs(); 
         setActivities(data);
       } catch (error) {
         console.error("Failed to fetch team activities:", error);
@@ -53,7 +55,14 @@ export function TeamActivityCard() {
       }
     }
     fetchActivities();
-  }, []);
+  }, []); // Fetches once on mount. For real-time, this would need a different strategy.
+
+  const getModuleTranslation = (moduleName: TeamActivityLog['modulo']): string => {
+    const key = `teamActivity.module.${moduleName.toLowerCase().replace(/ó/g, 'o').replace(/é/g, 'e').replace(/ /g, '')}`;
+    const translated = t(key);
+    return translated === key ? moduleName : translated; // Fallback to original if no translation
+  };
+
 
   if (isLoading) {
     return (
@@ -103,12 +112,11 @@ export function TeamActivityCard() {
                   </Avatar>
                   <div className="flex-1">
                     <p className="text-sm">
-                      <span className="font-medium" style={{ color: activity.avatar_color }}>{activity.nombre_usuario}</span>{' '}
-                      <span className="text-muted-foreground">{activity.descripcion}</span>
+                      {activity.descripcion}
                     </p>
                     <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                        {getModuleIcon(activity.modulo)}
-                       <span>{t(`teamActivity.module.${activity.modulo.toLowerCase().replace('ó', 'o').replace('é', 'e')}`)}</span>
+                       <span>{getModuleTranslation(activity.modulo)}</span>
                        <span className="mx-1">&bull;</span>
                        <span>
                         {formatDistanceToNow(parseISO(activity.timestamp), {
@@ -128,7 +136,7 @@ export function TeamActivityCard() {
       </CardContent>
       {activities.length > 0 && (
         <CardFooter className="p-4 border-t">
-            <Button variant="outline" size="sm" className="ml-auto">
+            <Button variant="outline" size="sm" className="ml-auto" onClick={() => alert(t('common.underConstruction'))}>
              {t('dashboardPage.viewAllActivity')}
             </Button>
         </CardFooter>
