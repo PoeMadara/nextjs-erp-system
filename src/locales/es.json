@@ -90,7 +90,8 @@
     "facturasTodas": "Todas las Facturas",
     "almacen": "Almacén",
     "notificaciones": "Notificaciones Sistema",
-    "logout": "Cerrar Sesión"
+    "logout": "Cerrar Sesión",
+    "navigationMenuTitle": "Menú de Navegación"
   },
   "userNav": {
     "profile": "Perfil",

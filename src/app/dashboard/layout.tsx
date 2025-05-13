@@ -1,18 +1,21 @@
+
 "use client";
 import type { ReactNode } from 'react';
 import { SidebarNav } from '@/components/layout/SidebarNav';
 import { UserNav } from '@/components/layout/UserNav';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'; // Added SheetTitle
 import { Menu } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/hooks/useTranslation'; // Import useTranslation
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation(); // Initialize useTranslation
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -70,6 +73,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0 w-[280px] bg-sidebar">
+              {/* Added SheetTitle with sr-only class for accessibility */}
+              <SheetTitle className="sr-only">{t('sidebar.navigationMenuTitle')}</SheetTitle>
               <SidebarNav />
             </SheetContent>
           </Sheet>
@@ -83,3 +88,4 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     </div>
   );
 }
+

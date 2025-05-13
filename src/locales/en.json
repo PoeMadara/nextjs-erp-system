@@ -90,7 +90,8 @@
     "facturasTodas": "All Invoices",
     "almacen": "Warehouse",
     "notificaciones": "System Notifications",
-    "logout": "Log Out"
+    "logout": "Log Out",
+    "navigationMenuTitle": "Navigation Menu"
   },
   "userNav": {
     "profile": "Profile",
