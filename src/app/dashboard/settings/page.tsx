@@ -59,7 +59,7 @@ export default function SettingsPage() {
     defaultValues: { currentPassword: "", newPassword: "", confirmNewPassword: "" },
   });
 
-  const [emailNotifications, setEmailNotifications] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(true); // Default to true
 
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function SettingsPage() {
           if (details) {
             setEmployeeDetails(details);
             emailForm.reset({ email: details.email });
-            setEmailNotifications(details.emailNotifications ?? true);
+            setEmailNotifications(details.emailNotifications ?? true); // Ensure it's boolean
           } else {
             toast({ title: t('common.error'), description: t('employees.notFound'), variant: "destructive" });
           }
@@ -110,7 +110,7 @@ export default function SettingsPage() {
     try {
       const updatedEmployee = await updateEmpleado(employeeDetails.id, { password: data.newPassword }, user.id, t);
        if (updatedEmployee) {
-        setEmployeeDetails(updatedEmployee); // password won't be in this object, but good to keep other fields consistent
+        setEmployeeDetails(updatedEmployee); 
         passwordForm.reset();
         toast({ title: t('common.success'), description: t('settingsPage.passwordUpdateSuccess') });
       } else {
@@ -123,11 +123,12 @@ export default function SettingsPage() {
 
   const handleNotificationToggle = async (checked: boolean) => {
     if (!user || !employeeDetails) return;
-    setEmailNotifications(checked);
+    setEmailNotifications(checked); // Optimistically update UI
     try {
         const updatedEmployee = await updateEmpleado(employeeDetails.id, { emailNotifications: checked }, user.id, t);
         if (updatedEmployee) {
             setEmployeeDetails(updatedEmployee);
+            // No need to update user in context as emailNotifications is not part of the minimal User interface in AuthContext
             toast({ title: t('common.success'), description: t('settingsPage.notificationSettingsUpdateSuccess') });
         } else {
             toast({ title: t('common.error'), description: t('settingsPage.notificationSettingsUpdateError'), variant: "destructive" });
@@ -274,14 +275,13 @@ export default function SettingsPage() {
               <Label htmlFor="email-notifications" className="flex flex-col space-y-1">
                 <span>{t('settingsPage.emailNotificationsLabel')}</span>
                  <span className="font-normal leading-snug text-muted-foreground">
-                  {t('common.underConstruction')} {/* Or more specific text */}
+                  {t('settingsPage.emailNotificationsDescription')}
                 </span>
               </Label>
               <Switch
                 id="email-notifications"
                 checked={emailNotifications}
                 onCheckedChange={handleNotificationToggle}
-                aria-readonly
               />
             </div>
           </CardContent>

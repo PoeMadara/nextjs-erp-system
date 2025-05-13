@@ -643,6 +643,7 @@
     "passwordMinLength": "Password must be at least 6 characters.",
     "notificationsSectionTitle": "Notifications",
     "emailNotificationsLabel": "Email Notifications",
+    "emailNotificationsDescription": "Receive system notifications and updates via email.",
     "notificationSettingsUpdateSuccess": "Notification settings updated.",
     "notificationSettingsUpdateError": "Failed to update notification settings.",
     "loadingSettings": "Loading settings..."
@@ -685,7 +686,7 @@
     "frequencyRecurringLabel": "Recurring",
     "frequencyRecurring": "Every {days} days",
     "neverSent": "Never",
-    "targetAll": "All Users",
+    "targetRole.all": "All Users",
     "targetRole.admin": "Admins",
     "targetRole.moderator": "Moderators",
     "targetRole.user": "Users",

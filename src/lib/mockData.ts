@@ -870,7 +870,7 @@ export const sendNotificationByConfig = async (configId: string, actingUserId: s
 
   const allUsers = await getEmpleados();
   const targetUsers = allUsers.filter(emp => {
-    if (!emp.emailNotifications) return false;
+    if (!emp.emailNotifications) return false; // Check if user has email notifications enabled
     if (config.targetRoles.includes('all')) return true;
     return config.targetRoles.some(targetRole => emp.role === targetRole);
   });
@@ -888,7 +888,7 @@ export const sendNotificationByConfig = async (configId: string, actingUserId: s
 
   // Update lastSent and log activity
   const now = new Date().toISOString();
-  await updateNotificationConfig(config.id, { lastSent: now }, actingUserId, t); // This will also log the update of the config
+  await updateNotificationConfig(config.id, { lastSent: now }, actingUserId, t); 
   
   await addTeamActivityLog({
     usuario_id: actingUserId,

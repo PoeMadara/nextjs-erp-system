@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import type { NotificationConfig, NotificationFrequency, NotificationTargetRole } from "@/types";
 import { useTranslation } from "@/hooks/useTranslation";
 
-const ALL_TARGET_ROLES: NotificationTargetRole[] = ['admin', 'moderator', 'user', 'all'];
+const ALL_TARGET_ROLES: NotificationTargetRole[] = ['all', 'admin', 'moderator', 'user']; // 'all' first for display order
 const ALL_FREQUENCIES: NotificationFrequency[] = ['once', 'recurring'];
 
 const makeNotificationSchema = (t: (key: string, params?: Record<string, string | number>) => string) => z.object({
@@ -74,6 +74,17 @@ export function NotificationForm({
   const watchedFrequency = form.watch("frequency");
 
   const actualSubmitButtonText = submitButtonText || (isEditMode ? t('notifications.updateButton') : t('notifications.createButton'));
+
+  const getTargetRoleLabel = (role: NotificationTargetRole) => {
+    // Map to specific translation keys
+    const roleKeyMap: Record<NotificationTargetRole, string> = {
+        all: 'notifications.targetRole.all',
+        admin: 'notifications.targetRole.admin',
+        moderator: 'notifications.targetRole.moderator',
+        user: 'notifications.targetRole.user',
+    };
+    return t(roleKeyMap[role]);
+  };
 
   return (
     <Card className="max-w-2xl mx-auto shadow-lg mt-6">
@@ -144,7 +155,7 @@ export function NotificationForm({
                               />
                             </FormControl>
                             <FormLabel className="font-normal cursor-pointer">
-                              {t(`notifications.targetRole.${role}`)}
+                              {getTargetRoleLabel(role)}
                             </FormLabel>
                           </FormItem>
                         )
@@ -200,10 +211,10 @@ export function NotificationForm({
                         min="1" 
                         placeholder={t('notifications.form.recurringDaysPlaceholder')} 
                         {...field}
-                        value={field.value === undefined ? '' : String(field.value)} // Handle undefined for empty input
+                        value={field.value === undefined ? '' : String(field.value)} 
                         onChange={event => {
                           const value = event.target.value;
-                          field.onChange(value === '' ? undefined : Number(value)); // Convert to number or undefined
+                          field.onChange(value === '' ? undefined : Number(value)); 
                         }}
                       />
                     </FormControl>
@@ -223,3 +234,4 @@ export function NotificationForm({
     </Card>
   );
 }
+
