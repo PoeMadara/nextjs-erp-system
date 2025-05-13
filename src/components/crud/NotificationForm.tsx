@@ -1,4 +1,3 @@
-
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -117,7 +116,7 @@ export function NotificationForm({
                 <FormItem>
                   <FormLabel>{t('notifications.form.targetAudienceLabel')}</FormLabel>
                   <FormDescription>{t('notifications.form.targetAudienceDescription')}</FormDescription>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+                  <div className="flex flex-wrap gap-x-6 gap-y-4 pt-2">
                   {ALL_TARGET_ROLES.map((role) => (
                     <FormField
                       key={role}
@@ -127,7 +126,7 @@ export function NotificationForm({
                         return (
                           <FormItem
                             key={role}
-                            className="flex flex-row items-start space-x-3 space-y-0"
+                            className="flex flex-row items-center space-x-2 space-y-0"
                           >
                             <FormControl>
                               <Checkbox
@@ -143,7 +142,7 @@ export function NotificationForm({
                                 }}
                               />
                             </FormControl>
-                            <FormLabel className="font-normal">
+                            <FormLabel className="font-normal cursor-pointer">
                               {t(`notifications.targetRole.${role}`)}
                             </FormLabel>
                           </FormItem>
