@@ -1,10 +1,12 @@
 # ERP System
 
-This is a comprehensive ERP (Enterprise Resource Planning) System built with Next.js, TypeScript, and Tailwind CSS. It aims to provide a modular and extensible platform for managing various business processes.
+This is a comprehensive ERP (Enterprise Resource Planning) System built with **Next.js**, **React**, **TypeScript**, and **Tailwind CSS**. It provides a modern, modular, and extensible platform for managing various business operations such as inventory, sales, finance, and user access. The project follows best practices in frontend architecture, styling, and type safety.
 
 ![Next.js](https://img.shields.io/badge/Framework-Next.js-000?logo=next.js)
 ![React](https://img.shields.io/badge/Library-React-61DAFB?logo=react)
 ![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Styling-TailwindCSS-38B2AC?logo=tailwindcss&logoColor=white)
+
 
 ## Autores
 
@@ -56,26 +58,6 @@ This project currently uses in-memory mock data stored in `src/lib/mockData.ts` 
 ![ESLint](https://img.shields.io/badge/ESLint-4B32C3?logo=eslint&logoColor=white)
 ![Prettier](https://img.shields.io/badge/Prettier-F7B93E?logo=prettier&logoColor=000)
 
-
-
-## Technologies Used
-
-*   **Frontend:**
-    *   [Next.js](https://nextjs.org/) (v15 with App Router)
-    *   [React](https://reactjs.org/) (v18)
-    *   [TypeScript](https://www.typescriptlang.org/)
-    *   [Tailwind CSS](https://tailwindcss.com/) for styling
-    *   [shadcn/ui](https://ui.shadcn.com/) for UI components (built on Radix UI and Tailwind CSS)
-    *   [Lucide React](https://lucide.dev/) for icons
-    *   [Zod](https://zod.dev/) for schema validation
-    *   [React Hook Form](https://react-hook-form.com/) for form handling
-    *   [date-fns](https://date-fns.org/) for date manipulation
-*   **Backend (Simulated with Mock Data):**
-    *   The current version uses in-memory mock data (`src/lib/mockData.ts`) to simulate database interactions. This needs to be replaced with a real database for production.
-*   **GenAI (Optional):**
-    *   [Genkit](https://firebase.google.com/docs/genkit) and Google AI (Gemini) can be integrated for AI-powered features.
-*   **Linting & Formatting:**
-    *   ESLint and Prettier (implicitly via Next.js defaults)
 
 ## Key Features
 
@@ -133,8 +115,8 @@ This project currently uses in-memory mock data stored in `src/lib/mockData.ts` 
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository-url>
-    cd <project-directory>
+    git clone [<repository-url>](https://github.com/PoeMadara/nextjs-erp-system)
+    cd [<project-directory>](https://github.com/PoeMadara/nextjs-erp-system)
     ```
 
 2.  **Install dependencies:**
