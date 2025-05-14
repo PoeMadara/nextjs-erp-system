@@ -394,7 +394,7 @@ export const addProducto = async (productoData: Omit<Producto, 'id'>, actingUser
         }
     });
     newProductCode = `P${(maxCodeNum + 1).toString().padStart(3, '0')}`;
-     if (productos.some(p => p.codigo === newProductCode)) { // Double check, should ideally not happen with this logic
+     if (productos.some(p => p.codigo === newProductCode)) { 
         throw new Error(t('products.validation.codeGenerationError'));
     }
   }
@@ -422,7 +422,6 @@ export const updateProducto = async (id: string, updates: Partial<Producto>, act
   const index = productos.findIndex(p => p.id === id);
   if (index === -1) return null;
 
-  // Check if new codigo is being set and if it's unique (excluding current product)
   if (updates.codigo && updates.codigo !== productos[index].codigo) {
     if (productos.some(p => p.id !== id && p.codigo === updates.codigo)) {
       throw new Error(t('products.validation.codeExists', { code: updates.codigo }));
@@ -550,14 +549,24 @@ export const getFacturaById = async (id: string): Promise<Factura | undefined> =
 
 const generateDetalleId = (facturaId: string, index: number) => `${facturaId}-DET${(index + 1).toString().padStart(3, '0')}`;
 
-const adjustStock = (productoId: string, cantidad: number, tipoAjuste: 'increment' | 'decrement') => {
+const adjustStock = (productoId: string, cantidad: number, tipoAjuste: 'increment' | 'decrement', t: (key: string, params?: any) => string) => {
   const productoIndex = productos.findIndex(p => p.id === productoId);
   if (productoIndex !== -1) {
     if (tipoAjuste === 'increment') {
       productos[productoIndex].stock += cantidad;
     } else {
+      if (productos[productoIndex].stock < cantidad) {
+         // This check should ideally happen before calling adjustStock for decrements
+         throw new Error(t('facturas.validation.insufficientStock', {
+            productName: productos[productoIndex].nombre,
+            availableStock: productos[productoIndex].stock,
+            requestedQuantity: cantidad
+        }));
+      }
       productos[productoIndex].stock -= cantidad;
     }
+  } else {
+    throw new Error(t('facturas.validation.productNotFound', { productId: productoId }));
   }
 };
 
@@ -607,9 +616,9 @@ export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombr
   if (newFactura.estado !== 'Cancelada') {
     newFactura.detalles.forEach(detalle => {
       if (newFactura.tipo === 'Venta') {
-        adjustStock(detalle.productoId, detalle.cantidad, 'decrement');
-      } else if (newFactura.tipo === 'Compra') {
-        adjustStock(detalle.productoId, detalle.cantidad, 'increment');
+        adjustStock(detalle.productoId, detalle.cantidad, 'decrement', t);
+      } else if (newFactura.tipo === 'Compra' && newFactura.estado === 'Pagada') { // Only adjust stock for paid purchase invoices
+        adjustStock(detalle.productoId, detalle.cantidad, 'increment', t);
       }
     });
   }
@@ -635,6 +644,9 @@ export const updateFactura = async (id: string, updates: Partial<Factura>, actin
   if (index === -1) return null;
 
   const originalFactura = { ...facturas[index], detalles: [...facturas[index].detalles.map(d => ({...d}))] };
+  const wasCompraPagada = originalFactura.tipo === 'Compra' && originalFactura.estado === 'Pagada';
+  const wasVentaNotCancelled = originalFactura.tipo === 'Venta' && originalFactura.estado !== 'Cancelada';
+
 
   const tentativeUpdatedFactura: Factura = {
     ...originalFactura,
@@ -659,41 +671,40 @@ export const updateFactura = async (id: string, updates: Partial<Factura>, actin
   tentativeUpdatedFactura.totalIva = parseFloat(newTotalIva.toFixed(2));
   tentativeUpdatedFactura.totalFactura = parseFloat((newBaseImponible + newTotalIva).toFixed(2));
 
-  if (originalFactura.estado !== 'Cancelada') {
-    originalFactura.detalles.forEach(detalle => {
-      if (originalFactura.tipo === 'Venta') {
-        adjustStock(detalle.productoId, detalle.cantidad, 'increment');
-      } else if (originalFactura.tipo === 'Compra') {
-        adjustStock(detalle.productoId, detalle.cantidad, 'decrement');
-      }
-    });
-  }
+  const isNowCompraPagada = tentativeUpdatedFactura.tipo === 'Compra' && tentativeUpdatedFactura.estado === 'Pagada';
+  const isNowVentaNotCancelled = tentativeUpdatedFactura.tipo === 'Venta' && tentativeUpdatedFactura.estado !== 'Cancelada';
+  const isNowCancelled = tentativeUpdatedFactura.estado === 'Cancelada';
+  const wasCancelled = originalFactura.estado === 'Cancelada';
 
-  if (tentativeUpdatedFactura.estado !== 'Cancelada') {
-    if (tentativeUpdatedFactura.tipo === 'Venta') {
-      for (const detalle of tentativeUpdatedFactura.detalles) {
-        const producto = productos.find(p => p.id === detalle.productoId);
-        if (!producto) throw new Error(t('facturas.validation.productNotFound', {productId: detalle.productoId}));
-        const currentStockAfterRevert = producto.stock;
-        if (currentStockAfterRevert < detalle.cantidad) {
-          if (originalFactura.estado !== 'Cancelada') {
-            originalFactura.detalles.forEach(d => {
-              if (originalFactura.tipo === 'Venta') adjustStock(d.productoId, d.cantidad, 'decrement');
-              else if (originalFactura.tipo === 'Compra') adjustStock(d.productoId, d.cantidad, 'increment');
-            });
-          }
-          throw new Error(t('facturas.validation.insufficientStock', {productName: producto.nombre, availableStock: currentStockAfterRevert, requestedQuantity: detalle.cantidad}));
-        }
+
+  // Revert original stock impact if necessary
+  if (wasCompraPagada) {
+    originalFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'decrement', t));
+  } else if (wasVentaNotCancelled) {
+    originalFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'increment', t));
+  }
+  
+  // Apply new stock impact
+  // Check for sufficient stock before applying changes for sales
+  if (isNowVentaNotCancelled) {
+    for (const detalle of tentativeUpdatedFactura.detalles) {
+      const producto = productos.find(p => p.id === detalle.productoId);
+      if (!producto) throw new Error(t('facturas.validation.productNotFound', {productId: detalle.productoId}));
+      // Current stock available for this product (after potential reversion)
+      const currentStockForProduct = productos.find(p => p.id === detalle.productoId)?.stock || 0;
+      if (currentStockForProduct < detalle.cantidad) {
+        // Revert back the reversion if error
+        if (wasCompraPagada) originalFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'increment', t));
+        else if (wasVentaNotCancelled) originalFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'decrement', t));
+        throw new Error(t('facturas.validation.insufficientStock', {productName: producto.nombre, availableStock: currentStockForProduct, requestedQuantity: detalle.cantidad}));
       }
     }
-    tentativeUpdatedFactura.detalles.forEach(detalle => {
-      if (tentativeUpdatedFactura.tipo === 'Venta') {
-        adjustStock(detalle.productoId, detalle.cantidad, 'decrement');
-      } else if (tentativeUpdatedFactura.tipo === 'Compra') {
-        adjustStock(detalle.productoId, detalle.cantidad, 'increment');
-      }
-    });
+    tentativeUpdatedFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'decrement', t));
+  } else if (isNowCompraPagada) {
+    tentativeUpdatedFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'increment', t));
   }
+  // If an invoice is cancelled, and it was previously affecting stock, the reversion above handled it.
+  // If it's newly cancelled, no further stock action needed as it won't apply new impact.
 
   facturas[index] = tentativeUpdatedFactura;
 
@@ -723,14 +734,11 @@ export const deleteFactura = async (id: string, actingUserId: string, t: (key: s
 
   const facturaToDelete = facturas[index];
 
-  if (facturaToDelete.estado !== 'Cancelada') {
-    facturaToDelete.detalles.forEach(detalle => {
-      if (facturaToDelete.tipo === 'Venta') {
-        adjustStock(detalle.productoId, detalle.cantidad, 'increment');
-      } else if (facturaToDelete.tipo === 'Compra') {
-        adjustStock(detalle.productoId, detalle.cantidad, 'decrement');
-      }
-    });
+  // Revert stock changes if the invoice was affecting stock
+  if (facturaToDelete.tipo === 'Venta' && facturaToDelete.estado !== 'Cancelada') {
+    facturaToDelete.detalles.forEach(detalle => adjustStock(detalle.productoId, detalle.cantidad, 'increment', t));
+  } else if (facturaToDelete.tipo === 'Compra' && facturaToDelete.estado === 'Pagada') {
+    facturaToDelete.detalles.forEach(detalle => adjustStock(detalle.productoId, detalle.cantidad, 'decrement', t));
   }
 
   facturas.splice(index, 1);
@@ -778,17 +786,37 @@ export const getRecentOrders = async (limit: number = 2): Promise<Array<{id: str
 
 export const getWarehouseStatus = async (): Promise<Array<{name: string, capacity: string, items: number, location: string }>> => {
   if (almacenes.length === 0) return [];
-  return almacenes.map(alm => ({
+  // Simplified: calculate total stock and distribute somewhat evenly for demo
+  const totalSystemStock = productos.reduce((sum, p) => sum + p.stock, 0);
+  const itemsPerWarehouse = almacenes.length > 0 ? Math.floor(totalSystemStock / almacenes.length) : 0;
+  
+  return almacenes.map((alm, index) => ({
     name: alm.nombre,
     capacity: alm.capacidad || 'N/A',
-    items: productos.reduce((sum, p) => sum + p.stock, 0) / almacenes.length, // Simplified: average stock across warehouses
+    // Distribute remaining stock to the last warehouse for a bit of variation
+    items: index === almacenes.length - 1 ? totalSystemStock - (itemsPerWarehouse * (almacenes.length -1)) : itemsPerWarehouse,
     location: alm.ubicacion || 'N/A',
   }));
 };
 
+
 export const getTotalStockValue = async (): Promise<{totalStock: number, totalRevenue: number, salesCount: number}> => {
     const totalStock = productos.reduce((sum, p) => sum + p.stock, 0);
-    const totalRevenue = facturas.filter(f => f.tipo === 'Venta' && f.estado === 'Pagada').reduce((sum, f) => sum + f.totalFactura, 0);
+    // Total revenue should sum totalFactura which already includes currency, assume base is EUR or convert to a common base if mixed
+    const totalRevenue = facturas
+      .filter(f => f.tipo === 'Venta' && f.estado === 'Pagada')
+      .reduce((sum, f) => {
+        // Assuming MOCK_EXCHANGE_RATES and BASE_CURRENCY are available or passed
+        // For simplicity, if we assume all revenue is tallied in a base currency (e.g. EUR)
+        // or mockData stores revenue in a consistent currency.
+        // Here, we'll just sum up, assuming all totalFactura are in a comparable unit or BASE_CURRENCY for this mock summary.
+        // A real system would convert each factura.totalFactura to BASE_CURRENCY before summing.
+        // For mock, let's assume all are EUR for simplicity of this function.
+        if (f.moneda === 'EUR') return sum + f.totalFactura;
+        if (f.moneda === 'USD') return sum + f.totalFactura / 1.08; // USD to EUR approx
+        if (f.moneda === 'GBP') return sum + f.totalFactura / 0.85; // GBP to EUR approx
+        return sum + f.totalFactura; // Fallback
+      }, 0);
     const salesCount = facturas.filter(f => f.tipo === 'Venta').length;
     return { totalStock, totalRevenue, salesCount };
 };
@@ -916,10 +944,9 @@ export const sendNotificationByConfig = async (configId: string, actingUserId: s
   });
 
   const now = new Date().toISOString();
-  // Update lastSent only if it's a "once" type or for logging, recurring might have its own scheduler
   const updatedFields: Partial<NotificationConfig> = { lastSent: now };
   if (config.frequency === 'once') {
-    updatedFields.isEnabled = false; // Disable "once" notifications after sending
+    updatedFields.isEnabled = false; 
   }
 
   await updateNotificationConfig(config.id, updatedFields, actingUserId, t);

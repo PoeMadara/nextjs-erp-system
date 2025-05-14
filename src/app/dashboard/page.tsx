@@ -1,11 +1,11 @@
 
 "use client";
 import { useEffect, useState, useMemo } from 'react';
-import Link from 'next/link'; 
+import Link from 'next/link';
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { PurchasesChart } from "@/components/dashboard/PurchasesChart";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { DollarSign, Package, ShoppingCart, Users, ListChecks, Banknote } from "lucide-react";
 import { TeamActivityCard } from '@/components/dashboard/TeamActivityCard';
 import {
@@ -19,18 +19,20 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from '@/hooks/useTranslation';
-import { getRecentSales, getRecentOrders, getWarehouseStatus, getTotalStockValue, getClientes } from '@/lib/mockData';
-import type { RecentSale, RecentOrder, WarehouseSummary, CurrencyCode } from '@/types';
+import { getRecentSales, getRecentOrders, getWarehouseStatus, getTotalStockValue, getClientes, getFacturas } from '@/lib/mockData';
+import type { RecentSale, RecentOrder, WarehouseSummary, CurrencyCode, Factura } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { format, getMonth, getYear, parseISO } from 'date-fns';
 
 interface DashboardData {
-  totalRevenue: number; 
+  totalRevenue: number;
   newCustomersCount: number;
   salesCount: number;
   productsInStock: number;
-  recentSales: RecentSale[]; 
-  recentOrders: RecentOrder[]; 
+  recentSales: RecentSale[];
+  recentOrders: RecentOrder[];
   warehouseStatus: WarehouseSummary[];
+  allFacturas: Factura[];
 }
 
 type DisplayCurrency = 'USD' | 'EUR' | 'GBP';
@@ -40,7 +42,7 @@ const MOCK_EXCHANGE_RATES: Record<DisplayCurrency, Record<DisplayCurrency, numbe
   EUR: { USD: 1.08, GBP: 0.85, EUR: 1 },
   GBP: { USD: 1.26, EUR: 1.17, GBP: 1 },
 };
-const BASE_CURRENCY: DisplayCurrency = 'USD'; // Assume all data from mockData.ts is in USD
+const BASE_CURRENCY: DisplayCurrency = 'EUR'; // Assuming most data from mockData.ts is in EUR or needs a common base
 
 const CURRENCY_SYMBOLS: Record<DisplayCurrency, string> = {
   USD: '$',
@@ -48,24 +50,12 @@ const CURRENCY_SYMBOLS: Record<DisplayCurrency, string> = {
   GBP: '£',
 };
 
-// Mock monthly data (assumed to be in BASE_CURRENCY)
-const baseSalesData = [
-  { month: "January", sales: 1860 }, { month: "February", sales: 3050 }, { month: "March", sales: 2370 },
-  { month: "April", sales: 730 }, { month: "May", sales: 2090 }, { month: "June", sales: 2140 },
-  { month: "July", sales: 2500 }, { month: "August", sales: 1900 }, { month: "September", sales: 3200 },
-  { month: "October", sales: 2800 }, { month: "November", sales: 2200 }, { month: "December", sales: 3500 },
-];
-
-const basePurchasesData = [
-  { month: "January", purchases: 1200 }, { month: "February", purchases: 2200 }, { month: "March", purchases: 1500 },
-  { month: "April", purchases: 500 }, { month: "May", purchases: 1800 }, { month: "June", purchases: 1600 },
-  { month: "July", purchases: 2000 }, { month: "August", purchases: 1300 }, { month: "September", purchases: 2500 },
-  { month: "October", purchases: 2100 }, { month: "November", purchases: 1700 }, { month: "December", purchases: 2800 },
-];
+const MONTH_NAMES_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTH_NAMES_ES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
 
 export default function DashboardPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCurrency, setSelectedCurrency] = useState<DisplayCurrency>('EUR');
@@ -80,12 +70,14 @@ export default function DashboardPage() {
           salesData,
           ordersData,
           warehouseData,
+          allFacturasData,
         ] = await Promise.all([
           getTotalStockValue(),
           getClientes(),
           getRecentSales(),
           getRecentOrders(),
           getWarehouseStatus(),
+          getFacturas(),
         ]);
 
         setData({
@@ -96,6 +88,7 @@ export default function DashboardPage() {
           recentSales: salesData,
           recentOrders: ordersData,
           warehouseStatus: warehouseData,
+          allFacturas: allFacturasData,
         });
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
@@ -106,36 +99,60 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  const convertAmount = (amount: number, from: DisplayCurrency, to: DisplayCurrency): number => {
+  const convertAmount = (amount: number, from: CurrencyCode, to: DisplayCurrency): number => {
     if (from === to) return amount;
-    const rate = MOCK_EXCHANGE_RATES[from]?.[to];
-    return rate ? amount * rate : amount; // Fallback to original amount if rate not found
+    // For simplicity, assume 'from' can be directly cast to DisplayCurrency if it matches.
+    // More robust logic would handle all CurrencyCode types.
+    const fromDisplay = from as DisplayCurrency; 
+    const rate = MOCK_EXCHANGE_RATES[fromDisplay]?.[to];
+    return rate ? amount * rate : amount; 
   };
 
   const displayTotalRevenue = useMemo(() => {
     if (!data) return 0;
+     // Assuming totalRevenue from mockData is in BASE_CURRENCY (EUR)
     return convertAmount(data.totalRevenue, BASE_CURRENCY, selectedCurrency);
   }, [data, selectedCurrency]);
 
-  const displaySalesChartData = useMemo(() => {
-    return baseSalesData.map(item => ({
-      ...item,
-      sales: parseFloat(convertAmount(item.sales, BASE_CURRENCY, selectedCurrency).toFixed(0))
+
+  const aggregateMonthlyData = (facturas: Factura[], type: 'Venta' | 'Compra', targetCurrency: DisplayCurrency, lang: 'en' | 'es') => {
+    const monthlyTotals: Record<number, number> = {}; // monthIndex: totalAmount
+    const currentYear = new Date().getFullYear();
+    const monthNames = lang === 'es' ? MONTH_NAMES_ES : MONTH_NAMES_EN;
+
+    facturas.forEach(factura => {
+      if (factura.tipo === type) {
+        const facturaDate = parseISO(factura.fecha);
+        if (getYear(facturaDate) === currentYear) {
+          const monthIndex = getMonth(facturaDate);
+          const convertedAmount = convertAmount(factura.totalFactura, factura.moneda, targetCurrency);
+          monthlyTotals[monthIndex] = (monthlyTotals[monthIndex] || 0) + convertedAmount;
+        }
+      }
+    });
+
+    return monthNames.map((monthName, index) => ({
+      month: monthName,
+      [type === 'Venta' ? 'sales' : 'purchases']: parseFloat((monthlyTotals[index] || 0).toFixed(0))
     }));
-  }, [selectedCurrency]);
+  };
+
+  const displaySalesChartData = useMemo(() => {
+    if (!data?.allFacturas) return MONTH_NAMES_EN.map(month => ({ month, sales: 0 }));
+    return aggregateMonthlyData(data.allFacturas, 'Venta', selectedCurrency, language);
+  }, [data?.allFacturas, selectedCurrency, language]);
 
   const displayPurchasesChartData = useMemo(() => {
-    return basePurchasesData.map(item => ({
-      ...item,
-      purchases: parseFloat(convertAmount(item.purchases, BASE_CURRENCY, selectedCurrency).toFixed(0))
-    }));
-  }, [selectedCurrency]);
-  
+    if (!data?.allFacturas) return MONTH_NAMES_EN.map(month => ({ month, purchases: 0 }));
+    return aggregateMonthlyData(data.allFacturas, 'Compra', selectedCurrency, language);
+  }, [data?.allFacturas, selectedCurrency, language]);
+
+
   const displayRecentSales = useMemo(() => {
     if (!data) return [];
     return data.recentSales.map(sale => ({
         ...sale,
-        amount: convertAmount(sale.amount, sale.currency as DisplayCurrency, selectedCurrency) 
+        amount: convertAmount(sale.amount, sale.currency, selectedCurrency)
     }));
   }, [data, selectedCurrency]);
 
@@ -143,7 +160,7 @@ export default function DashboardPage() {
     if (!data) return [];
     return data.recentOrders.map(order => ({
         ...order,
-        amount: convertAmount(order.amount, order.currency as DisplayCurrency, selectedCurrency)
+        amount: convertAmount(order.amount, order.currency, selectedCurrency)
     }));
   }, [data, selectedCurrency]);
 
@@ -195,31 +212,31 @@ export default function DashboardPage() {
       </div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard 
-          title={t('dashboardPage.totalRevenue')} 
-          value={`${currencySymbol}${displayTotalRevenue.toFixed(2)}`} 
-          icon={DollarSign} 
+        <MetricCard
+          title={t('dashboardPage.totalRevenue')}
+          value={`${currencySymbol}${displayTotalRevenue.toFixed(2)}`}
+          icon={DollarSign}
           description={t('dashboardPage.fromPaidInvoices')}
           className="shadow-md hover:shadow-lg transition-shadow"
         />
-        <MetricCard 
-          title={t('dashboardPage.totalCustomers')} 
-          value={`${data.newCustomersCount}`} 
-          icon={Users} 
+        <MetricCard
+          title={t('dashboardPage.totalCustomers')}
+          value={`${data.newCustomersCount}`}
+          icon={Users}
           description={t('dashboardPage.totalRegisteredCustomers')}
           className="shadow-md hover:shadow-lg transition-shadow"
         />
-        <MetricCard 
+        <MetricCard
           title={t('dashboardPage.sales')}
-          value={`${data.salesCount}`} 
-          icon={ShoppingCart} 
+          value={`${data.salesCount}`}
+          icon={ShoppingCart}
           description={t('dashboardPage.totalSalesInvoices')}
           className="shadow-md hover:shadow-lg transition-shadow"
         />
-        <MetricCard 
+        <MetricCard
           title={t('dashboardPage.productsInStock')}
-          value={`${data.productsInStock}`} 
-          icon={Package} 
+          value={`${data.productsInStock}`}
+          icon={Package}
           description={t('dashboardPage.totalItemsAvailable')}
           className="shadow-md hover:shadow-lg transition-shadow"
         />
@@ -290,7 +307,7 @@ export default function DashboardPage() {
                   <TableRow key={sale.id}>
                     <TableCell className="font-medium">{sale.id}</TableCell>
                     <TableCell>{sale.customer}</TableCell>
-                    <TableCell>{sale.date}</TableCell>
+                    <TableCell>{format(parseISO(sale.date), 'dd/MM/yyyy')}</TableCell>
                     <TableCell className="text-right">{currencySymbol}{sale.amount.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
@@ -328,7 +345,7 @@ export default function DashboardPage() {
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.id}</TableCell>
                     <TableCell>{order.supplier}</TableCell>
-                    <TableCell>{order.date}</TableCell>
+                    <TableCell>{format(parseISO(order.date), 'dd/MM/yyyy')}</TableCell>
                     <TableCell className="text-right">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
@@ -380,3 +397,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
