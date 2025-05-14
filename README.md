@@ -32,6 +32,34 @@ The application supports multi-language (English and Spanish) and features a rol
 
 ## Technologies Used
 
+### Frontend:
+![Next.js](https://img.shields.io/badge/Next.js-000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-20232a?logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-38B2AC?logo=tailwindcss&logoColor=white)
+![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-%23171717?logo=radixui&logoColor=white&label=shadcn%2Fui)
+![Lucide](https://img.shields.io/badge/Lucide%20React-000000?logo=lucide&logoColor=white&label=Icons)
+![Zod](https://img.shields.io/badge/Zod-%23e6ccff?logo=typescript&logoColor=black)
+![React Hook Form](https://img.shields.io/badge/React%20Hook%20Form-EC5990?logo=reacthookform&logoColor=white)
+![date-fns](https://img.shields.io/badge/date--fns-007ACC?logo=javascript&logoColor=white)
+
+### Backend (Simulated):
+![Mock Data](https://img.shields.io/badge/Backend-Mock%20Data-informational)
+
+This project currently uses in-memory mock data stored in `src/lib/mockData.ts` to simulate database interactions. This should be replaced with a real database for production use.
+
+### GenAI: 
+![Genkit](https://img.shields.io/badge/Genkit-FFB300?logo=google&logoColor=black)
+![Gemini](https://img.shields.io/badge/Gemini-AI-4285F4?logo=google&logoColor=white)
+
+### Linting & Formatting: 
+![ESLint](https://img.shields.io/badge/ESLint-4B32C3?logo=eslint&logoColor=white)
+![Prettier](https://img.shields.io/badge/Prettier-F7B93E?logo=prettier&logoColor=000)
+
+
+
+## Technologies Used
+
 *   **Frontend:**
     *   [Next.js](https://nextjs.org/) (v15 with App Router)
     *   [React](https://reactjs.org/) (v18)
