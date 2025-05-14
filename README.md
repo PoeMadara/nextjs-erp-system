@@ -2,6 +2,14 @@
 
 This is a comprehensive ERP (Enterprise Resource Planning) System built with Next.js, TypeScript, and Tailwind CSS. It aims to provide a modular and extensible platform for managing various business processes.
 
+## Autores
+
+- **Carlos Vergara Gámez**  
+  [LinkedIn](https://www.linkedin.com/in/carlosvergaragamez/) | [GitHub](https://github.com/PoeMadara)
+
+- **Lavinia Cristiana Bacaru**  
+  [LinkedIn](https://www.linkedin.com/in/lavinia-bacaru-devsecops/) | [GitHub](https://github.com/codewithlavi)
+
 ## Project Overview
 
 The ERP System includes modules for managing:
