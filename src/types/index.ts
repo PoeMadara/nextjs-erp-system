@@ -47,6 +47,8 @@ export interface Almacen {
   notas?: string;
 }
 
+export type CurrencyCode = 'EUR' | 'USD' | 'GBP'; // Add more as needed
+
 export interface Producto {
   id: string; // Codigo
   codigo?: string; // Unique product code
@@ -54,6 +56,7 @@ export interface Producto {
   descripcion?: string;
   precioCompra: number;
   precioVenta: number;
+  moneda: CurrencyCode; // Added currency field
   iva: number; // Percentage e.g., 21 for 21%
   stock: number;
   categoria?: string;
@@ -62,7 +65,7 @@ export interface Producto {
 
 export type FacturaTipo = 'Compra' | 'Venta';
 export type FacturaEstado = 'Pendiente' | 'Pagada' | 'Cancelada';
-export type CurrencyCode = 'EUR' | 'USD' | 'GBP'; // Add more as needed
+
 
 export interface DetalleFactura {
   id?: string; // Auto-increment or UUID, generated. Optional for new lines in form.
@@ -126,13 +129,13 @@ export interface TeamActivityLog {
   id: string;
   usuario_id: string;
   nombre_usuario: string;
-  avatar_color: string; 
+  avatar_color: string;
   modulo: TeamActivityModule;
   accion: TeamActivityAction; // The verb, e.g., 'crear', 'modificar'
   descripcion: string; // The detailed, final, potentially localized message
   timestamp: string; // ISO Date string
-  entidad_id?: string; 
-  entidad_nombre?: string; 
+  entidad_id?: string;
+  entidad_nombre?: string;
 }
 
 export type NotificationFrequency = 'once' | 'recurring';

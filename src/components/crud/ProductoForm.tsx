@@ -1,3 +1,4 @@
+
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,16 +15,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Producto } from "@/types";
+import type { Producto, CurrencyCode } from "@/types";
 import { useTranslation } from "@/hooks/useTranslation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DollarSign } from "lucide-react";
+
+const ALL_CURRENCIES: CurrencyCode[] = ['EUR', 'USD', 'GBP'];
 
 const makeProductoSchema = (t: (key: string, params?: Record<string, string | number>) => string) => z.object({
   nombre: z.string().min(2, { message: t('products.validation.nameMinLength', { count: 2 }) }),
+  codigo: z.string().optional(),
   referencia: z.string().optional(),
   descripcion: z.string().optional(),
   categoria: z.string().optional(),
   precioCompra: z.coerce.number().positive({ message: t('products.validation.pricePositive')}),
   precioVenta: z.coerce.number().positive({ message: t('products.validation.pricePositive')}),
+  moneda: z.enum(ALL_CURRENCIES, { required_error: t('products.validation.currencyRequired') }),
   iva: z.coerce.number().min(0, { message: t('products.validation.ivaNonNegative')}),
   stock: z.coerce.number().min(0, { message: t('products.validation.stockNonNegative')}),
 });
@@ -37,24 +44,26 @@ interface ProductoFormProps {
   submitButtonText?: string;
 }
 
-export function ProductoForm({ 
-  onSubmit, 
-  defaultValues, 
-  isSubmitting = false, 
-  submitButtonText 
+export function ProductoForm({
+  onSubmit,
+  defaultValues,
+  isSubmitting = false,
+  submitButtonText
 }: ProductoFormProps) {
   const { t } = useTranslation();
   const productoSchema = makeProductoSchema(t);
-  
+
   const form = useForm<ProductoFormValues>({
     resolver: zodResolver(productoSchema),
     defaultValues: {
       nombre: defaultValues?.nombre || "",
+      codigo: defaultValues?.codigo || "",
       referencia: defaultValues?.referencia || "",
       descripcion: defaultValues?.descripcion || "",
       categoria: defaultValues?.categoria || "",
       precioCompra: defaultValues?.precioCompra || 0,
       precioVenta: defaultValues?.precioVenta || 0,
+      moneda: defaultValues?.moneda || 'USD', // Default to USD
       iva: defaultValues?.iva || 21,
       stock: defaultValues?.stock || 0,
     },
@@ -86,6 +95,20 @@ export function ProductoForm({
               />
               <FormField
                 control={form.control}
+                name="codigo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('productForm.codeLabel')} ({t('common.optional')})</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t('productForm.codePlaceholder')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+                control={form.control}
                 name="referencia"
                 render={({ field }) => (
                   <FormItem>
@@ -97,7 +120,6 @@ export function ProductoForm({
                   </FormItem>
                 )}
               />
-            </div>
             <FormField
               control={form.control}
               name="descripcion"
@@ -124,7 +146,7 @@ export function ProductoForm({
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormField
                 control={form.control}
                 name="precioCompra"
@@ -147,6 +169,27 @@ export function ProductoForm({
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="0.00" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="moneda"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('productForm.currencyLabel')}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                           <DollarSign className="mr-2 h-4 w-4 opacity-50" />
+                          <SelectValue placeholder={t('productForm.selectCurrency')} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ALL_CURRENCIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

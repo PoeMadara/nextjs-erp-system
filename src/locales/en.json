@@ -31,7 +31,8 @@
     "status": "Status",
     "type": "Type",
     "location": "Location",
-    "role": "Role"
+    "role": "Role",
+    "optional": "Optional"
   },
   "loginPage": {
     "title": "ERP Login",
@@ -466,18 +467,24 @@
     "failUpdate": "Failed to update product.",
     "successCreate": "Product {name} created successfully.",
     "failCreate": "Failed to create product.",
+    "filterByCurrency": "Filter by currency",
+    "searchCurrency": "Search currency...",
+    "noCurrencyFound": "No currency found.",
     "validation": {
       "nameMinLength": "Name must be at least {count} characters.",
       "pricePositive": "Price must be a positive number.",
       "stockNonNegative": "Stock cannot be negative.",
       "ivaNonNegative": "VAT must be a non-negative number.",
       "codeExists": "Product code {code} already exists.",
-      "codeGenerationError": "Failed to generate a unique product code. Please try again or provide one manually."
+      "codeGenerationError": "Failed to generate a unique product code. Please try again or provide one manually.",
+      "currencyRequired": "Currency is required."
     }
   },
   "productForm": {
     "nameLabel": "Product Name",
     "namePlaceholder": "e.g., Super Laptop X2000",
+    "codeLabel": "Product Code",
+    "codePlaceholder": "e.g., P001 (leave blank to auto-generate)",
     "referenceLabel": "Reference/SKU (Optional)",
     "referencePlaceholder": "e.g., SLX2000-A1",
     "descriptionLabel": "Description (Optional)",
@@ -486,6 +493,8 @@
     "categoryPlaceholder": "e.g., Electronics",
     "purchasePriceLabel": "Purchase Price",
     "salePriceLabel": "Sale Price",
+    "currencyLabel": "Currency",
+    "selectCurrency": "Select currency",
     "vatLabel": "VAT (%)",
     "stockLabel": "Stock",
     "editTitle": "Edit Product",
@@ -725,5 +734,3 @@
     "toggleFail": "Failed to toggle status for \"{title}\"."
   }
 }
-
-    

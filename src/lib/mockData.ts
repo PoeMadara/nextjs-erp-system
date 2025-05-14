@@ -20,10 +20,10 @@ let almacenes: Almacen[] = [
 ];
 
 let productos: Producto[] = [
-  { id: 'PROD001', codigo: 'P001', nombre: 'Portátil Modelo X', descripcion: 'Portátil 15 pulgadas, 16GB RAM, 512GB SSD', precioCompra: 600.00, precioVenta: 899.99, iva: 21.00, stock: 50, categoria: 'Electrónica', referencia: 'LX15-512'},
-  { id: 'PROD002', codigo: 'P002', nombre: 'Monitor 24 pulgadas', descripcion: 'Monitor LED Full HD', precioCompra: 120.00, precioVenta: 179.50, iva: 21.00, stock: 120, categoria: 'Periféricos', referencia: 'MON24-FHD' },
-  { id: 'PROD003', codigo: 'P003', nombre: 'Teclado Mecánico RGB', descripcion: 'Teclado mecánico con retroiluminación RGB', precioCompra: 45.00, precioVenta: 79.90, iva: 21.00, stock: 75, categoria: 'Periféricos', referencia: 'TEC-MEC-RGB' },
-  { id: 'PROD004', codigo: 'P004', nombre: 'Ratón Inalámbrico Ergo', descripcion: 'Ratón ergonómico inalámbrico', precioCompra: 20.00, precioVenta: 35.00, iva: 21.00, stock: 200, categoria: 'Periféricos', referencia: 'RAT-ERG-WL' },
+  { id: 'PROD001', codigo: 'P001', nombre: 'Portátil Modelo X', descripcion: 'Portátil 15 pulgadas, 16GB RAM, 512GB SSD', precioCompra: 600.00, precioVenta: 899.99, moneda: 'EUR', iva: 21.00, stock: 50, categoria: 'Electrónica', referencia: 'LX15-512'},
+  { id: 'PROD002', codigo: 'P002', nombre: 'Monitor 24 pulgadas', descripcion: 'Monitor LED Full HD', precioCompra: 120.00, precioVenta: 179.50, moneda: 'EUR', iva: 21.00, stock: 120, categoria: 'Periféricos', referencia: 'MON24-FHD' },
+  { id: 'PROD003', codigo: 'P003', nombre: 'Teclado Mecánico RGB', descripcion: 'Teclado mecánico con retroiluminación RGB', precioCompra: 45.00, precioVenta: 79.90, moneda: 'USD', iva: 21.00, stock: 75, categoria: 'Periféricos', referencia: 'TEC-MEC-RGB' },
+  { id: 'PROD004', codigo: 'P004', nombre: 'Ratón Inalámbrico Ergo', descripcion: 'Ratón ergonómico inalámbrico', precioCompra: 20.00, precioVenta: 35.00, moneda: 'GBP', iva: 21.00, stock: 200, categoria: 'Periféricos', referencia: 'RAT-ERG-WL' },
 ];
 
 let facturas: Factura[] = [
@@ -421,7 +421,7 @@ export const addProducto = async (productoData: Omit<Producto, 'id'>, actingUser
 export const updateProducto = async (id: string, updates: Partial<Producto>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Producto | null> => {
   const index = productos.findIndex(p => p.id === id);
   if (index === -1) return null;
-  
+
   // Check if new codigo is being set and if it's unique (excluding current product)
   if (updates.codigo && updates.codigo !== productos[index].codigo) {
     if (productos.some(p => p.id !== id && p.codigo === updates.codigo)) {
@@ -937,5 +937,3 @@ export const sendNotificationByConfig = async (configId: string, actingUserId: s
 
   return { success: true, message: t('notifications.sentSuccess', {count: targetUsers.length})};
 };
-
-    

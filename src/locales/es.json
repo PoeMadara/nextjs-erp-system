@@ -31,7 +31,8 @@
     "status": "Estado",
     "type": "Tipo",
     "location": "Ubicación",
-    "role": "Rol"
+    "role": "Rol",
+    "optional": "Opcional"
   },
   "loginPage": {
     "title": "ERP Login",
@@ -466,18 +467,24 @@
     "failUpdate": "Error al actualizar el producto.",
     "successCreate": "Producto {name} creado correctamente.",
     "failCreate": "Error al crear el producto.",
+    "filterByCurrency": "Filtrar por moneda",
+    "searchCurrency": "Buscar moneda...",
+    "noCurrencyFound": "No se encontró la moneda.",
     "validation": {
       "nameMinLength": "El nombre debe tener al menos {count} caracteres.",
       "pricePositive": "El precio debe ser un número positivo.",
       "stockNonNegative": "El stock no puede ser negativo.",
       "ivaNonNegative": "El IVA debe ser un número no negativo.",
       "codeExists": "El código de producto {code} ya existe.",
-      "codeGenerationError": "Error al generar un código de producto único. Inténtalo de nuevo o proporciónalo manualmente."
+      "codeGenerationError": "Error al generar un código de producto único. Inténtalo de nuevo o proporciónalo manualmente.",
+      "currencyRequired": "La moneda es obligatoria."
     }
   },
   "productForm": {
     "nameLabel": "Nombre del Producto",
     "namePlaceholder": "Ej: Portátil Súper X2000",
+    "codeLabel": "Código de Producto",
+    "codePlaceholder": "Ej: P001 (dejar en blanco para autogenerar)",
     "referenceLabel": "Referencia/SKU (Opcional)",
     "referencePlaceholder": "Ej: PSX2000-A1",
     "descriptionLabel": "Descripción (Opcional)",
@@ -486,6 +493,8 @@
     "categoryPlaceholder": "Ej: Electrónica",
     "purchasePriceLabel": "Precio de Compra",
     "salePriceLabel": "Precio de Venta",
+    "currencyLabel": "Moneda",
+    "selectCurrency": "Selecciona moneda",
     "vatLabel": "IVA (%)",
     "stockLabel": "Stock",
     "editTitle": "Editar Producto",
@@ -725,5 +734,3 @@
     "toggleFail": "Error al cambiar el estado de \"{title}\"."
   }
 }
-
-    
