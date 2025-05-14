@@ -33,7 +33,7 @@ export function PurchasesChart({ chartData, currencySymbol = "$" }: PurchasesCha
   const chartConfig = {
     purchases: {
       label: t('dashboardPage.chartPurchasesLabel'),
-      color: "hsl(var(--chart-2))", // Using a different chart color
+      color: "hsl(var(--chart-2))", 
     },
   } satisfies ChartConfig;
 
@@ -56,10 +56,11 @@ export function PurchasesChart({ chartData, currencySymbol = "$" }: PurchasesCha
                 angle={-30}
                 textAnchor="end"
                 height={50}
+                interval={0} // Ensure all ticks are attempted to be shown
                 fontSize={12}
               />
               <YAxis 
-                tickFormatter={(value) => `${currencySymbol}${value / 1000}k`}
+                tickFormatter={(value) => `${currencySymbol}${Math.round(value / 1000)}K`}
                 tickLine={false}
                 axisLine={false}
                 fontSize={12}

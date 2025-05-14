@@ -556,7 +556,6 @@ const adjustStock = (productoId: string, cantidad: number, tipoAjuste: 'incremen
       productos[productoIndex].stock += cantidad;
     } else {
       if (productos[productoIndex].stock < cantidad) {
-         // This check should ideally happen before calling adjustStock for decrements
          throw new Error(t('facturas.validation.insufficientStock', {
             productName: productos[productoIndex].nombre,
             availableStock: productos[productoIndex].stock,
@@ -566,7 +565,7 @@ const adjustStock = (productoId: string, cantidad: number, tipoAjuste: 'incremen
       productos[productoIndex].stock -= cantidad;
     }
   } else {
-    throw new Error(t('facturas.validation.productNotFound', { productId: productoId }));
+    throw new Error(t('facturas.validation.productNotFound', { productId: productId }));
   }
 };
 
@@ -613,15 +612,13 @@ export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombr
   };
   facturas.push(newFactura);
 
-  if (newFactura.estado !== 'Cancelada') {
-    newFactura.detalles.forEach(detalle => {
-      if (newFactura.tipo === 'Venta') {
-        adjustStock(detalle.productoId, detalle.cantidad, 'decrement', t);
-      } else if (newFactura.tipo === 'Compra' && newFactura.estado === 'Pagada') { // Only adjust stock for paid purchase invoices
-        adjustStock(detalle.productoId, detalle.cantidad, 'increment', t);
-      }
-    });
+  // Adjust stock based on invoice type and status
+  if (newFactura.tipo === 'Venta' && newFactura.estado !== 'Cancelada') {
+    newFactura.detalles.forEach(detalle => adjustStock(detalle.productoId, detalle.cantidad, 'decrement', t));
+  } else if (newFactura.tipo === 'Compra' && newFactura.estado === 'Pagada') {
+    newFactura.detalles.forEach(detalle => adjustStock(detalle.productoId, detalle.cantidad, 'increment', t));
   }
+
   await addTeamActivityLog({
     usuario_id: actingUserId,
     modulo: 'Facturación',
@@ -644,10 +641,8 @@ export const updateFactura = async (id: string, updates: Partial<Factura>, actin
   if (index === -1) return null;
 
   const originalFactura = { ...facturas[index], detalles: [...facturas[index].detalles.map(d => ({...d}))] };
-  const wasCompraPagada = originalFactura.tipo === 'Compra' && originalFactura.estado === 'Pagada';
-  const wasVentaNotCancelled = originalFactura.tipo === 'Venta' && originalFactura.estado !== 'Cancelada';
-
-
+  
+  // Apply updates to create the tentative new state of the invoice
   const tentativeUpdatedFactura: Factura = {
     ...originalFactura,
     ...updates,
@@ -665,48 +660,50 @@ export const updateFactura = async (id: string, updates: Partial<Factura>, actin
     }) : [...originalFactura.detalles],
   };
 
+  // Recalculate totals for the updated invoice
   const newBaseImponible = tentativeUpdatedFactura.detalles.reduce((sum, d) => sum + (d.subtotal || 0), 0);
   const newTotalIva = tentativeUpdatedFactura.detalles.reduce((sum, d) => sum + ((d.subtotalConIva || 0) - (d.subtotal || 0)), 0);
   tentativeUpdatedFactura.baseImponible = parseFloat(newBaseImponible.toFixed(2));
   tentativeUpdatedFactura.totalIva = parseFloat(newTotalIva.toFixed(2));
   tentativeUpdatedFactura.totalFactura = parseFloat((newBaseImponible + newTotalIva).toFixed(2));
 
-  const isNowCompraPagada = tentativeUpdatedFactura.tipo === 'Compra' && tentativeUpdatedFactura.estado === 'Pagada';
-  const isNowVentaNotCancelled = tentativeUpdatedFactura.tipo === 'Venta' && tentativeUpdatedFactura.estado !== 'Cancelada';
-  const isNowCancelled = tentativeUpdatedFactura.estado === 'Cancelada';
-  const wasCancelled = originalFactura.estado === 'Cancelada';
-
-
-  // Revert original stock impact if necessary
-  if (wasCompraPagada) {
-    originalFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'decrement', t));
-  } else if (wasVentaNotCancelled) {
+  // --- Stock Adjustment Logic ---
+  // 1. Revert original stock effect (if it was one that affected stock)
+  if (originalFactura.tipo === 'Venta' && originalFactura.estado !== 'Cancelada') {
     originalFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'increment', t));
+  } else if (originalFactura.tipo === 'Compra' && originalFactura.estado === 'Pagada') {
+    originalFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'decrement', t));
   }
-  
-  // Apply new stock impact
-  // Check for sufficient stock before applying changes for sales
-  if (isNowVentaNotCancelled) {
+
+  // 2. Apply new stock effect (if it's one that affects stock)
+  if (tentativeUpdatedFactura.tipo === 'Venta' && tentativeUpdatedFactura.estado !== 'Cancelada') {
+    // Before decrementing, ensure sufficient stock for all items. If not, revert the reversion and throw error.
     for (const detalle of tentativeUpdatedFactura.detalles) {
-      const producto = productos.find(p => p.id === detalle.productoId);
-      if (!producto) throw new Error(t('facturas.validation.productNotFound', {productId: detalle.productoId}));
-      // Current stock available for this product (after potential reversion)
       const currentStockForProduct = productos.find(p => p.id === detalle.productoId)?.stock || 0;
       if (currentStockForProduct < detalle.cantidad) {
-        // Revert back the reversion if error
-        if (wasCompraPagada) originalFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'increment', t));
-        else if (wasVentaNotCancelled) originalFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'decrement', t));
-        throw new Error(t('facturas.validation.insufficientStock', {productName: producto.nombre, availableStock: currentStockForProduct, requestedQuantity: detalle.cantidad}));
+        // Revert the stock reversion done in step 1 before throwing error
+        if (originalFactura.tipo === 'Venta' && originalFactura.estado !== 'Cancelada') {
+          originalFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'decrement', t)); // Re-decrement
+        } else if (originalFactura.tipo === 'Compra' && originalFactura.estado === 'Pagada') {
+          originalFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'increment', t)); // Re-increment
+        }
+        throw new Error(t('facturas.validation.insufficientStock', {
+          productName: productos.find(p => p.id === detalle.productoId)?.nombre || detalle.productoId,
+          availableStock: currentStockForProduct,
+          requestedQuantity: detalle.cantidad
+        }));
       }
     }
+    // If all checks pass, decrement stock
     tentativeUpdatedFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'decrement', t));
-  } else if (isNowCompraPagada) {
+  } else if (tentativeUpdatedFactura.tipo === 'Compra' && tentativeUpdatedFactura.estado === 'Pagada') {
     tentativeUpdatedFactura.detalles.forEach(d => adjustStock(d.productoId, d.cantidad, 'increment', t));
   }
-  // If an invoice is cancelled, and it was previously affecting stock, the reversion above handled it.
-  // If it's newly cancelled, no further stock action needed as it won't apply new impact.
+  // If the invoice is now 'Cancelada', stock reversion (if applicable) was handled in step 1.
+  // No new stock effect is applied for 'Cancelada' invoices.
+  // --- End Stock Adjustment Logic ---
 
-  facturas[index] = tentativeUpdatedFactura;
+  facturas[index] = tentativeUpdatedFactura; // Save the updated invoice
 
   await addTeamActivityLog({
     usuario_id: actingUserId,
@@ -720,7 +717,7 @@ export const updateFactura = async (id: string, updates: Partial<Factura>, actin
   });
 
   const updatedFactura = facturas[index];
-  return {
+  return { // Return the fully populated invoice object for UI update
     ...updatedFactura,
     clienteNombre: updatedFactura.clienteId ? clientes.find(c=>c.id === updatedFactura.clienteId)?.nombre : undefined,
     proveedorNombre: updatedFactura.proveedorId ? proveedores.find(p=>p.id === updatedFactura.proveedorId)?.nombre : undefined,
@@ -758,7 +755,7 @@ export const deleteFactura = async (id: string, actingUserId: string, t: (key: s
 // For dashboard summaries
 export const getRecentSales = async (limit: number = 3): Promise<Array<{id: string, customer: string, amount: number, date: string, currency: CurrencyCode}>> => {
   return facturas
-    .filter(f => f.tipo === 'Venta')
+    .filter(f => f.tipo === 'Venta' && f.estado !== 'Cancelada')
     .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
     .slice(0, limit)
     .map(f => ({
@@ -772,7 +769,7 @@ export const getRecentSales = async (limit: number = 3): Promise<Array<{id: stri
 
 export const getRecentOrders = async (limit: number = 2): Promise<Array<{id: string, supplier: string, amount: number, date: string, currency: CurrencyCode}>> => {
    return facturas
-    .filter(f => f.tipo === 'Compra')
+    .filter(f => f.tipo === 'Compra' && f.estado !== 'Cancelada')
     .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
     .slice(0, limit)
     .map(f => ({
@@ -802,22 +799,15 @@ export const getWarehouseStatus = async (): Promise<Array<{name: string, capacit
 
 export const getTotalStockValue = async (): Promise<{totalStock: number, totalRevenue: number, salesCount: number}> => {
     const totalStock = productos.reduce((sum, p) => sum + p.stock, 0);
-    // Total revenue should sum totalFactura which already includes currency, assume base is EUR or convert to a common base if mixed
     const totalRevenue = facturas
-      .filter(f => f.tipo === 'Venta' && f.estado === 'Pagada')
+      .filter(f => f.tipo === 'Venta' && f.estado === 'Pagada') // Only count paid sales invoices for revenue
       .reduce((sum, f) => {
-        // Assuming MOCK_EXCHANGE_RATES and BASE_CURRENCY are available or passed
-        // For simplicity, if we assume all revenue is tallied in a base currency (e.g. EUR)
-        // or mockData stores revenue in a consistent currency.
-        // Here, we'll just sum up, assuming all totalFactura are in a comparable unit or BASE_CURRENCY for this mock summary.
-        // A real system would convert each factura.totalFactura to BASE_CURRENCY before summing.
-        // For mock, let's assume all are EUR for simplicity of this function.
         if (f.moneda === 'EUR') return sum + f.totalFactura;
         if (f.moneda === 'USD') return sum + f.totalFactura / 1.08; // USD to EUR approx
         if (f.moneda === 'GBP') return sum + f.totalFactura / 0.85; // GBP to EUR approx
         return sum + f.totalFactura; // Fallback
       }, 0);
-    const salesCount = facturas.filter(f => f.tipo === 'Venta').length;
+    const salesCount = facturas.filter(f => f.tipo === 'Venta' && f.estado !== 'Cancelada').length; // Count non-cancelled sales
     return { totalStock, totalRevenue, salesCount };
 };
 
@@ -927,7 +917,7 @@ export const sendNotificationByConfig = async (configId: string, actingUserId: s
 
   const allUsers = await getEmpleados();
   const targetUsers = allUsers.filter(emp => {
-    if (!emp.emailNotifications) return false;
+    if (!emp.emailNotifications) return false; // Check if user wants notifications
     if (config.targetRoles.includes('all')) return true;
     return config.targetRoles.some(targetRole => emp.role === targetRole);
   });
@@ -945,6 +935,7 @@ export const sendNotificationByConfig = async (configId: string, actingUserId: s
 
   const now = new Date().toISOString();
   const updatedFields: Partial<NotificationConfig> = { lastSent: now };
+  // Only disable 'once' notifications after sending. Recurring ones remain enabled until manually disabled.
   if (config.frequency === 'once') {
     updatedFields.isEnabled = false; 
   }

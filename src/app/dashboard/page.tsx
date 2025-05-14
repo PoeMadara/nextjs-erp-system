@@ -101,8 +101,6 @@ export default function DashboardPage() {
 
   const convertAmount = (amount: number, from: CurrencyCode, to: DisplayCurrency): number => {
     if (from === to) return amount;
-    // For simplicity, assume 'from' can be directly cast to DisplayCurrency if it matches.
-    // More robust logic would handle all CurrencyCode types.
     const fromDisplay = from as DisplayCurrency; 
     const rate = MOCK_EXCHANGE_RATES[fromDisplay]?.[to];
     return rate ? amount * rate : amount; 
@@ -110,18 +108,18 @@ export default function DashboardPage() {
 
   const displayTotalRevenue = useMemo(() => {
     if (!data) return 0;
-     // Assuming totalRevenue from mockData is in BASE_CURRENCY (EUR)
     return convertAmount(data.totalRevenue, BASE_CURRENCY, selectedCurrency);
   }, [data, selectedCurrency]);
 
 
   const aggregateMonthlyData = (facturas: Factura[], type: 'Venta' | 'Compra', targetCurrency: DisplayCurrency, lang: 'en' | 'es') => {
-    const monthlyTotals: Record<number, number> = {}; // monthIndex: totalAmount
+    const monthlyTotals: Record<number, number> = {}; 
     const currentYear = new Date().getFullYear();
     const monthNames = lang === 'es' ? MONTH_NAMES_ES : MONTH_NAMES_EN;
 
     facturas.forEach(factura => {
-      if (factura.tipo === type) {
+      // Exclude cancelled invoices from chart totals
+      if (factura.tipo === type && factura.estado !== 'Cancelada') {
         const facturaDate = parseISO(factura.fecha);
         if (getYear(facturaDate) === currentYear) {
           const monthIndex = getMonth(facturaDate);
@@ -397,4 +395,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
