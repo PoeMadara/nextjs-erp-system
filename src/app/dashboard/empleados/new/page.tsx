@@ -1,3 +1,4 @@
+
 "use client";
 import { EmpleadoForm, type EmpleadoFormValues } from "@/components/crud/EmpleadoForm";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -13,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function NewEmpleadoPage() {
   const { toast } = useToast();
-  const { router } = useRouter();
+  const router = useRouter();
   const { t } = useTranslation();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,9 +33,13 @@ export default function NewEmpleadoPage() {
       });
       router.push("/dashboard/empleados");
     } catch (error) {
+      let errorMessage = t('employees.failCreate');
+      if (error instanceof Error) {
+        errorMessage = error.message; 
+      }
       toast({
         title: t('common.error'),
-        description: t('employees.failCreate'),
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -63,3 +68,5 @@ export default function NewEmpleadoPage() {
     </>
   );
 }
+
+    

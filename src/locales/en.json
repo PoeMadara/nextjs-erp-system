@@ -470,7 +470,9 @@
       "nameMinLength": "Name must be at least {count} characters.",
       "pricePositive": "Price must be a positive number.",
       "stockNonNegative": "Stock cannot be negative.",
-      "ivaNonNegative": "VAT must be a non-negative number."
+      "ivaNonNegative": "VAT must be a non-negative number.",
+      "codeExists": "Product code {code} already exists.",
+      "codeGenerationError": "Failed to generate a unique product code. Please try again or provide one manually."
     }
   },
   "productForm": {
@@ -723,3 +725,5 @@
     "toggleFail": "Failed to toggle status for \"{title}\"."
   }
 }
+
+    

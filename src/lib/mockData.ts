@@ -27,24 +27,24 @@ let productos: Producto[] = [
 ];
 
 let facturas: Factura[] = [
-  { 
-    id: 'FV2024-00001', fecha: '2024-05-10', tipo: 'Venta', clienteId: 'CLI001', empleadoId: 'EMP001', almacenId: 'ALM001', 
+  {
+    id: 'FV2024-00001', fecha: '2024-05-10', tipo: 'Venta', clienteId: 'CLI001', empleadoId: 'EMP001', almacenId: 'ALM001',
     baseImponible: 179.50, totalIva: 37.69, totalFactura: 217.19, estado: 'Pagada', moneda: 'EUR',
     detalles: [
       { id: 'DET001', productoId: 'PROD002', productoNombre: 'Monitor 24 pulgadas', cantidad: 1, precioUnitario: 179.50, porcentajeIva: 21.00, subtotal: 179.50, subtotalConIva: 217.195 }
     ],
     clienteNombre: 'Juan Pérez', empleadoNombre: 'Admin ERP'
   },
-  { 
-    id: 'FC2024-00001', fecha: '2024-06-15', tipo: 'Compra', proveedorId: 'PRO001', empleadoId: 'EMP002', almacenId: 'ALM001', 
+  {
+    id: 'FC2024-00001', fecha: '2024-06-15', tipo: 'Compra', proveedorId: 'PRO001', empleadoId: 'EMP002', almacenId: 'ALM001',
     baseImponible: 600.00, totalIva: 126.00, totalFactura: 726.00, estado: 'Pendiente', moneda: 'USD',
     detalles: [
       { id: 'DET002', productoId: 'PROD001', productoNombre: 'Portátil Modelo X', cantidad: 1, precioUnitario: 600.00, porcentajeIva: 21.00, subtotal: 600.00, subtotalConIva: 726.00 }
     ],
     proveedorNombre: 'Suministros Informáticos SL', empleadoNombre: 'Laura García'
   },
-   { 
-    id: 'FV2024-00002', fecha: '2024-07-01', tipo: 'Venta', clienteId: 'CLI002', empleadoId: 'EMP001', almacenId: 'ALM002', 
+   {
+    id: 'FV2024-00002', fecha: '2024-07-01', tipo: 'Venta', clienteId: 'CLI002', empleadoId: 'EMP001', almacenId: 'ALM002',
     baseImponible: 79.90, totalIva: 16.78, totalFactura: 96.68, estado: 'Pendiente', moneda: 'GBP',
     detalles: [
       { id: 'DET003', productoId: 'PROD003', productoNombre: 'Teclado Mecánico RGB', cantidad: 1, precioUnitario: 79.90, porcentajeIva: 21.00, subtotal: 79.90, subtotalConIva: 96.679 }
@@ -61,23 +61,24 @@ const getNextAvatarColor = () => {
   return color;
 }
 
-let teamActivityLogs: TeamActivityLog[] = []; 
+let teamActivityLogs: TeamActivityLog[] = [];
 let notificationConfigs: NotificationConfig[] = [];
 
 const LOG_LIMIT = 20;
 
-const generateId = (prefix: string, currentItems: {id: string}[]) => {
+const generateId = (prefix: string, currentItems: any[], idKey: string = 'id', padLength: number = 3) => {
   const maxNum = currentItems.reduce((max, item) => {
-    if (!item || !item.id) return max;
-    const numStr = item.id.replace(prefix, '').replace(/^.*-/, ''); // Handles FV2024-00001 like IDs too
+    if (!item || !item[idKey]) return max;
+    const numStr = String(item[idKey]).replace(prefix, '').replace(/^.*-/, '');
     if (numStr && /^\d+$/.test(numStr)) {
         const num = parseInt(numStr, 10);
         return Math.max(max, num);
     }
     return max;
   }, 0);
-  return `${prefix}${(maxNum + 1).toString().padStart(3, '0')}`;
+  return `${prefix}${(maxNum + 1).toString().padStart(padLength, '0')}`;
 };
+
 
 interface AddTeamActivityLogData {
   usuario_id: string;
@@ -87,7 +88,7 @@ interface AddTeamActivityLogData {
   descripcionParams?: Record<string, string | number | undefined | null>;
   entidad_id?: string;
   entidad_nombre?: string;
-  t: (key: string, params?: any) => string; 
+  t: (key: string, params?: any) => string;
 }
 
 export const addTeamActivityLog = async (logData: AddTeamActivityLogData): Promise<TeamActivityLog> => {
@@ -103,23 +104,23 @@ export const addTeamActivityLog = async (logData: AddTeamActivityLogData): Promi
     ...logData.descripcionParams,
     userName: userName,
   });
-  
+
   const newLog: TeamActivityLog = {
-    id: generateId('ACT', teamActivityLogs),
+    id: generateId('ACT', teamActivityLogs, 'id', 3),
     usuario_id: logData.usuario_id,
     nombre_usuario: userName,
     avatar_color: userAvatarColor,
     modulo: logData.modulo,
     accion: logData.accion,
-    descripcion: descripcion, 
+    descripcion: descripcion,
     timestamp: new Date().toISOString(),
     entidad_id: logData.entidad_id,
     entidad_nombre: logData.entidad_nombre,
   };
 
-  teamActivityLogs.unshift(newLog); 
+  teamActivityLogs.unshift(newLog);
   if (teamActivityLogs.length > LOG_LIMIT) {
-    teamActivityLogs = teamActivityLogs.slice(0, LOG_LIMIT); 
+    teamActivityLogs = teamActivityLogs.slice(0, LOG_LIMIT);
   }
   return newLog;
 };
@@ -130,7 +131,7 @@ export const getClientes = async (): Promise<Cliente[]> => [...clientes];
 export const getClienteById = async (id: string): Promise<Cliente | undefined> => clientes.find(c => c.id === id);
 
 export const addCliente = async (clienteData: Omit<Cliente, 'id'>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Cliente> => {
-  const newCliente = { ...clienteData, id: generateId('CLI', clientes) };
+  const newCliente = { ...clienteData, id: generateId('CLI', clientes, 'id', 3) };
   clientes.push(newCliente);
   await addTeamActivityLog({
     usuario_id: actingUserId,
@@ -188,7 +189,7 @@ export const deleteCliente = async (id: string, actingUserId: string, t: (key: s
 export const getProveedores = async (): Promise<Proveedor[]> => [...proveedores];
 export const getProveedorById = async (id: string): Promise<Proveedor | undefined> => proveedores.find(p => p.id === id);
 export const addProveedor = async (proveedorData: Omit<Proveedor, 'id'>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Proveedor> => {
-  const newProveedor = { ...proveedorData, id: generateId('PRO', proveedores) };
+  const newProveedor = { ...proveedorData, id: generateId('PRO', proveedores, 'id', 3) };
   proveedores.push(newProveedor);
    await addTeamActivityLog({
     usuario_id: actingUserId,
@@ -245,26 +246,25 @@ export const getEmpleadoById = async (id: string): Promise<Empleado | undefined>
 export const getEmpleadoByEmail = async (email: string): Promise<Empleado | undefined> => empleados.find(e => e.email.toLowerCase() === email.toLowerCase());
 
 export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked' | 'role' | 'avatarColor' | 'emailNotifications'> & {password?: string, role?: EmpleadoRole}, actingUserId?: string, t?: (key: string, params?: any) => string): Promise<Empleado> => {
-  // Determine role: if 'role' is provided in empleadoData, use it. Otherwise, if it's the first employee, make them admin. Else, default to 'user'.
   const role: EmpleadoRole = empleadoData.role || (empleados.length === 0 ? 'admin' : 'user');
-  
-  const newEmpleado: Empleado = { 
+
+  const newEmpleado: Empleado = {
     nombre: empleadoData.nombre,
     email: empleadoData.email,
     telefono: empleadoData.telefono,
-    id: generateId('EMP', empleados), // Generate ID before pushing to ensure empleados.length is correct for role determination
-    role: role, 
-    isBlocked: false, 
-    password: empleadoData.password || 'password123', // Default password, consider security implications for real apps
+    id: generateId('EMP', empleados, 'id', 3),
+    role: role,
+    isBlocked: false,
+    password: empleadoData.password || 'password123',
     avatarColor: getNextAvatarColor(),
     bio: empleadoData.bio || '',
-    emailNotifications: true, // Default to true
+    emailNotifications: true,
     lastLogin: empleadoData.lastLogin || new Date().toISOString(),
   };
-  
+
   empleados.push(newEmpleado);
 
-  if(actingUserId && t){ // Only log if actingUserId and t are provided (i.e., not during initial programmatic creation if any)
+  if(actingUserId && t){
      await addTeamActivityLog({
         usuario_id: actingUserId,
         modulo: 'Empleados',
@@ -282,17 +282,17 @@ export const addEmpleado = async (empleadoData: Omit<Empleado, 'id' | 'isBlocked
 export const updateEmpleado = async (id: string, updates: Partial<Empleado>, actingUserId: string, t: (key: string, params?: any) => string, skipLog: boolean = false): Promise<Empleado | null> => {
   const index = empleados.findIndex(e => e.id === id);
   if (index === -1) return null;
-  
-  const currentEmpleado = {...empleados[index]}; 
+
+  const currentEmpleado = {...empleados[index]};
   empleados[index] = { ...currentEmpleado, ...updates };
 
   if (skipLog) {
     return empleados[index];
   }
-  
+
   let logData: Partial<AddTeamActivityLogData> = {
     usuario_id: actingUserId,
-    modulo: 'Empleados', // Default, can be overridden
+    modulo: 'Empleados',
     entidad_id: empleados[index].id,
     entidad_nombre: empleados[index].nombre,
     t,
@@ -306,7 +306,7 @@ export const updateEmpleado = async (id: string, updates: Partial<Empleado>, act
      logData.modulo = 'Perfil';
      logData.accion = 'modificar';
      logData.descripcionKey = 'teamActivity.log.perfilEmailActualizado';
-  } else if (updates.password !== undefined && updates.password !== currentEmpleado.password) { // Note: password check is simplistic
+  } else if (updates.password !== undefined && updates.password !== currentEmpleado.password) {
      logData.modulo = 'Perfil';
      logData.accion = 'modificar';
      logData.descripcionKey = 'teamActivity.log.perfilContrasenaActualizada';
@@ -322,17 +322,15 @@ export const updateEmpleado = async (id: string, updates: Partial<Empleado>, act
     logData.accion = updates.isBlocked ? 'bloquear' : 'desbloquear';
     logData.descripcionKey = updates.isBlocked ? 'teamActivity.log.empleadoBloqueado' : 'teamActivity.log.empleadoDesbloqueado';
   } else {
-    // Generic modification if no specific field above matches but other fields might have changed
     const hasOtherChanges = Object.keys(updates).some(key => key !== 'lastLogin' && (updates as any)[key] !== (currentEmpleado as any)[key]);
     if (hasOtherChanges) {
         logData.accion = 'modificar';
         logData.descripcionKey = 'teamActivity.log.empleadoModificado';
     } else {
-        // If only lastLogin changed, or no significant changes, don't log a generic "modified"
         return empleados[index];
     }
   }
-  
+
   if(logData.accion && logData.descripcionKey && logData.modulo) {
     await addTeamActivityLog(logData as AddTeamActivityLogData);
   }
@@ -349,7 +347,6 @@ export const deleteEmpleado = async (id: string, actingUserId: string, t: (key: 
       const adminCount = empleados.filter(e => e.role === 'admin').length;
       if (adminCount <= 1) {
         console.warn("Cannot delete the last admin.");
-        // Potentially throw an error or return a specific message
         throw new Error(t('employees.failDeleteLastAdmin'));
       }
     }
@@ -375,11 +372,37 @@ export const deleteEmpleado = async (id: string, actingUserId: string, t: (key: 
 // Productos CRUD
 export const getProductos = async (): Promise<Producto[]> => [...productos];
 export const getProductoById = async (id: string): Promise<Producto | undefined> => productos.find(p => p.id === id);
+
 export const addProducto = async (productoData: Omit<Producto, 'id'>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Producto> => {
-  const newProducto: Producto = { 
-      ...productoData, 
-      id: generateId('PROD', productos),
-      codigo: productoData.codigo || generateId('P', productos.filter(p => p.codigo?.startsWith("P"))), // Ensure unique product code
+  let newProductCode = productoData.codigo;
+  if (newProductCode) {
+    if (productos.some(p => p.codigo === newProductCode)) {
+      throw new Error(t('products.validation.codeExists', { code: newProductCode }));
+    }
+  } else {
+    const pCodedProducts = productos.filter(p => p.codigo?.startsWith("P"));
+    let maxCodeNum = 0;
+    pCodedProducts.forEach(p => {
+        if (p.codigo) {
+            const numStr = p.codigo.replace('P', '');
+            if (numStr && /^\d+$/.test(numStr)) {
+                const num = parseInt(numStr, 10);
+                if (num > maxCodeNum) {
+                    maxCodeNum = num;
+                }
+            }
+        }
+    });
+    newProductCode = `P${(maxCodeNum + 1).toString().padStart(3, '0')}`;
+     if (productos.some(p => p.codigo === newProductCode)) { // Double check, should ideally not happen with this logic
+        throw new Error(t('products.validation.codeGenerationError'));
+    }
+  }
+
+  const newProducto: Producto = {
+    ...productoData,
+    id: generateId('PROD', productos, 'id', 3),
+    codigo: newProductCode,
   };
   productos.push(newProducto);
   await addTeamActivityLog({
@@ -394,9 +417,18 @@ export const addProducto = async (productoData: Omit<Producto, 'id'>, actingUser
   });
   return newProducto;
 };
+
 export const updateProducto = async (id: string, updates: Partial<Producto>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Producto | null> => {
   const index = productos.findIndex(p => p.id === id);
   if (index === -1) return null;
+  
+  // Check if new codigo is being set and if it's unique (excluding current product)
+  if (updates.codigo && updates.codigo !== productos[index].codigo) {
+    if (productos.some(p => p.id !== id && p.codigo === updates.codigo)) {
+      throw new Error(t('products.validation.codeExists', { code: updates.codigo }));
+    }
+  }
+
   productos[index] = { ...productos[index], ...updates };
   await addTeamActivityLog({
     usuario_id: actingUserId,
@@ -436,7 +468,7 @@ export const deleteProducto = async (id: string, actingUserId: string, t: (key: 
 export const getAlmacenes = async (): Promise<Almacen[]> => [...almacenes];
 export const getAlmacenById = async (id: string): Promise<Almacen | undefined> => almacenes.find(a => a.id === id);
 export const addAlmacen = async (almacenData: Omit<Almacen, 'id'>, actingUserId: string, t: (key: string, params?: any) => string): Promise<Almacen> => {
-  const newAlmacen = { ...almacenData, id: generateId('ALM', almacenes) };
+  const newAlmacen = { ...almacenData, id: generateId('ALM', almacenes, 'id', 3) };
   almacenes.push(newAlmacen);
   await addTeamActivityLog({
     usuario_id: actingUserId,
@@ -545,7 +577,7 @@ export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombr
   const yearFacturas = facturas.filter(f => f.id.startsWith(`${yearPrefix}${year}-`));
   const nextIdNum = yearFacturas.length > 0 ? Math.max(...yearFacturas.map(f => parseInt(f.id.split('-')[1])).filter(num => !isNaN(num))) + 1 : 1;
   const newId = `${yearPrefix}${year}-${nextIdNum.toString().padStart(5, '0')}`;
-  
+
   const processedDetalles = facturaData.detalles.map((d, index) => {
     const producto = productos.find(p => p.id === d.productoId);
     const subtotal = d.cantidad * d.precioUnitario;
@@ -586,10 +618,10 @@ export const addFactura = async (facturaData: Omit<Factura, 'id' | 'clienteNombr
     modulo: 'Facturación',
     accion: 'crear',
     descripcionKey: 'teamActivity.log.facturaCreada',
-    descripcionParams: { 
-        entidadNombre: newFactura.id, 
-        tipoFactura: t(newFactura.tipo === 'Venta' ? 'facturas.typeSale' : 'facturas.typePurchase'), 
-        clienteProveedorNombre: newFactura.tipo === 'Venta' ? clientes.find(c => c.id === newFactura.clienteId)?.nombre : proveedores.find(p => p.id === newFactura.proveedorId)?.nombre 
+    descripcionParams: {
+        entidadNombre: newFactura.id,
+        tipoFactura: t(newFactura.tipo === 'Venta' ? 'facturas.typeSale' : 'facturas.typePurchase'),
+        clienteProveedorNombre: newFactura.tipo === 'Venta' ? clientes.find(c => c.id === newFactura.clienteId)?.nombre : proveedores.find(p => p.id === newFactura.proveedorId)?.nombre
     },
     entidad_id: newFactura.id,
     t,
@@ -602,7 +634,7 @@ export const updateFactura = async (id: string, updates: Partial<Factura>, actin
   const index = facturas.findIndex(f => f.id === id);
   if (index === -1) return null;
 
-  const originalFactura = { ...facturas[index], detalles: [...facturas[index].detalles.map(d => ({...d}))] }; 
+  const originalFactura = { ...facturas[index], detalles: [...facturas[index].detalles.map(d => ({...d}))] };
 
   const tentativeUpdatedFactura: Factura = {
     ...originalFactura,
@@ -618,7 +650,7 @@ export const updateFactura = async (id: string, updates: Partial<Factura>, actin
             subtotal: parseFloat(subtotal.toFixed(2)),
             subtotalConIva: parseFloat(subtotalConIva.toFixed(2)),
         };
-    }) : [...originalFactura.detalles], 
+    }) : [...originalFactura.detalles],
   };
 
   const newBaseImponible = tentativeUpdatedFactura.detalles.reduce((sum, d) => sum + (d.subtotal || 0), 0);
@@ -627,7 +659,6 @@ export const updateFactura = async (id: string, updates: Partial<Factura>, actin
   tentativeUpdatedFactura.totalIva = parseFloat(newTotalIva.toFixed(2));
   tentativeUpdatedFactura.totalFactura = parseFloat((newBaseImponible + newTotalIva).toFixed(2));
 
-  // Revert original stock changes if original factura wasn't cancelled
   if (originalFactura.estado !== 'Cancelada') {
     originalFactura.detalles.forEach(detalle => {
       if (originalFactura.tipo === 'Venta') {
@@ -638,15 +669,13 @@ export const updateFactura = async (id: string, updates: Partial<Factura>, actin
     });
   }
 
-  // Apply new stock changes if new factura isn't cancelled
   if (tentativeUpdatedFactura.estado !== 'Cancelada') {
     if (tentativeUpdatedFactura.tipo === 'Venta') {
       for (const detalle of tentativeUpdatedFactura.detalles) {
         const producto = productos.find(p => p.id === detalle.productoId);
         if (!producto) throw new Error(t('facturas.validation.productNotFound', {productId: detalle.productoId}));
-        const currentStockAfterRevert = producto.stock; // Stock after original sale was reverted
+        const currentStockAfterRevert = producto.stock;
         if (currentStockAfterRevert < detalle.cantidad) {
-          // If stock is insufficient, revert the revert and throw error
           if (originalFactura.estado !== 'Cancelada') {
             originalFactura.detalles.forEach(d => {
               if (originalFactura.tipo === 'Venta') adjustStock(d.productoId, d.cantidad, 'decrement');
@@ -665,9 +694,9 @@ export const updateFactura = async (id: string, updates: Partial<Factura>, actin
       }
     });
   }
-  
+
   facturas[index] = tentativeUpdatedFactura;
-  
+
   await addTeamActivityLog({
     usuario_id: actingUserId,
     modulo: 'Facturación',
@@ -748,10 +777,10 @@ export const getRecentOrders = async (limit: number = 2): Promise<Array<{id: str
 };
 
 export const getWarehouseStatus = async (): Promise<Array<{name: string, capacity: string, items: number, location: string }>> => {
-  if (almacenes.length === 0) return []; 
+  if (almacenes.length === 0) return [];
   return almacenes.map(alm => ({
     name: alm.nombre,
-    capacity: alm.capacidad || 'N/A', 
+    capacity: alm.capacidad || 'N/A',
     items: productos.reduce((sum, p) => sum + p.stock, 0) / almacenes.length, // Simplified: average stock across warehouses
     location: alm.ubicacion || 'N/A',
   }));
@@ -766,8 +795,8 @@ export const getTotalStockValue = async (): Promise<{totalStock: number, totalRe
 
 
 export const getTeamActivityLogs = async (limit: number = LOG_LIMIT): Promise<TeamActivityLog[]> => {
-  return [...teamActivityLogs] 
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) 
+  return [...teamActivityLogs]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, limit);
 };
 
@@ -796,11 +825,11 @@ export const addNotificationConfig = async (
   const creator = await getEmpleadoById(actingUserId);
   const newConfig: NotificationConfig = {
     ...configData,
-    id: generateId('NOTIF', notificationConfigs),
+    id: generateId('NOTIF', notificationConfigs, 'id', 3),
     createdAt: new Date().toISOString(),
     createdBy: actingUserId,
     createdByName: creator?.nombre || 'System',
-    isEnabled: true, // Default to enabled
+    isEnabled: true,
   };
   notificationConfigs.push(newConfig);
   await addTeamActivityLog({
@@ -870,7 +899,7 @@ export const sendNotificationByConfig = async (configId: string, actingUserId: s
 
   const allUsers = await getEmpleados();
   const targetUsers = allUsers.filter(emp => {
-    if (!emp.emailNotifications) return false; // Check if user has email notifications enabled
+    if (!emp.emailNotifications) return false;
     if (config.targetRoles.includes('all')) return true;
     return config.targetRoles.some(targetRole => emp.role === targetRole);
   });
@@ -886,10 +915,15 @@ export const sendNotificationByConfig = async (configId: string, actingUserId: s
     console.log(`Body: ${config.message}`);
   });
 
-  // Update lastSent and log activity
   const now = new Date().toISOString();
-  await updateNotificationConfig(config.id, { lastSent: now }, actingUserId, t); 
-  
+  // Update lastSent only if it's a "once" type or for logging, recurring might have its own scheduler
+  const updatedFields: Partial<NotificationConfig> = { lastSent: now };
+  if (config.frequency === 'once') {
+    updatedFields.isEnabled = false; // Disable "once" notifications after sending
+  }
+
+  await updateNotificationConfig(config.id, updatedFields, actingUserId, t);
+
   await addTeamActivityLog({
     usuario_id: actingUserId,
     modulo: 'Notificaciones',
@@ -900,19 +934,8 @@ export const sendNotificationByConfig = async (configId: string, actingUserId: s
     entidad_nombre: config.title,
     t,
   });
-  
+
   return { success: true, message: t('notifications.sentSuccess', {count: targetUsers.length})};
 };
 
-// The initial default admin user creation has been removed.
-// The logic within addEmpleado now handles making the first registered user an admin.
-// if (empleados.length === 0) {
-//   addEmpleado({
-//     nombre: 'Admin ERP',
-//     email: 'admin@erpsystem.com',
-//     password: 'password123', 
-//     role: 'admin',
-//     bio: 'Default administrator account.',
-//     lastLogin: new Date().toISOString()
-//   });
-// }
+    

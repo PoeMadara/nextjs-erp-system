@@ -470,7 +470,9 @@
       "nameMinLength": "El nombre debe tener al menos {count} caracteres.",
       "pricePositive": "El precio debe ser un número positivo.",
       "stockNonNegative": "El stock no puede ser negativo.",
-      "ivaNonNegative": "El IVA debe ser un número no negativo."
+      "ivaNonNegative": "El IVA debe ser un número no negativo.",
+      "codeExists": "El código de producto {code} ya existe.",
+      "codeGenerationError": "Error al generar un código de producto único. Inténtalo de nuevo o proporciónalo manualmente."
     }
   },
   "productForm": {
@@ -723,3 +725,5 @@
     "toggleFail": "Error al cambiar el estado de \"{title}\"."
   }
 }
+
+    
