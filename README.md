@@ -115,8 +115,8 @@ This project currently uses in-memory mock data stored in `src/lib/mockData.ts` 
 
 1.  **Clone the repository:**
     ```bash
-    git clone [<repository-url>](https://github.com/PoeMadara/nextjs-erp-system)
-    cd [<project-directory>](https://github.com/PoeMadara/nextjs-erp-system)
+    git clone https://github.com/PoeMadara/nextjs-erp-system
+    cd https://github.com/PoeMadara/nextjs-erp-system
     ```
 
 2.  **Install dependencies:**
