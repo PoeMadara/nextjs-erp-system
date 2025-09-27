@@ -7,7 +7,7 @@ This is a comprehensive ERP (Enterprise Resource Planning) System built with **N
 ![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Styling-TailwindCSS-38B2AC?logo=tailwindcss&logoColor=white)
 
-<img src="https://github.com/PoeMadara/nextjs-erp-system/blob/master/extra/ERP_System_video.gif" width="600" height="400" alt="demo">
+![ERP_System_video](https://github.com/user-attachments/assets/6a9c1177-d0a4-4d94-9e0e-2643a3b0763a)
 
 > You can try the demo if you visit this link: https://goo.su/bZttdv
 
