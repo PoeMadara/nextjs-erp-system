@@ -9,7 +9,6 @@ This is a comprehensive ERP (Enterprise Resource Planning) System built with **N
 
 ![ERP_System_video](https://github.com/user-attachments/assets/6a9c1177-d0a4-4d94-9e0e-2643a3b0763a)
 
-> You can try the demo if you visit this link: https://goo.su/bZttdv
 
 ## Autors
 
