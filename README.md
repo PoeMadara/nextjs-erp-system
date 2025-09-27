@@ -10,6 +10,8 @@ This is a comprehensive ERP (Enterprise Resource Planning) System built with **N
 
 <img src="https://github.com/PoeMadara/nextjs-erp-system/blob/master/extra/ERP_System_video.gif" width="600" height="400" alt="demo">
 
+> You can try the demo if you visit this link: https://goo.su/bZttdv
+
 ## Autors
 
 - **Carlos Vergara Gámez**  
