@@ -1,7 +1,7 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  /* Configuraction for GitHub Pages */
+  output: 'export',
+  reactStrictMode: true,
+  assetPrefix: './',
 };
 
 export default nextConfig;
