@@ -8,7 +8,9 @@ This is a comprehensive ERP (Enterprise Resource Planning) System built with **N
 ![Tailwind CSS](https://img.shields.io/badge/Styling-TailwindCSS-38B2AC?logo=tailwindcss&logoColor=white)
 
 
-<img src="https://github.com/PoeMadara/nextjs-erp-system/blob/master/extra/ERP_System_video.gif" width="600" height="400" alt="demo">
+<p align="center">
+  <img src="https://github.com/PoeMadara/nextjs-erp-system/blob/master/extra/ERP_System_video.gif" width="600" alt="ERP System Demo">
+</p>
 
 > You can try the demo if you visit this link: https://goo.su/bZttdv
 
@@ -42,12 +44,17 @@ The application supports multi-language (English and Spanish) and features a rol
 ![Next.js](https://img.shields.io/badge/Next.js-000?logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232a?logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-38B2AC?logo=tailwindcss&logoColor=white)
 ![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-%23171717?logo=radixui&logoColor=white&label=shadcn%2Fui)
+![Nix](https://img.shields.io/badge/Nix-5277C3?logo=nixos&logoColor=white)
 ![Lucide](https://img.shields.io/badge/Lucide%20React-000000?logo=lucide&logoColor=white&label=Icons)
 ![Zod](https://img.shields.io/badge/Zod-%23e6ccff?logo=typescript&logoColor=black)
 ![React Hook Form](https://img.shields.io/badge/React%20Hook%20Form-EC5990?logo=reacthookform&logoColor=white)
 ![date-fns](https://img.shields.io/badge/date--fns-007ACC?logo=javascript&logoColor=white)
+
+### Hosted:
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?logo=firebase&logoColor=black)
 
 ### Backend (Simulated):
 ![Mock Data](https://img.shields.io/badge/Backend-Mock%20Data-informational)
@@ -226,5 +233,6 @@ The current application uses mock data. To connect to a real database:
     *   Set your public directory to `.next` (or follow Next.js specific Firebase deployment guides).
 4.  For dynamic Next.js features, you might need to set up Firebase Functions. Refer to the official [Firebase documentation for deploying Next.js apps](https://firebase.google.com/docs/hosting/frameworks/nextjs).
 5.  Deploy: `firebase deploy`
+
 
 
