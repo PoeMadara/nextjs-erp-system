@@ -232,5 +232,8 @@ The current application uses mock data. To connect to a real database:
 4.  For dynamic Next.js features, you might need to set up Firebase Functions. Refer to the official [Firebase documentation for deploying Next.js apps](https://firebase.google.com/docs/hosting/frameworks/nextjs).
 5.  Deploy: `firebase deploy`
 
+## License
+This project is licensed under the Apache 2.0 License - see the [LICENSE](https://github.com/PoeMadara/nextjs-erp-system/blob/master/LICENSE) file for details.
+
 
 
