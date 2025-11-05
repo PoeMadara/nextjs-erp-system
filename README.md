@@ -1,6 +1,6 @@
 # ERP System
 
-This is a comprehensive ERP (Enterprise Resource Planning) System built with **Next.js**, **React**, **TypeScript**, and **Tailwind CSS**. A modular ERP platform powered by generative AI, capable of automating business processes. Ready for deployment on AWS: EC2 for hosting, S3 for reports and archives, DynamoDB for system entities, and Lambda for automated backend tasks.The project follows best practices in frontend architecture, styling, and type safety.
+This is a comprehensive ERP (Enterprise Resource Planning) System built with **Next.js**, **React**, **TypeScript**, and **Tailwind CSS**. A modular ERP platform powered by generative AI, capable of automating business processes. Ready for deployment on AWS: EC2 for hosting, S3 for reports and archives, DynamoDB for system entities, and Lambda for automated backend tasks. The project follows best practices in frontend architecture, styling, and type safety.
 
 ![Next.js](https://img.shields.io/badge/Framework-Next.js-000?logo=next.js)
 ![React](https://img.shields.io/badge/Library-React-61DAFB?logo=react)
